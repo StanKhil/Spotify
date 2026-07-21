@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="Spotify/Spotify.csproj" />
+  <Project Path="Spotify.Application/Spotify.Application.csproj" Id="512625f7-a1f9-48ce-b96e-424fe2937f08" />
+  <Project Path="Spotify.Domain/Spotify.Domain.csproj" Id="deaab7c3-adfa-42a3-a3e2-ba5b813369a9" />
+  <Project Path="Spotify.Infrastructure/Spotify.Infrastructure.csproj" Id="e0ac1a0c-433d-4705-818b-12dff3551c55" />
+  <Project Path="Spotify/Spotify.Web.csproj" />
 </Solution>
