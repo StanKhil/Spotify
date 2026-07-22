@@ -13,8 +13,6 @@ namespace Spotify.Domain.Entities.Content
         public DateTime? DeletedAt { get; set; }
         public bool IsForAdult { get; set; }
 
-        public Guid? AuthorId { get; set; }
-
         public Guid? ImageItemId { get; set; }
         public ImageItem? ImageItem { get; set; }
 
