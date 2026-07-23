@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Spotify.Domain.Entities.Content
 {
@@ -14,12 +15,18 @@ namespace Spotify.Domain.Entities.Content
         public bool IsForAdult { get; set; }
 
         public Guid? ImageItemId { get; set; }
+
+        [ForeignKey(nameof(ImageItemId))]
         public ImageItem? ImageItem { get; set; }
 
         public Guid AudioItemId { get; set; }
+
+        [ForeignKey(nameof(AudioItemId))]
         public AudioItem AudioItem { get; set; } = null!;
 
         public string? GenreId { get; set; }
+
+        [ForeignKey(nameof(GenreId))]
         public Genre? Genre { get; set; }
 
         public ICollection<LastPlayed>? LastPlayedEntries { get; set; }

@@ -33,14 +33,6 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
             builder.HasOne(x => x.UserAccess)
                 .WithOne(x => x.User)
                 .HasForeignKey<UserAccess>(x => x.UserId);
-
-            builder.HasMany(x => x.Playlists)
-                .WithOne(x => x.User)
-                .HasForeignKey(x => x.UserId);
-
-            builder.HasMany(x => x.AuthoredContent)
-                .WithOne(x => x.Author)
-                .HasForeignKey(x => x.AuthorId);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace Spotify.Domain.Entities.Content
@@ -9,9 +10,13 @@ namespace Spotify.Domain.Entities.Content
         public Guid Id { get; set; }
 
         public Guid AuthorId { get; set; }
-        public UserData Author { get; set; } = null!;
+
+        [ForeignKey(nameof(AuthorId))]
+        public UserAccess Author { get; set; } = null!;
 
         public Guid ItemId { get; set; }
+
+        [ForeignKey(nameof(ItemId))]
         public AudioContent Item { get; set; } = null!;
     }
 }

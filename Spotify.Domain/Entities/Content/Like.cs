@@ -5,16 +5,13 @@ using System.Text;
 
 namespace Spotify.Domain.Entities.Content
 {
-    public class Playlist
+    public class Like
     {
         public Guid Id { get; set; }
-        public string Name { get; set; } = null!;
-
+        public Guid AuthorContentId { get; set; }
         public Guid UserAccessId { get; set; }
 
-        [ForeignKey(nameof(UserAccessId))]
-        public UserAccess UserAccess { get; set; } = null!;
-
-        public ICollection<Track> Tracks { get; set; } = [];
+        [ForeignKey(nameof(AuthorContentId))]
+        public AuthorContent AuthorContent { get; set; } = null!;
     }
 }
