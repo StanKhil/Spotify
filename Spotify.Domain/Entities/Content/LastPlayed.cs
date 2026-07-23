@@ -1,12 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Spotify.Domain.Entities.Content
 {
     public class LastPlayed
     {
         public Guid Id { get; set; }
+
         public Guid UserAccessId { get; set; }
-        public ICollection<AudioContent> AudioContents { get; set; } = new List<AudioContent>();
+        public UserAccess UserAccess { get; set; } = null!;
+
+        public Guid AudioContentId { get; set; }
+        public AudioContent AudioContent { get; set; } = null!;
+
+        public DateTime PlayedAt { get; set; } = DateTime.UtcNow;
     }
 }

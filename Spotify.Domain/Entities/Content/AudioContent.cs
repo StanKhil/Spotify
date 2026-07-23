@@ -23,5 +23,7 @@ namespace Spotify.Domain.Entities.Content
         public Genre? Genre { get; set; }
 
         public ICollection<LastPlayed>? LastPlayedEntries { get; set; }
+
+        public ICollection<AuthorContent> Authors { get; set; } = new List<AuthorContent>();
     }
 }
