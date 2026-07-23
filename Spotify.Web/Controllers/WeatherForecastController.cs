@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Spotify.Controllers
+namespace Spotify.Web.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -8,7 +8,7 @@ namespace Spotify.Controllers
     {
         private static readonly string[] Summaries =
         [
-            "Freezing", "Bracing", "Chilly", "Coold", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         ];
 
         [HttpGet(Name = "GetWeatherForecast")]

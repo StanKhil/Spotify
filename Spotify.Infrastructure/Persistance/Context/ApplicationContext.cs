@@ -13,6 +13,28 @@ namespace Spotify.Infrastructure.Persistance.Context
     public class ApplicationContext : IdentityDbContext<UserAccess, UserRole, Guid>
     {
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options) { }
+        public DbSet<Album> Albums { get; set; } = null!;
+        public DbSet<Audiobook> Audiobooks { get; set; } = null!;
+        public DbSet<AudioItem> AudioItems { get; set; } = null!;
+        public DbSet<AuthorContent> AuthorContents { get; set; } = null!;
+        public DbSet<CoverImage> CoverImages { get; set; } = null!;
+        public DbSet<Country> Countries { get; set; } = null!;
+        public DbSet<Episode> Episodes { get; set; } = null!;
+        public DbSet<Genre> Genres { get; set; } = null!;
+        public DbSet<LastPlayed> LastPlayedEntries { get; set; } = null!;
+        public DbSet<ImageItem> ImageItems { get; set; } = null!;
+        public DbSet<Like> Likes { get; set; } = null!;
+        public DbSet<Mood> Moods { get; set; } = null!;
+        public DbSet<Playlist> Playlists { get; set; } = null!;
+        public DbSet<Settings> Settings { get; set; } = null!;
+        public DbSet<Subscription> Subscriptions { get; set; } = null!;
+        public DbSet<Podcast> Podcasts { get; set; } = null!;
+        public DbSet<Tag> Tags { get; set; } = null!;
+        public DbSet<Track> Tracks { get; set; } = null!;
+        public DbSet<TrackTag> TrackTags { get; set; } = null!;
+        public DbSet<City> Cities { get; set; } = null!;
+        public DbSet<UserAccess> UserAccesses { get; set; } = null!;
+        public DbSet<UserData> UserDatas { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -28,7 +50,8 @@ namespace Spotify.Infrastructure.Persistance.Context
 
             builder.Entity<Subscription>().HasMany(s => s.UserAccesses).WithOne(ua => ua.Subscription).HasForeignKey(ua => ua.SubscriptionId);
 
-            builder.ApplyConfiguration(new AlbumConfiguration());
+            builder.ApplyConfigurationsFromAssembly(typeof(ApplicationContext).Assembly);
+
         }
     }
 }

@@ -15,7 +15,6 @@ namespace Spotify
             // Add services to the container.
 
             builder.Services.AddControllers();
-            builder.Services.AddOpenApi();
 
             // Database
             builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDatabase")));

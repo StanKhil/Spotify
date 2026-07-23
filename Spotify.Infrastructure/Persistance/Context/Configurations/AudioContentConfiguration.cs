@@ -34,7 +34,7 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
             builder.HasOne(x => x.AudioItem)
                 .WithMany()
                 .HasForeignKey(x => x.AudioItemId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.HasOne(x => x.Genre)
                 .WithMany()
@@ -48,7 +48,7 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
             builder.HasMany(x => x.Authors)
                 .WithOne(x => x.Item)
                 .HasForeignKey(x => x.ItemId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

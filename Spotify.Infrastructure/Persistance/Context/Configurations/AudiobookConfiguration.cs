@@ -11,8 +11,6 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
     {
         public void Configure(EntityTypeBuilder<Audiobook> builder)
         {
-            builder.HasKey(x => x.Id);
-
             builder.HasOne(x => x.AuthorContent)
                 .WithMany()
                 .HasForeignKey(x => x.AuthorContentId)

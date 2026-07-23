@@ -1,4 +1,4 @@
-namespace Spotify
+namespace Spotify.Web
 {
     public class WeatherForecast
     {

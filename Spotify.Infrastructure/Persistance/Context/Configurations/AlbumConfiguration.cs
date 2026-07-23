@@ -8,7 +8,6 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
     {
         public void Configure(EntityTypeBuilder<Album> builder)
         {
-            builder.HasKey(x => x.Id);
 
             builder.HasOne(x => x.CoverImage)
                 .WithMany(x => x.Albums)

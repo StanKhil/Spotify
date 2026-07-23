@@ -11,5 +11,6 @@ namespace Spotify.Domain.Entities.Content
         public CoverImage CoverImage { get; set; } = null!;
 
         public bool IsDraft { get; set; }
+        public ICollection<Track> Tracks { get; set; } = new List<Track>();
     }
 }

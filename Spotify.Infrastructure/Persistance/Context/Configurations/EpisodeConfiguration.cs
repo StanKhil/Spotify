@@ -10,8 +10,6 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
     {
         public void Configure(EntityTypeBuilder<Episode> builder)
         {
-            builder.HasKey(x => x.Id);
-
             builder.HasOne(x => x.Podcast)
                 .WithMany(x => x.Episodes)
                 .HasForeignKey(x => x.PodcastId)

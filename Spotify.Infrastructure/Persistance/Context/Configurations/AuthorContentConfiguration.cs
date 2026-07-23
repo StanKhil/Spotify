@@ -16,12 +16,12 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
             builder.HasOne(x => x.Author)
                 .WithMany(x => x.AuthoredContent)
                 .HasForeignKey(x => x.AuthorId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(x => x.Item)
                 .WithMany(x => x.Authors)
                 .HasForeignKey(x => x.ItemId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.HasIndex(x => new { x.AuthorId, x.ItemId })
                 .IsUnique();

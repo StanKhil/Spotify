@@ -23,8 +23,10 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
             //builder.Property(x => x.DerivedKey)
             //    .IsRequired();
 
-            builder.HasMany(ua => ua.Likes)
-                .WithOne().HasForeignKey(l => l.UserAccessId);
+            //builder.HasMany(ua => ua.Likes)
+            //    .WithOne()
+            //    .HasForeignKey(l => l.UserAccessId)
+            //    .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(ua => ua.User)
                 .WithOne(ud => ud.UserAccess)
