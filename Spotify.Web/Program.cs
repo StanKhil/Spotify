@@ -1,8 +1,14 @@
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Spotify.Application.Interfaces;
 using Spotify.Domain.Entities.Content;
+using Spotify.Infrastructure.Authentication;
 using Spotify.Infrastructure.Persistance.Context;
+using Spotify.Infrastructure.Services;
+using System.Text;
 
 namespace Spotify
 {
@@ -19,6 +25,35 @@ namespace Spotify
             // Database
             builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDatabase")));
             builder.Services.AddIdentity<ApplicationUser, UserRole>().AddEntityFrameworkStores<ApplicationContext>().AddDefaultTokenProviders();
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+            var jwtOptions = builder.Configuration
+                .GetRequiredSection(JwtOptions.SectionName)
+                .Get<JwtOptions>()
+                ?? throw new InvalidOperationException("JWT configuration is missing.");
+
+            if (string.IsNullOrWhiteSpace(jwtOptions.Key) || jwtOptions.Key.Length < 32)
+            {
+                throw new InvalidOperationException("Jwt:Key must contain at least 32 characters.");
+            }
+
+            builder.Services.AddSingleton(jwtOptions);
+            builder.Services.AddSingleton<JwtTokenGenerator>();
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = jwtOptions.Issuer,
+                        ValidateAudience = true,
+                        ValidAudience = jwtOptions.Audience,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key)),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
 
             builder.Services.AddCors(options =>
             {
