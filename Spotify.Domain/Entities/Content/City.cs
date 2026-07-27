@@ -10,6 +10,6 @@ namespace Spotify.Domain.Entities.Content
         public string Name { get; set; } = null!;
         public Guid CountryId { get; set; }
         public Country Country { get; set; } = null!;
-        public ICollection<UserData> Users { get; set; } = new List<UserData>();
+        public ICollection<UserProfile> Users { get; set; } = new List<UserProfile>();
     }
 }

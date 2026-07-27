@@ -10,10 +10,10 @@ namespace Spotify.Domain.Entities.Content
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
 
-        public Guid UserAccessId { get; set; }
+        public Guid ApplicationUserId { get; set; }
 
-        [ForeignKey(nameof(UserAccessId))]
-        public UserAccess UserAccess { get; set; } = null!;
+        [ForeignKey(nameof(ApplicationUserId))]
+        public ApplicationUser ApplicationUser { get; set; } = null!;
 
         public ICollection<Track> Tracks { get; set; } = [];
     }

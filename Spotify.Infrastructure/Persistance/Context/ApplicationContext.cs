@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Spotify.Infrastructure.Persistance.Context
 {
-    public class ApplicationContext : IdentityDbContext<UserAccess, UserRole, Guid>
+    public class ApplicationContext : IdentityDbContext<ApplicationUser, UserRole, Guid>
     {
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options) { }
         public DbSet<Album> Albums { get; set; } = null!;
@@ -33,22 +33,22 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<Track> Tracks { get; set; } = null!;
         public DbSet<TrackTag> TrackTags { get; set; } = null!;
         public DbSet<City> Cities { get; set; } = null!;
-        public DbSet<UserAccess> UserAccesses { get; set; } = null!;
-        public DbSet<UserData> UserDatas { get; set; } = null!;
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
+        public DbSet<UserProfile> UserProfiles { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<UserAccess>().ToTable("UserAccesses");
+            builder.Entity<ApplicationUser>().ToTable("ApplicationUsers");
             builder.Entity<UserRole>().ToTable("Roles");
             builder.Entity<IdentityUserClaim<Guid>>().ToTable("UserClaims");
             builder.Entity<IdentityUserRole<Guid>>().ToTable("UserRoles");
 
-            builder.Entity<IdentityUserRole<Guid>>().HasOne<UserAccess>().WithMany().HasForeignKey(ur => ur.UserId).OnDelete(DeleteBehavior.NoAction);
+            builder.Entity<IdentityUserRole<Guid>>().HasOne<ApplicationUser>().WithMany().HasForeignKey(ur => ur.UserId).OnDelete(DeleteBehavior.NoAction);
             builder.Entity<IdentityUserRole<Guid>>().HasOne<UserRole>().WithMany().HasForeignKey(ur => ur.RoleId).OnDelete(DeleteBehavior.NoAction);
 
-            builder.Entity<Subscription>().HasMany(s => s.UserAccesses).WithOne(ua => ua.Subscription).HasForeignKey(ua => ua.SubscriptionId);
+            builder.Entity<Subscription>().HasMany(s => s.ApplicationUsers).WithOne(ua => ua.Subscription).HasForeignKey(ua => ua.SubscriptionId);
 
             builder.ApplyConfigurationsFromAssembly(typeof(ApplicationContext).Assembly);
 

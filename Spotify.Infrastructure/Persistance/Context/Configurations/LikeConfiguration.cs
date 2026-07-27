@@ -15,9 +15,9 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
                 .HasForeignKey(x => x.AuthorContentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasOne<UserAccess>()
+            builder.HasOne(x => x.ApplicationUser)
                 .WithMany(ua => ua.Likes)
-                .HasForeignKey(x => x.UserAccessId)
+                .HasForeignKey(x => x.ApplicationUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

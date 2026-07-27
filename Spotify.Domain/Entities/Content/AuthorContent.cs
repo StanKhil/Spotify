@@ -12,7 +12,7 @@ namespace Spotify.Domain.Entities.Content
         public Guid AuthorId { get; set; }
 
         [ForeignKey(nameof(AuthorId))]
-        public UserAccess Author { get; set; } = null!;
+        public ApplicationUser Author { get; set; } = null!;
 
         public Guid ItemId { get; set; }
 

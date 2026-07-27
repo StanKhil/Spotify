@@ -18,7 +18,7 @@ namespace Spotify
 
             // Database
             builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDatabase")));
-            builder.Services.AddIdentity<UserAccess, UserRole>().AddEntityFrameworkStores<ApplicationContext>().AddDefaultTokenProviders();
+            builder.Services.AddIdentity<ApplicationUser, UserRole>().AddEntityFrameworkStores<ApplicationContext>().AddDefaultTokenProviders();
 
             builder.Services.AddCors(options =>
             {

@@ -17,9 +17,9 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
                 .IsRequired()
                 .HasMaxLength(150);
 
-            builder.HasOne(x => x.UserAccess)
+            builder.HasOne(x => x.ApplicationUser)
                 .WithMany(x => x.Playlists)
-                .HasForeignKey(x => x.UserAccessId)
+                .HasForeignKey(x => x.ApplicationUserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(x => x.Tracks)

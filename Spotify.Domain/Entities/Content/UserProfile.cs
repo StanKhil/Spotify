@@ -7,23 +7,20 @@ using System.Text;
 
 namespace Spotify.Domain.Entities.Content
 {
-    public class UserData
+    public class UserProfile
     {
-        public Guid Id { get; set; }
-        [Required]
-        public string Email { get; set; } = null!;
+        public Guid UserId { get; set; }
+
         public Guid CountryId { get; set; }
         public Guid CityId { get; set; }
+
         public DateTime Birthdate { get; set; }
         public bool IsAdult { get; set; }
         public DateTime RegisteredAt { get; set; }
         public DateTime? DeletedAt { get; set; }
 
-        [ForeignKey(nameof(CountryId))]
+        public ApplicationUser ApplicationUser { get; set; } = null!;
         public Country Country { get; set; } = null!;
-
-        [ForeignKey(nameof(CityId))]
         public City City { get; set; } = null!;
-        public UserAccess UserAccess { get; set; } = null!;
     }
 }

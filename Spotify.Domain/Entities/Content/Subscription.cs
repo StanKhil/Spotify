@@ -14,6 +14,6 @@ namespace Spotify.Domain.Entities.Content
         [Column(TypeName = "decimal(13,2)")]
         public decimal Price { get; set; }
 
-        public List<UserAccess> UserAccesses { get; set; } = [];
+        public List<ApplicationUser> ApplicationUsers { get; set; } = [];
     }
 }
