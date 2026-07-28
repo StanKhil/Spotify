@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.DTOs.Auth;
 using Spotify.Application.Interfaces;
+using Spotify.Application.DTOs.ForgotPassword;
 
 namespace Spotify.Web.Controllers;
 
@@ -57,5 +58,36 @@ public sealed class AuthController : ControllerBase
         }
 
         return Ok(result.Authentication);
+    }
+
+    [HttpPost("forgot-password/check-email")]
+    public async Task<ActionResult<CheckEmailResult>> CheckEmail(
+        [FromBody] CheckEmailRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authenticationService.CheckEmailAsync(request, cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPost("forgot-password/check-code")]
+    public async Task<ActionResult<CheckCodeResult>> CheckCode(
+        [FromBody] CheckCodeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authenticationService.CheckCodeAsync(request, cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPost("forgot-password/new-password")]
+    public async Task<ActionResult<NewPasswordResult>> NewPassword(
+        [FromBody] NewPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authenticationService.NewPasswordAsync(request, cancellationToken);
+
+        return Ok(result);
+
     }
 }

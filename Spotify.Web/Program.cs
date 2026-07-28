@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Spotify.Application.Interfaces;
 using Spotify.Domain.Entities.Content;
 using Spotify.Infrastructure.Authentication;
+using Spotify.Infrastructure.Email;
 using Spotify.Infrastructure.Persistance.Context;
 using Spotify.Infrastructure.Services;
 using System.Text;
@@ -26,6 +27,14 @@ namespace Spotify
             builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDatabase")));
             builder.Services.AddIdentity<ApplicationUser, UserRole>().AddEntityFrameworkStores<ApplicationContext>().AddDefaultTokenProviders();
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            builder.Services.AddScoped<IEmailService, DefaultEmailService>();
+            builder.Services.AddMemoryCache();
+
+            var emailOptions = builder.Configuration
+                .GetSection(EmailOptions.SectionName)
+                .Get<EmailOptions>()
+                ?? new EmailOptions();
+            builder.Services.AddSingleton(emailOptions);
 
             var jwtOptions = builder.Configuration
                 .GetRequiredSection(JwtOptions.SectionName)
