@@ -6,7 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Spotify.Application.DTOs.Auth;
 using Spotify.Application.DTOs.ForgotPassword;
 using Spotify.Application.Interfaces;
-using Spotify.Domain.Entities.Content;
+using Spotify.Domain.Entities.User;
 using Spotify.Domain.Enumerations;
 using Spotify.Infrastructure.Authentication;
 using Spotify.Infrastructure.Persistance.Context;

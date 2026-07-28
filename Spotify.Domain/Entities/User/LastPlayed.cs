@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Spotify.Domain.Entities.Content;
+using System;
 
-namespace Spotify.Domain.Entities.Content
+namespace Spotify.Domain.Entities.User
 {
     public class LastPlayed
     {

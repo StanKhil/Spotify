@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Spotify.Domain.Entities.Content;
+using Spotify.Domain.Entities.Location;
 
 namespace Spotify.Infrastructure.Persistance.Context.Configurations
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Spotify.Domain.Entities.Content;
+using Spotify.Domain.Entities.User;
 using System;
 using System.Collections.Generic;
 using System.Text;

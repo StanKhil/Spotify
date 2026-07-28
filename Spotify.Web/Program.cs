@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Spotify.Application.Interfaces;
-using Spotify.Domain.Entities.Content;
 using Spotify.Infrastructure.Authentication;
-using Spotify.Infrastructure.Email;
 using Spotify.Infrastructure.Persistance.Context;
 using Spotify.Infrastructure.Services;
 using System.Text;
+using Spotify.Domain.Entities.User;
+using Spotify.Domain.Entities.Security;
 
 namespace Spotify
 {

@@ -1,4 +1,4 @@
-namespace Spotify.Infrastructure.Email;
+namespace Spotify.Domain.Entities.Security;
 
 public sealed class EmailOptions
 {

@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Spotify.Domain.Entities.Content;
+using Spotify.Domain.Entities.Location;
+using Spotify.Domain.Entities.User;
 using Spotify.Infrastructure.Persistance.Context.Configurations;
 using System;
 using System.Collections.Generic;

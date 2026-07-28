@@ -1,4 +1,4 @@
-namespace Spotify.Infrastructure.Authentication;
+namespace Spotify.Domain.Entities.Security;
 
 public sealed class JwtOptions
 {

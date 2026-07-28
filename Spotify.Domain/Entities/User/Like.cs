@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Spotify.Domain.Entities.Content;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
-namespace Spotify.Domain.Entities.Content
+namespace Spotify.Domain.Entities.User
 {
     public class Like
     {

@@ -1,13 +1,15 @@
+using Microsoft.IdentityModel.Tokens;
+using Spotify.Application.DTOs.Auth;
+using Spotify.Application.Interfaces;
+using Spotify.Domain.Entities.User;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using Spotify.Application.DTOs.Auth;
-using Spotify.Domain.Entities.Content;
+using Spotify.Domain.Entities.Security;
 
 namespace Spotify.Infrastructure.Authentication;
 
-public sealed class JwtTokenGenerator
+public sealed class JwtTokenGenerator : IJwtTokenGenerator
 {
     private readonly JwtOptions _options;
 
