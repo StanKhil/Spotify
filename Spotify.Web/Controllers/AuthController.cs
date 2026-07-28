@@ -54,7 +54,7 @@ public sealed class AuthController : ControllerBase
                 ModelState.AddModelError(string.Empty, error);
             }
 
-            return ValidationProblem(ModelState, statusCode: StatusCodes.Status401Unauthorized);
+            return ValidationProblem(statusCode: StatusCodes.Status401Unauthorized);
         }
 
         return Ok(result.Authentication);
