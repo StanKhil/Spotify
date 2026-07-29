@@ -17,6 +17,7 @@ public sealed class AuthenticationService : IAuthenticationService
 {
     private const string DefaultRoleName = "User";
     private static readonly TimeSpan PasswordResetCodeLifetime = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan GoogleRegistrationLifetime = TimeSpan.FromMinutes(10);
 
     private readonly ApplicationContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -277,4 +278,169 @@ public sealed class AuthenticationService : IAuthenticationService
         string ResetToken,
         bool IsVerified,
         DateTimeOffset ExpiresAtUtc);
+
+    public async Task<GoogleSignInResult> GoogleSignInAsync(
+        GoogleExternalUser googleUser,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByLoginAsync("Google", googleUser.ProviderKey);
+        if (user is not null)
+        {
+            var isDeleted = await _context.UserProfiles
+                .AnyAsync(x => x.UserId == user.Id && x.DeletedAt != null, cancellationToken);
+
+            if (isDeleted)
+            {
+                return GoogleSignInResult.Failure("This account is unavailable.");
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return GoogleSignInResult.Authenticated(_jwtTokenGenerator.Create(user, roles));
+        }
+
+        if (await _userManager.FindByEmailAsync(googleUser.Email) is not null)
+        {
+            return GoogleSignInResult.Failure(
+                "An account with this email already exists. Sign in with your password first.");
+        }
+
+        var registrationToken = CreateSecureToken();
+        _cache.Set(
+            GetGoogleRegistrationCacheKey(registrationToken),
+            new GoogleRegistrationEntry(
+                googleUser.ProviderKey,
+                googleUser.Email,
+                googleUser.DisplayName),
+            GoogleRegistrationLifetime);
+
+        return GoogleSignInResult.RegistrationRequired(registrationToken);
+    }
+
+
+    public async Task<GoogleSignInResult> CompleteGoogleRegistrationAsync(
+        GoogleCompleteRegistrationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_cache.TryGetValue<GoogleRegistrationEntry>(
+                GetGoogleRegistrationCacheKey(request.RegistrationToken), out var googleRegistration) ||
+            googleRegistration is null)
+        {
+            return GoogleSignInResult.Failure("Invalid or expired registration token.");
+        }
+
+        if (!string.Equals(request.Password, request.ConfirmPassword, StringComparison.Ordinal))
+        {
+            return GoogleSignInResult.Failure("Passwords do not match.");
+        }
+
+        if (await _userManager.FindByEmailAsync(googleRegistration.Email) is not null)
+        {
+            return GoogleSignInResult.Failure("An account with this email already exists.");
+        }
+
+        var countryExists = await _context.Countries
+            .AnyAsync(x => x.Id == request.CountryId, cancellationToken);
+        var cityMatchesCountry = await _context.Cities
+            .AnyAsync(x => x.Id == request.CityId && x.CountryId == request.CountryId, cancellationToken);
+        var subscriptionExists = await _context.Subscriptions
+            .AnyAsync(x => x.Id == request.SubscriptionId, cancellationToken);
+
+        if (!countryExists || !cityMatchesCountry || !subscriptionExists)
+        {
+            return GoogleSignInResult.Failure("Country, city, or subscription was not found.");
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        var settings = new Settings
+        {
+            Id = Guid.NewGuid(),
+            Language = Language.English
+        };
+        _context.Settings.Add(settings);
+
+        var user = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            Email = googleRegistration.Email,
+            EmailConfirmed = true,
+            UserName = googleRegistration.Email,
+            SubscriptionId = request.SubscriptionId,
+            SettingsId = settings.Id
+        };
+
+        var createUserResult = await _userManager.CreateAsync(user, request.Password);
+        if (!createUserResult.Succeeded)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return GoogleSignInResult.Failure(createUserResult.Errors.Select(x => x.Description).ToArray());
+        }
+
+        if (!await _roleManager.RoleExistsAsync(DefaultRoleName))
+        {
+            var createRoleResult = await _roleManager.CreateAsync(new UserRole
+            {
+                Id = Guid.NewGuid(),
+                Name = DefaultRoleName,
+                Description = "Default listener role",
+                CanRead = true
+            });
+
+            if (!createRoleResult.Succeeded)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return GoogleSignInResult.Failure(createRoleResult.Errors.Select(x => x.Description).ToArray());
+            }
+        }
+
+        var addToRoleResult = await _userManager.AddToRoleAsync(user, DefaultRoleName);
+        if (!addToRoleResult.Succeeded)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return GoogleSignInResult.Failure(addToRoleResult.Errors.Select(x => x.Description).ToArray());
+        }
+
+        var addGoogleLoginResult = await _userManager.AddLoginAsync(
+            user,
+            new UserLoginInfo("Google", googleRegistration.ProviderKey, "Google"));
+        if (!addGoogleLoginResult.Succeeded)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return GoogleSignInResult.Failure(addGoogleLoginResult.Errors.Select(x => x.Description).ToArray());
+        }
+
+        _context.UserProfiles.Add(new UserProfile
+        {
+            UserId = user.Id,
+            CountryId = request.CountryId,
+            CityId = request.CityId,
+            Birthdate = request.Birthdate.ToDateTime(TimeOnly.MinValue),
+            IsAdult = request.Birthdate.AddYears(18) <= DateOnly.FromDateTime(DateTime.UtcNow),
+            RegisteredAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        var roles = await _userManager.GetRolesAsync(user);
+        _cache.Remove(GetGoogleRegistrationCacheKey(request.RegistrationToken));
+        return GoogleSignInResult.Authenticated(_jwtTokenGenerator.Create(user, roles));
+    }
+
+    private static string GetGoogleRegistrationCacheKey(string registrationToken) =>
+        $"google-registration:{registrationToken}";
+
+    private static string CreateSecureToken()
+    {
+        var bytes = new byte[32];
+        using var random = RandomNumberGenerator.Create();
+        random.GetBytes(bytes);
+        return Convert.ToHexString(bytes);
+    }
+
+    private sealed record GoogleRegistrationEntry(
+        string ProviderKey,
+        string Email,
+        string DisplayName);
+
 }

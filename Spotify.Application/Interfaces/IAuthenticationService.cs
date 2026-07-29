@@ -13,6 +13,14 @@ public interface IAuthenticationService
         LoginRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<GoogleSignInResult> GoogleSignInAsync(
+        GoogleExternalUser googleUser,
+        CancellationToken cancellationToken = default);
+
+    Task<GoogleSignInResult> CompleteGoogleRegistrationAsync(
+        GoogleCompleteRegistrationRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<CheckEmailResult> CheckEmailAsync(
         CheckEmailRequest request,
         CancellationToken cancellationToken = default);
