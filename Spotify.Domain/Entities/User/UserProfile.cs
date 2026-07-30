@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Spotify.Domain.Entities.Location;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.Metrics;
 using System.Text;
 
-namespace Spotify.Domain.Entities.Content
+namespace Spotify.Domain.Entities.User
 {
     public class UserProfile
     {

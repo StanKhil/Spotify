@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
+using Spotify.Domain.Entities.Content;
 
-namespace Spotify.Domain.Entities.Content
+namespace Spotify.Domain.Entities.User
 {
     public class ApplicationUser : IdentityUser<Guid>
     {

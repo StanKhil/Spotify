@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.Interfaces;
-using Spotify.Domain.Entities.Content;
+using Spotify.Domain.Entities.User;
 
 namespace Spotify.Web.Controllers
 {

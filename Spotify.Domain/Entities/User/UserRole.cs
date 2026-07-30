@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace Spotify.Domain.Entities.Content
+namespace Spotify.Domain.Entities.User
 {
     public class UserRole : IdentityRole<Guid>
     {

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Spotify.Domain.Entities.User;
 
 namespace Spotify.Domain.Entities.Content;
 

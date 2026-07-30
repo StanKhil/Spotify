@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Spotify.Domain.Entities.Content
+namespace Spotify.Domain.Entities.User
 {
     public class Settings
     {

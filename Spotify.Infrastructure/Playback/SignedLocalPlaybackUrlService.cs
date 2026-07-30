@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
-using Spotify.Infrastructure.Authentication;
+using Spotify.Domain.Entities.Security;
 
 namespace Spotify.Infrastructure.Playback;
 

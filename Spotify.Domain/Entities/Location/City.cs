@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Spotify.Domain.Entities.User;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Spotify.Domain.Entities.Content
+namespace Spotify.Domain.Entities.Location
 {
     public class City
     {

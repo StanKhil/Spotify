@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using Spotify.Application.Interfaces;
-using Spotify.Infrastructure.Email;
+using Spotify.Domain.Entities.Security;
 
 namespace Spotify.Infrastructure.Services;
 

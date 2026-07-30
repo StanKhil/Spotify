@@ -1,3 +1,4 @@
+using Spotify.Domain.Entities.User;
 namespace Spotify.Domain.Entities.Content;
 
 public class LastPlayed
