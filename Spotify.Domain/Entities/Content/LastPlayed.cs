@@ -1,17 +1,14 @@
-﻿using System;
+namespace Spotify.Domain.Entities.Content;
 
-namespace Spotify.Domain.Entities.Content
+public class LastPlayed
 {
-    public class LastPlayed
-    {
-        public Guid Id { get; set; }
-
-        public Guid ApplicationUserId { get; set; }
-        public ApplicationUser ApplicationUser { get; set; } = null!;
-
-        public Guid AudioContentId { get; set; }
-        public AudioContent AudioContent { get; set; } = null!;
-
-        public DateTime PlayedAt { get; set; } = DateTime.UtcNow;
-    }
+    public Guid Id { get; set; }
+    public Guid ApplicationUserId { get; set; }
+    public ApplicationUser ApplicationUser { get; set; } = null!;
+    public Guid AudioContentId { get; set; }
+    public AudioContent AudioContent { get; set; } = null!;
+    public int PositionSeconds { get; set; }
+    public bool IsCompleted { get; set; }
+    public DateTime PlayedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

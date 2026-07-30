@@ -1,7 +1,7 @@
 
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Spotify.Application.Interfaces;
@@ -9,6 +9,7 @@ using Spotify.Domain.Entities.Content;
 using Spotify.Infrastructure.Authentication;
 using Spotify.Infrastructure.Email;
 using Spotify.Infrastructure.Persistance.Context;
+using Spotify.Infrastructure.Playback;
 using Spotify.Infrastructure.Services;
 using System.Text;
 
@@ -37,6 +38,20 @@ namespace Spotify
                 ?? new EmailOptions();
             builder.Services.AddSingleton(emailOptions);
 
+            var playbackOptions = builder.Configuration
+                .GetSection(PlaybackOptions.SectionName)
+                .Get<PlaybackOptions>()
+                ?? new PlaybackOptions();
+
+            builder.Services.AddSingleton(playbackOptions);
+
+            var jamendoOptions = builder.Configuration
+                .GetSection(JamendoOptions.SectionName)
+                .Get<JamendoOptions>()
+                ?? new JamendoOptions();
+
+            builder.Services.AddSingleton(jamendoOptions);
+
             var jwtOptions = builder.Configuration
                 .GetRequiredSection(JwtOptions.SectionName)
                 .Get<JwtOptions>()
@@ -46,6 +61,20 @@ namespace Spotify
             {
                 throw new InvalidOperationException("Jwt:Key must contain at least 32 characters.");
             }
+
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<IPlaybackService, PlaybackService>();
+
+            builder.Services.AddSingleton<ILocalAudioStorageService, LocalAudioStorageService>();
+
+            builder.Services.AddScoped<ILocalPlaybackUrlService, SignedLocalPlaybackUrlService>();
+
+            builder.Services.AddHttpClient<JamendoApiClient>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<JamendoOptions>();
+
+                client.BaseAddress = new Uri(options.BaseUrl);
+            });
 
             builder.Services.AddSingleton(jwtOptions);
             builder.Services.AddSingleton<JwtTokenGenerator>();

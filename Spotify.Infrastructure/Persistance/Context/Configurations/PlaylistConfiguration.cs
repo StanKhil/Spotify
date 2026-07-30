@@ -22,9 +22,6 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
                 .HasForeignKey(x => x.ApplicationUserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasMany(x => x.Tracks)
-                .WithOne(x => x.Playlist)
-                .HasForeignKey(x => x.PlaylistId);
         }
     }
 }

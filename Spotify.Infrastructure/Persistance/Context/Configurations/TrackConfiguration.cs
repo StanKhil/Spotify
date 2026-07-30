@@ -22,11 +22,6 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
                 .HasForeignKey(x => x.MoodId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.HasOne(x => x.Playlist)
-                .WithMany(x => x.Tracks)
-                .HasForeignKey(x => x.PlaylistId)
-                .OnDelete(DeleteBehavior.SetNull);
-
             builder.Property(x => x.PlaysNumber)
                 .IsRequired();
 

@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
-namespace Spotify.Domain.Entities.Content
+namespace Spotify.Domain.Entities.Content;
+
+public class Playlist
 {
-    public class Playlist
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = null!;
+    public Guid Id { get; set; }
+    public string Name { get; set; } = null!;
+    public Guid ApplicationUserId { get; set; }
 
-        public Guid ApplicationUserId { get; set; }
+    [ForeignKey(nameof(ApplicationUserId))]
+    public ApplicationUser ApplicationUser { get; set; } = null!;
 
-        [ForeignKey(nameof(ApplicationUserId))]
-        public ApplicationUser ApplicationUser { get; set; } = null!;
-
-        public ICollection<Track> Tracks { get; set; } = [];
-    }
+    public ICollection<PlaylistTrack> PlaylistTracks { get; set; } = [];
 }

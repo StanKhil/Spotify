@@ -26,6 +26,7 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<Like> Likes { get; set; } = null!;
         public DbSet<Mood> Moods { get; set; } = null!;
         public DbSet<Playlist> Playlists { get; set; } = null!;
+        public DbSet<PlaylistTrack> PlaylistTracks { get; set; } = null!;
         public DbSet<Settings> Settings { get; set; } = null!;
         public DbSet<Subscription> Subscriptions { get; set; } = null!;
         public DbSet<Podcast> Podcasts { get; set; } = null!;
