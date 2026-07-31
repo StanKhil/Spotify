@@ -26,4 +26,9 @@
     <ProjectReference Include="..\Spotify.Infrastructure\Spotify.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\audio\" />
+    <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
 </Project>
