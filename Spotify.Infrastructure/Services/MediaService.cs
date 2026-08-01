@@ -1,6 +1,7 @@
 ﻿using Spotify.Application.DTOs.Media;
 using Spotify.Application.Interfaces;
 using Spotify.Domain.Entities.Content;
+using Spotify.Domain.Enumerations;
 using Spotify.Infrastructure.Persistance.Context;
 
 namespace Spotify.Infrastructure.Services;
@@ -37,11 +38,20 @@ public sealed class MediaService : IMediaService
         }
 
         var url = await _fileStorageService.SaveAsync(content, fileName, "audio", cancellationToken);
+        var now = DateTime.UtcNow;
 
         var audioItem = new AudioItem
         {
             Id = Guid.NewGuid(),
-            AudioList = url
+            Provider = AudioProvider.LocalStorage,
+            StorageKey = url,
+            ExternalContentId = null,
+            ContentType = contentType,
+            BitrateKbps = null,
+            LicenseUrl = null,
+            IsDownloadAllowed = true,
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         _context.AudioItems.Add(audioItem);

@@ -2,6 +2,7 @@
 using Spotify.Application.DTOs.Customer;
 using Spotify.Application.Interfaces;
 using Spotify.Infrastructure.Persistance.Context;
+using Spotify.Domain.Entities.User;
 
 namespace Spotify.Infrastructure.Services;
 
@@ -18,7 +19,7 @@ public sealed class CustomerService : ICustomerService
         CancellationToken cancellationToken = default)
     {
         return await _context.ApplicationUsers
-            .Join(_context.Set<Domain.Entities.Content.UserProfile>(),
+            .Join(_context.Set<UserProfile>(),
                 u => u.Id, p => p.UserId,
                 (u, p) => new CustomerResponse(
                     u.Id, u.Email!, u.UserName!, p.CountryId, p.CityId,
@@ -32,7 +33,7 @@ public sealed class CustomerService : ICustomerService
     {
         return await _context.ApplicationUsers
             .Where(u => u.Id == id)
-            .Join(_context.Set<Domain.Entities.Content.UserProfile>(),
+            .Join(_context.Set<UserProfile>(),
                 u => u.Id, p => p.UserId,
                 (u, p) => new CustomerResponse(
                     u.Id, u.Email!, u.UserName!, p.CountryId, p.CityId,
@@ -44,7 +45,7 @@ public sealed class CustomerService : ICustomerService
         Guid id, UpdateCustomerRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _context.ApplicationUsers.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        var profile = await _context.Set<Domain.Entities.Content.UserProfile>()
+        var profile = await _context.Set<UserProfile>()
             .FirstOrDefaultAsync(x => x.UserId == id, cancellationToken);
 
         if (user is null || profile is null)
@@ -78,7 +79,7 @@ public sealed class CustomerService : ICustomerService
     public async Task<DeleteCustomerResult> DeleteCustomerAsync(
         Guid id, CancellationToken cancellationToken = default)
     {
-        var profile = await _context.Set<Domain.Entities.Content.UserProfile>()
+        var profile = await _context.Set<UserProfile>()
             .FirstOrDefaultAsync(x => x.UserId == id, cancellationToken);
 
         if (profile is null)

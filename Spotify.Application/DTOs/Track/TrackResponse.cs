@@ -11,7 +11,7 @@ public sealed record TrackResponse(
     long PlaysNumber,
     bool IsAdult,
     bool IsDraft,
-    Guid AudioItemId,
+    Guid? AudioItemId,
     Guid? ImageItemId,
     IReadOnlyCollection<string> TagIds,
     DateTime CreatedAt);

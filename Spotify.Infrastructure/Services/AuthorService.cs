@@ -2,8 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Spotify.Application.DTOs.Author;
 using Spotify.Application.Interfaces;
-using Spotify.Domain.Entities.Content;
 using Spotify.Infrastructure.Persistance.Context;
+using Spotify.Domain.Entities.User;
 
 namespace Spotify.Infrastructure.Services;
 

@@ -19,7 +19,7 @@ public sealed class PlaylistService : IPlaylistService
     {
         return await _context.Playlists
             .OrderBy(x => x.Name)
-            .Select(x => new PlaylistResponse(x.Id, x.Name, x.ApplicationUserId, x.Tracks.Count))
+            .Select(x => new PlaylistResponse(x.Id, x.Name, x.ApplicationUserId, x.PlaylistTracks.Count))
             .ToListAsync(cancellationToken);
     }
 
@@ -28,7 +28,7 @@ public sealed class PlaylistService : IPlaylistService
     {
         return await _context.Playlists
             .Where(x => x.Id == id)
-            .Select(x => new PlaylistResponse(x.Id, x.Name, x.ApplicationUserId, x.Tracks.Count))
+            .Select(x => new PlaylistResponse(x.Id, x.Name, x.ApplicationUserId, x.PlaylistTracks.Count))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -66,7 +66,7 @@ public sealed class PlaylistService : IPlaylistService
         playlist.Name = request.Name.Trim();
         await _context.SaveChangesAsync(cancellationToken);
 
-        var tracksCount = await _context.Tracks.CountAsync(x => x.PlaylistId == id, cancellationToken);
+        var tracksCount = await _context.PlaylistTracks.CountAsync(x => x.PlaylistId == id, cancellationToken);
 
         return UpdatePlaylistResult.Success(new PlaylistResponse(playlist.Id, playlist.Name, playlist.ApplicationUserId, tracksCount));
     }
