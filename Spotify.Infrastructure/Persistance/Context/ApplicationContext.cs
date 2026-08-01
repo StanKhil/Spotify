@@ -38,11 +38,14 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<City> Cities { get; set; } = null!;
         public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
         public DbSet<UserProfile> UserProfiles { get; set; } = null!;
+        public DbSet<Plugin> Plugins { get; set; } = null!;
+        public DbSet<SystemSetting> SystemSettings { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<SystemSetting>().HasKey(x => x.Key);
             builder.Entity<ApplicationUser>().ToTable("ApplicationUsers");
             builder.Entity<UserRole>().ToTable("Roles");
             builder.Entity<IdentityUserClaim<Guid>>().ToTable("UserClaims");

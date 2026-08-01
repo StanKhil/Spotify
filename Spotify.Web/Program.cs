@@ -11,6 +11,7 @@ using Spotify.Infrastructure.Authentication;
 using Spotify.Infrastructure.Persistance.Context;
 using Spotify.Infrastructure.Playback;
 using Spotify.Infrastructure.Services;
+using Spotify.Infrastructure.Storage;
 using System.Text;
 using Spotify.Domain.Entities.User;
 using Spotify.Domain.Entities.Security;
@@ -31,6 +32,20 @@ namespace Spotify
             builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDatabase")));
             builder.Services.AddIdentity<ApplicationUser, UserRole>().AddEntityFrameworkStores<ApplicationContext>().AddDefaultTokenProviders();
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            builder.Services.AddScoped<IGenreService, GenreService>();
+            builder.Services.AddScoped<ITagService, TagService>();
+            builder.Services.AddScoped<IMoodService, MoodService>();
+            builder.Services.AddScoped<IAlbumService, AlbumService>();
+            builder.Services.AddScoped<IPodcastService, PodcastService>();
+            builder.Services.AddScoped<IEpisodeService, EpisodeService>();
+            builder.Services.AddScoped<IPlaylistService, PlaylistService>();
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
+            builder.Services.AddScoped<IAudiobookService, AudiobookService>();
+            builder.Services.AddScoped<IAuthorService, AuthorService>();
+            builder.Services.AddScoped<ITrackService, TrackService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<IPluginService, PluginService>();
+            builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
             builder.Services.AddScoped<IEmailService, DefaultEmailService>();
             builder.Services.AddMemoryCache();
 
@@ -115,6 +130,10 @@ namespace Spotify
 
             var app = builder.Build();
 
+            builder.Services.AddSingleton<IFileStorageService>(
+            new LocalFileStorageService(builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot")));
+            builder.Services.AddScoped<IMediaService, MediaService>();
+
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -127,6 +146,7 @@ namespace Spotify
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseStaticFiles();
 
             app.MapControllers();
 
