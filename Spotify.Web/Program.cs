@@ -126,11 +126,11 @@ namespace Spotify
                 });
             });
 
-            var app = builder.Build();
-
             builder.Services.AddSingleton<IFileStorageService>(
             new LocalFileStorageService(builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot")));
             builder.Services.AddScoped<IMediaService, MediaService>();
+
+            var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
             {
