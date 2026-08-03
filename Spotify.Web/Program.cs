@@ -91,6 +91,8 @@ namespace Spotify
                 client.BaseAddress = new Uri(options.BaseUrl);
             });
 
+            builder.Services.AddScoped<IJamendoService, JamendoService>();
+
             builder.Services.AddSingleton(jwtOptions);
             builder.Services.AddSingleton<JwtTokenGenerator>();
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
