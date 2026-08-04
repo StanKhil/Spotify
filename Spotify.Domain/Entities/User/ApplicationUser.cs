@@ -17,7 +17,7 @@ namespace Spotify.Domain.Entities.User
 
         public UserProfile Profile { get; set; } = null!;
 
-        public ICollection<AuthorContent> AuthoredContent { get; set; } = [];
+        public ICollection<AuthorContentAuthor> AuthoredContent { get; set; } = [];
         public ICollection<Playlist> Playlists { get; set; } = [];
         public ICollection<Like> Likes { get; set; } = [];
     }

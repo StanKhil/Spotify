@@ -19,6 +19,7 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<Audiobook> Audiobooks { get; set; } = null!;
         public DbSet<AudioItem> AudioItems { get; set; } = null!;
         public DbSet<AuthorContent> AuthorContents { get; set; } = null!;
+        public DbSet<AuthorContentAuthor> AuthorContentAuthors { get; set; } = null!;
         public DbSet<CoverImage> CoverImages { get; set; } = null!;
         public DbSet<Country> Countries { get; set; } = null!;
         public DbSet<Episode> Episodes { get; set; } = null!;
