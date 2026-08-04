@@ -7,33 +7,66 @@ namespace Spotify.Web.Controllers
 {
     [ApiController]
     [Route("api/region")]
-    public class RegionController
+    public class RegionController : ControllerBase
     {
         private readonly IRegionService _regionService;
 
-        public RegionController(IRegionService regionService) {
+        public RegionController(IRegionService regionService)
+        {
             _regionService = regionService;
         }
 
+        
         [HttpGet("cities")]
-        public Task<IEnumerable<CityResponse>> GetAllCities()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetAllCities()
         {
-            var cities = _regionService.GetAllCitiesAsync().Result;
-            return Task.FromResult(cities);
+            var cities = await _regionService.GetAllCitiesAsync();
+
+            if (cities == null || !cities.Any())
+            {
+                return NotFound(new { message = "No cities found." });
+            }
+
+            return Ok(cities);
         }
 
+       
         [HttpGet("countries")]
-        public Task<IEnumerable<CountryResponse>> GetAllCountries()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetAllCountries()
         {
-            var countries = _regionService.GetAllCountriesAsync().Result;
-            return Task.FromResult(countries);
+            var countries = await _regionService.GetAllCountriesAsync();
+
+            if (countries == null || !countries.Any())
+            {
+                return NotFound(new { message = "No countries found." });
+            }
+
+            return Ok(countries);
         }
 
-        [HttpGet("cities/{countryId}")]
-        public Task<IEnumerable<CityResponse>> GetCitiesByCountryId(Guid countryId)
+       
+        [HttpGet("cities/{countryId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCitiesByCountryId(Guid countryId)
         {
-            var cities = _regionService.GetCitiesByCountryIdAsync(countryId).Result;
-            return Task.FromResult(cities);
+            if (countryId == Guid.Empty)
+            {
+                return BadRequest(new { message = "Invalid country ID." });
+            }
+
+            var cities = await _regionService.GetCitiesByCountryIdAsync(countryId);
+
+            if (cities == null || !cities.Any())
+            {
+                return NotFound(new { message = $"No cities found for country ID: {countryId}" });
+            }
+
+            return Ok(cities);
         }
     }
 }
