@@ -20,5 +20,5 @@ public sealed class RegisterRequest
     public Guid CountryId { get; init; }
     public Guid CityId { get; init; }
     public Boolean IsAuthor { get; init; }
-    public DateOnly Birthdate { get; init; }
+    public String Birthdate { get; init; } = String.Empty;
 }

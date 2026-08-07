@@ -54,8 +54,8 @@ public sealed class AuthenticationService : IAuthenticationService
         {
             return RegisterResult.Failure("Email and user name are required.");
         }
-
-        if (request.Birthdate > DateOnly.FromDateTime(DateTime.UtcNow))
+        var birthdate = DateOnly.Parse(request.Birthdate);
+        if (birthdate > DateOnly.FromDateTime(DateTime.UtcNow))
         {
             return RegisterResult.Failure("Birthdate cannot be in the future.");
         }
@@ -154,8 +154,8 @@ public sealed class AuthenticationService : IAuthenticationService
             UserId = user.Id,
             CountryId = request.CountryId,
             CityId = request.CityId,
-            Birthdate = request.Birthdate.ToDateTime(TimeOnly.MinValue),
-            IsAdult = request.Birthdate.AddYears(18) <= DateOnly.FromDateTime(DateTime.UtcNow),
+            Birthdate = birthdate.ToDateTime(TimeOnly.MinValue),
+            IsAdult = birthdate.AddYears(18) <= DateOnly.FromDateTime(DateTime.UtcNow),
             RegisteredAt = DateTime.UtcNow
         });
 
