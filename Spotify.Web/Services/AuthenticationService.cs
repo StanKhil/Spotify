@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
@@ -54,7 +55,8 @@ public sealed class AuthenticationService : IAuthenticationService
         {
             return RegisterResult.Failure("Email, user name, and birthdate are required.");
         }
-        var birthdate = DateOnly.Parse(request.Birthdate);
+
+        var birthdate = DateOnly.ParseExact(request.Birthdate, "dd.MM.yyyy", CultureInfo.InvariantCulture);
         if (birthdate > DateOnly.FromDateTime(DateTime.UtcNow))
         {
             return RegisterResult.Failure("Birthdate cannot be in the future.");
