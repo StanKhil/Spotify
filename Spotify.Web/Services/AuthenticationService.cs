@@ -10,6 +10,7 @@ using Spotify.Domain.Entities.User;
 using Spotify.Domain.Enumerations;
 using Spotify.Infrastructure.Authentication;
 using Spotify.Infrastructure.Persistance.Context;
+using Spotify.Application.DTOs.License;
 
 namespace Spotify.Infrastructure.Services;
 
@@ -78,6 +79,24 @@ public sealed class AuthenticationService : IAuthenticationService
         {
             return RegisterResult.Failure("Country or city was not found.");
         }
+
+        if (request.IsAuthor)
+        {
+            var license = await _context.Licenses
+            .FirstOrDefaultAsync(x => x.UserEmail == email, cancellationToken);
+            if (license == null)
+            {
+                return RegisterResult.Failure("No license found for the provided email.");
+            }
+            else if (license.UserEmail != email)
+            {
+                return RegisterResult.Failure("The provided email does not match the license email.");
+            }else if(license.UserName != userName)
+            {
+                return RegisterResult.Failure("The provided user name does not match the license user name.");
+            }
+        }
+        
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
@@ -256,6 +275,41 @@ public sealed class AuthenticationService : IAuthenticationService
 
         _cache.Remove(GetPasswordResetCacheKey(userEmail));
         return NewPasswordResult.Success();
+    }
+
+    public async Task<LicenseResult> SendActivationLicenseAsync(
+        LicenseDto request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _emailService.SendAsync(
+                request.UserEmail,
+                "Spotify Activation License",
+                $"<p>Your activation license key is <strong>{request.ActivationKey}</strong>.</p>",
+                cancellationToken);
+        }
+        catch (Exception)
+        {
+            return LicenseResult.Failure("Unable to send the activation license email. Please try again later.");
+        }
+        return LicenseResult.Success();
+    }
+
+    public async Task<CheckAuthorCodeResult> CheckAuthorCodeAsync(
+        CheckAuthorCodeRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var license = await _context.Licenses
+            .FirstOrDefaultAsync(x => x.UserEmail == request.UserEmail, cancellationToken);
+
+        if (license == null)
+            return CheckAuthorCodeResult.Failure("No license found for the provided email.");
+
+        if(license.UserEmail != request.UserEmail)
+            return CheckAuthorCodeResult.Failure("The provided email does not match the license email.");
+
+        return CheckAuthorCodeResult.Success();
     }
 
     private static string GetPasswordResetCacheKey(string email) =>

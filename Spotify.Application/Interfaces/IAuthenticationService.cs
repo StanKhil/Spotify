@@ -1,5 +1,6 @@
 using Spotify.Application.DTOs.Auth;
 using Spotify.Application.DTOs.ForgotPassword;
+using Spotify.Application.DTOs.License;
 
 namespace Spotify.Application.Interfaces;
 
@@ -29,7 +30,15 @@ public interface IAuthenticationService
         CheckCodeRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<CheckAuthorCodeResult> CheckAuthorCodeAsync(
+        CheckAuthorCodeRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<NewPasswordResult> NewPasswordAsync(
         NewPasswordRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<LicenseResult> SendActivationLicenseAsync(
+        LicenseDto request,
         CancellationToken cancellationToken = default);
 }
