@@ -73,12 +73,10 @@ public sealed class AuthenticationService : IAuthenticationService
             .AnyAsync(x => x.Id == request.CountryId, cancellationToken);
         var cityMatchesCountry = await _context.Cities
             .AnyAsync(x => x.Id == request.CityId && x.CountryId == request.CountryId, cancellationToken);
-        var subscriptionExists = await _context.Subscriptions
-            .AnyAsync(x => x.Id == request.SubscriptionId, cancellationToken);
 
-        if (!countryExists || !cityMatchesCountry || !subscriptionExists)
+        if (!countryExists || !cityMatchesCountry)
         {
-            return RegisterResult.Failure("Country, city, or subscription was not found.");
+            return RegisterResult.Failure("Country or city was not found.");
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -96,8 +94,9 @@ public sealed class AuthenticationService : IAuthenticationService
             Id = Guid.NewGuid(),
             Email = email,
             UserName = userName,
-            SubscriptionId = request.SubscriptionId,
-            SettingsId = settings.Id
+            SubscriptionId = Guid.Parse("0334e250-c1b7-42a8-9f48-15c43ba55d35"),
+            SettingsId = settings.Id,
+            IsAuthor = request.IsAuthor
         };
 
         var createUserResult = await _userManager.CreateAsync(user, request.Password);

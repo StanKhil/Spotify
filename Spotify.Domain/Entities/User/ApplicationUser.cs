@@ -11,7 +11,7 @@ namespace Spotify.Domain.Entities.User
     {
         public Guid SubscriptionId { get; set; }
         public Subscription Subscription { get; set; } = null!;
-
+        public Boolean IsAuthor { get; set; } = false;
         public Guid SettingsId { get; set; }
         public Settings Settings { get; set; } = null!;
 
