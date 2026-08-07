@@ -4,11 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Spotify.Domain.Entities.Content;
 using Spotify.Domain.Entities.Location;
 using Spotify.Domain.Entities.User;
-using Spotify.Infrastructure.Persistance.Context.Configurations;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Text;
 
 namespace Spotify.Infrastructure.Persistance.Context
 {
@@ -19,6 +14,7 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<Audiobook> Audiobooks { get; set; } = null!;
         public DbSet<AudioItem> AudioItems { get; set; } = null!;
         public DbSet<AuthorContent> AuthorContents { get; set; } = null!;
+        public DbSet<AuthorContentAuthor> AuthorContentAuthors { get; set; } = null!;
         public DbSet<CoverImage> CoverImages { get; set; } = null!;
         public DbSet<Country> Countries { get; set; } = null!;
         public DbSet<Episode> Episodes { get; set; } = null!;
@@ -26,6 +22,7 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<LastPlayed> LastPlayedEntries { get; set; } = null!;
         public DbSet<ImageItem> ImageItems { get; set; } = null!;
         public DbSet<Like> Likes { get; set; } = null!;
+        public DbSet<License> Licenses { get; set; } = null!;
         public DbSet<Mood> Moods { get; set; } = null!;
         public DbSet<Playlist> Playlists { get; set; } = null!;
         public DbSet<PlaylistTrack> PlaylistTracks { get; set; } = null!;

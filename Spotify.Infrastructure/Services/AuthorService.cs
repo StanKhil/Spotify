@@ -48,7 +48,7 @@ public sealed class AuthorService : IAuthorService
 
         foreach (var author in authors)
         {
-            var contentCount = await _context.AuthorContents
+            var contentCount = await _context.AuthorContentAuthors
                 .CountAsync(x => x.AuthorId == author.Id, cancellationToken);
 
             result.Add(new AuthorResponse(author.Id, author.Email!, author.UserName!, contentCount));
@@ -67,7 +67,7 @@ public sealed class AuthorService : IAuthorService
             return null;
         }
 
-        var contentCount = await _context.AuthorContents.CountAsync(x => x.AuthorId == id, cancellationToken);
+        var contentCount = await _context.AuthorContentAuthors.CountAsync(x => x.AuthorId == id, cancellationToken);
 
         return new AuthorResponse(author.Id, author.Email!, author.UserName!, contentCount);
     }
@@ -126,7 +126,7 @@ public sealed class AuthorService : IAuthorService
             return DeleteAuthorResult.Failure("Author was not found.");
         }
 
-        var hasContent = await _context.AuthorContents.AnyAsync(x => x.AuthorId == id, cancellationToken);
+        var hasContent = await _context.AuthorContentAuthors.AnyAsync(x => x.AuthorId == id, cancellationToken);
 
         if (hasContent)
         {

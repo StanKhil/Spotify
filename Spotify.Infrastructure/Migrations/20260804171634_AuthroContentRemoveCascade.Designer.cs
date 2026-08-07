@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Spotify.Infrastructure.Persistance.Context;
 
@@ -11,9 +12,11 @@ using Spotify.Infrastructure.Persistance.Context;
 namespace Spotify.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20260804171634_AuthroContentRemoveCascade")]
+    partial class AuthroContentRemoveCascade
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -546,6 +549,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.Property<bool>("IsAuthor")
                         .HasColumnType("bit");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -600,29 +604,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("SubscriptionId");
 
                     b.ToTable("ApplicationUsers", (string)null);
-                });
-
-            modelBuilder.Entity("Spotify.Domain.Entities.User.License", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ActivationKey")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Licenses");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.Like", b =>

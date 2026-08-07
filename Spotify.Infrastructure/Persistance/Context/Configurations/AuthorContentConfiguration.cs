@@ -13,18 +13,15 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
         {
             builder.HasKey(x => x.Id);
 
-            builder.HasOne(x => x.Author)
-                .WithMany(x => x.AuthoredContent)
-                .HasForeignKey(x => x.AuthorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             builder.HasOne(x => x.Item)
                 .WithMany(x => x.Authors)
                 .HasForeignKey(x => x.ItemId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasIndex(x => new { x.AuthorId, x.ItemId })
-                .IsUnique();
+            builder.HasMany(x => x.Authors)
+                .WithOne(x => x.AuthorContent)
+                .HasForeignKey(x => x.AuthorContentId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
