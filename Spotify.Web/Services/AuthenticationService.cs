@@ -50,9 +50,9 @@ public sealed class AuthenticationService : IAuthenticationService
         var email = request.Email.Trim();
         var userName = request.UserName.Trim();
 
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(userName))
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(request.Birthdate))
         {
-            return RegisterResult.Failure("Email and user name are required.");
+            return RegisterResult.Failure("Email, user name, and birthdate are required.");
         }
         var birthdate = DateOnly.Parse(request.Birthdate);
         if (birthdate > DateOnly.FromDateTime(DateTime.UtcNow))
