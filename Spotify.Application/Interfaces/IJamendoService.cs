@@ -22,7 +22,7 @@ namespace Spotify.Application.Interfaces
             int limit = 20,
             CancellationToken cancellationToken = default);
 
-        Task<JamendoAlbumDto?> GetAlbumAsync(
+        Task<JamendoAlbumTrackDto?> GetAlbumAsync(
             string albumId,
             CancellationToken cancellationToken = default);
     }
