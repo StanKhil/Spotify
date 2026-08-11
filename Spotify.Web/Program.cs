@@ -41,6 +41,7 @@ namespace Spotify
             builder.Services.AddScoped<IAudiobookService, AudiobookService>();
             builder.Services.AddScoped<IAuthorService, AuthorService>();
             builder.Services.AddScoped<ITrackService, TrackService>();
+            builder.Services.AddScoped<ITrackActionService, TrackActionService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<IPluginService, PluginService>();
             builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
@@ -103,12 +104,56 @@ namespace Spotify
                     {
                         ValidateIssuer = true,
                         ValidIssuer = jwtOptions.Issuer,
+
                         ValidateAudience = true,
                         ValidAudience = jwtOptions.Audience,
+
                         ValidateLifetime = true,
+
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key)),
+
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(jwtOptions.Key)),
+
                         ClockSkew = TimeSpan.Zero
+                    };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            Console.WriteLine(
+                                $"JWT HEADER: {context.Request.Headers.Authorization}");
+
+                            return Task.CompletedTask;
+                        },
+
+                        OnAuthenticationFailed = context =>
+                        {
+                            Console.WriteLine(
+                                $"JWT AUTH FAILED: {context.Exception}");
+
+                            return Task.CompletedTask;
+                        },
+
+                        OnTokenValidated = context =>
+                        {
+                            Console.WriteLine(
+                                "JWT TOKEN VALIDATED");
+
+                            return Task.CompletedTask;
+                        },
+
+                        OnChallenge = context =>
+                        {
+                            Console.WriteLine(
+                                $"JWT CHALLENGE: {context.Error}");
+
+                            Console.WriteLine(
+                                $"JWT DESCRIPTION: {context.ErrorDescription}");
+
+                            return Task.CompletedTask;
+                        }
                     };
                 })
                 .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>

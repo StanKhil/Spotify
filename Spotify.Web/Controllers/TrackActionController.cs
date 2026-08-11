@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.Interfaces;
@@ -7,8 +8,8 @@ using Spotify.Domain.Entities.User;
 namespace Spotify.Web.Controllers;
 
 [ApiController]
-[Route("api/tracks")]
-[Authorize]
+[Route("api/tracks/actions")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class TrackActionController : ControllerBase
 {
     private readonly ITrackActionService _trackActionService;
@@ -22,9 +23,9 @@ public sealed class TrackActionController : ControllerBase
         _userManager = userManager;
     }
 
-    [HttpPost("{trackId:guid}/play")]
+    [HttpPost("{trackId}/play")]
     public async Task<IActionResult> Play(
-        Guid trackId,
+        string trackId,
         CancellationToken cancellationToken)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -43,9 +44,9 @@ public sealed class TrackActionController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("{trackId:guid}/like")]
+    [HttpPost("{trackId}/like")]
     public async Task<IActionResult> Like(
-        Guid trackId,
+        string trackId,
         CancellationToken cancellationToken)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -64,9 +65,9 @@ public sealed class TrackActionController : ControllerBase
         return Ok(result);
     }
 
-    [HttpDelete("{trackId:guid}/like")]
+    [HttpDelete("{trackId}/like")]
     public async Task<IActionResult> Unlike(
-        Guid trackId,
+        string trackId,
         CancellationToken cancellationToken)
     {
         var user = await _userManager.GetUserAsync(User);

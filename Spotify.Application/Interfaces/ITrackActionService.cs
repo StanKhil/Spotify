@@ -8,17 +8,17 @@ namespace Spotify.Application.Interfaces
     public interface ITrackActionService
     {
         Task<TrackActionResponse?> PlayAsync(
-            Guid trackId,
+            string trackId,
             Guid userId,
             CancellationToken cancellationToken = default);
 
         Task<TrackActionResponse?> LikeAsync(
-            Guid trackId,
+            string trackId,
             Guid userId,
             CancellationToken cancellationToken = default);
 
         Task<TrackActionResponse?> UnlikeAsync(
-            Guid trackId,
+            string trackId,
             Guid userId,
             CancellationToken cancellationToken = default);
     }
