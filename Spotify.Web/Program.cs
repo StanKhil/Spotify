@@ -42,6 +42,7 @@ namespace Spotify
             builder.Services.AddScoped<IAuthorService, AuthorService>();
             builder.Services.AddScoped<ITrackService, TrackService>();
             builder.Services.AddScoped<ITrackActionService, TrackActionService>();
+            builder.Services.AddScoped<IAuthorActionService,AuthorActionService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<IPluginService, PluginService>();
             builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();

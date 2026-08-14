@@ -38,6 +38,7 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<Plugin> Plugins { get; set; } = null!;
         public DbSet<SystemSetting> SystemSettings { get; set; } = null!;
         public DbSet<ListeningHistory> ListeningHistories { get; set; } = null!;
+        public DbSet<AuthorSubscription> AuthorSubscriptions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

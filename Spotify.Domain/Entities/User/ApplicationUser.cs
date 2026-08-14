@@ -18,5 +18,7 @@ namespace Spotify.Domain.Entities.User
     = new List<ListeningHistory>();
         public ICollection<Playlist> Playlists { get; set; } = [];
         public ICollection<Like> Likes { get; set; } = [];
+        public ICollection<AuthorSubscription> AuthorSubscriptions { get; set; } = [];
+        public ICollection<AuthorSubscription> Followers { get; set; } = [];
     }
 }
