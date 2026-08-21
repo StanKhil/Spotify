@@ -15,7 +15,6 @@ namespace Spotify.Domain.Entities.Content
         [ForeignKey(nameof(ItemId))]
         public AudioContent Item { get; set; } = null!;
 
-        // Many-to-many: one AuthorContent can have many Authors
         public ICollection<AuthorContentAuthor> Authors { get; set; } = [];
     }
 }

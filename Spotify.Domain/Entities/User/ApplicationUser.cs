@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Spotify.Domain.Entities.Content;
 
 namespace Spotify.Domain.Entities.User
@@ -18,7 +14,11 @@ namespace Spotify.Domain.Entities.User
         public UserProfile Profile { get; set; } = null!;
 
         public ICollection<AuthorContentAuthor> AuthoredContent { get; set; } = [];
+        public ICollection<ListeningHistory> ListeningHistory { get; set; }
+    = new List<ListeningHistory>();
         public ICollection<Playlist> Playlists { get; set; } = [];
         public ICollection<Like> Likes { get; set; } = [];
+        public ICollection<AuthorSubscription> AuthorSubscriptions { get; set; } = [];
+        public ICollection<AuthorSubscription> Followers { get; set; } = [];
     }
 }

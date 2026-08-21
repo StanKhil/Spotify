@@ -35,7 +35,7 @@ namespace Spotify.Infrastructure.Services
             CancellationToken cancellationToken = default)
             => _client.SearchAlbumsAsync(query, limit, cancellationToken);
 
-        public Task<JamendoAlbumDto?> GetAlbumAsync(
+        public Task<JamendoAlbumTrackDto?> GetAlbumAsync(
             string albumId,
             CancellationToken cancellationToken = default)
             => _client.GetAlbumAsync(albumId, cancellationToken);

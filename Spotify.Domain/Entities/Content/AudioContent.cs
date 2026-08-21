@@ -29,6 +29,5 @@ public abstract class AudioContent
     [ForeignKey(nameof(GenreId))]
     public Genre? Genre { get; set; }
 
-    public ICollection<LastPlayed> LastPlayedEntries { get; set; } = new List<LastPlayed>();
     public ICollection<AuthorContent> Authors { get; set; } = new List<AuthorContent>();
 }

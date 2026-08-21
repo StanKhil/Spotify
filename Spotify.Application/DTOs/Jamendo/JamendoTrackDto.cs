@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Spotify.Application.DTOs.Jamendo
+﻿namespace Spotify.Application.DTOs.Jamendo
 {
     public sealed record JamendoTrackDto(
         string Id,

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Spotify.Infrastructure.Persistance.Context;
 
@@ -11,9 +12,11 @@ using Spotify.Infrastructure.Persistance.Context;
 namespace Spotify.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20260810082821_TrackActions")]
+    partial class TrackActions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -259,31 +262,6 @@ namespace Spotify.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("AuthorContentAuthors");
-                });
-
-            modelBuilder.Entity("Spotify.Domain.Entities.Content.AuthorSubscription", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
-
-                    b.HasIndex("ApplicationUserId", "AuthorId")
-                        .IsUnique();
-
-                    b.ToTable("AuthorSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.CoverImage", b =>
@@ -601,6 +579,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.Property<bool>("IsAuthor")
                         .HasColumnType("bit");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -990,25 +969,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.Navigation("AuthorContent");
                 });
 
-            modelBuilder.Entity("Spotify.Domain.Entities.Content.AuthorSubscription", b =>
-                {
-                    b.HasOne("Spotify.Domain.Entities.User.ApplicationUser", "ApplicationUser")
-                        .WithMany("AuthorSubscriptions")
-                        .HasForeignKey("ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Spotify.Domain.Entities.User.ApplicationUser", "Author")
-                        .WithMany("Followers")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-
-                    b.Navigation("Author");
-                });
-
             modelBuilder.Entity("Spotify.Domain.Entities.Content.LastPlayed", b =>
                 {
                     b.HasOne("Spotify.Domain.Entities.User.ApplicationUser", "ApplicationUser")
@@ -1270,11 +1230,7 @@ namespace Spotify.Infrastructure.Migrations
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.ApplicationUser", b =>
                 {
-                    b.Navigation("AuthorSubscriptions");
-
                     b.Navigation("AuthoredContent");
-
-                    b.Navigation("Followers");
 
                     b.Navigation("Likes");
 

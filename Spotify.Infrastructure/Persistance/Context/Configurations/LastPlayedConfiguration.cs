@@ -13,16 +13,16 @@ public sealed class LastPlayedConfiguration : IEntityTypeConfiguration<LastPlaye
         builder.Property(x => x.PlayedAt).IsRequired();
         builder.Property(x => x.UpdatedAt).IsRequired();
 
-        builder.HasIndex(x => new { x.ApplicationUserId, x.AudioContentId }).IsUnique();
+        builder.HasIndex(x => new { x.ApplicationUserId, x.AuthorContentId }).IsUnique();
 
         builder.HasOne(x => x.ApplicationUser)
             .WithMany()
             .HasForeignKey(x => x.ApplicationUserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(x => x.AudioContent)
-            .WithMany(x => x.LastPlayedEntries)
-            .HasForeignKey(x => x.AudioContentId)
+        builder.HasOne(x => x.AuthorContent)
+            .WithMany()
+            .HasForeignKey(x => x.AuthorContentId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
