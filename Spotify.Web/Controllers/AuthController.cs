@@ -154,6 +154,8 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("forgot-password/check-email")]
+    [ProducesResponseType<CheckEmailResult>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<CheckEmailResult>> CheckEmail(
         [FromBody] CheckEmailRequest request,
         CancellationToken cancellationToken)

@@ -200,7 +200,7 @@ public sealed class AuthenticationService : IAuthenticationService
 
         if (user?.Email is null)
         {
-            return CheckEmailResult.Success();
+            return CheckEmailResult.Failure("The provided email address is not registered.");
         }
 
         var code = RandomNumberGenerator.GetInt32(100_000, 1_000_000).ToString();
