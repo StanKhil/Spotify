@@ -41,4 +41,10 @@ public interface IAuthenticationService
     Task<LicenseResult> SendActivationLicenseAsync(
         LicenseDto request,
         CancellationToken cancellationToken = default);
+
+    Task<MeResult> MeAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<LogoutResult> LogoutAsync(
+        CancellationToken cancellationToken = default);
 }

@@ -1,4 +1,4 @@
-
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -80,6 +80,8 @@ namespace Spotify
             }
 
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
+            builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IPlaybackService, PlaybackService>();
 
             builder.Services.AddSingleton<ILocalAudioStorageService, LocalAudioStorageService>();
@@ -137,12 +139,33 @@ namespace Spotify
                             return Task.CompletedTask;
                         },
 
-                        OnTokenValidated = context =>
+                        OnTokenValidated = async context =>
                         {
-                            Console.WriteLine(
-                                "JWT TOKEN VALIDATED");
+                            var jti = context.Principal?
+                                .FindFirst(JwtRegisteredClaimNames.Jti)?
+                                .Value;
 
-                            return Task.CompletedTask;
+                            if (string.IsNullOrWhiteSpace(jti))
+                            {
+                                context.Fail("Token does not contain a JTI.");
+                                return;
+                            }
+
+                            var revocationService = context.HttpContext
+                                .RequestServices
+                                .GetRequiredService<ITokenRevocationService>();
+
+                            var isRevoked = await revocationService.IsRevokedAsync(
+                                jti,
+                                context.HttpContext.RequestAborted);
+
+                            if (isRevoked)
+                            {
+                                context.Fail("Token has been revoked.");
+                                return;
+                            }
+
+                            Console.WriteLine($"JWT TOKEN VALIDATED. JTI: {jti}");
                         },
 
                         OnChallenge = context =>

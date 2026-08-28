@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Spotify.Domain.Entities.Content;
 using Spotify.Domain.Entities.Location;
+using Spotify.Domain.Entities.Security;
 using Spotify.Domain.Entities.User;
 using Spotify.Domain.Enumerations;
 
@@ -40,6 +41,7 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<SystemSetting> SystemSettings { get; set; } = null!;
         public DbSet<ListeningHistory> ListeningHistories { get; set; } = null!;
         public DbSet<AuthorSubscription> AuthorSubscriptions { get; set; } = null!;
+        public DbSet<RevokedToken> RevokedTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

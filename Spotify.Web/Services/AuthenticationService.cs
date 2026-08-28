@@ -1,17 +1,18 @@
-using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Spotify.Application.DTOs.Auth;
 using Spotify.Application.DTOs.ForgotPassword;
+using Spotify.Application.DTOs.License;
 using Spotify.Application.Interfaces;
+using Spotify.Domain.Entities.Security;
 using Spotify.Domain.Entities.User;
 using Spotify.Domain.Enumerations;
 using Spotify.Infrastructure.Authentication;
 using Spotify.Infrastructure.Persistance.Context;
-using Spotify.Application.DTOs.License;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Spotify.Infrastructure.Services;
 
@@ -28,13 +29,16 @@ public sealed class AuthenticationService : IAuthenticationService
     private readonly IEmailService _emailService;
     private readonly IMemoryCache _cache;
 
+    private readonly ICurrentUserService _currentUserService;
+
     public AuthenticationService(
         ApplicationContext context,
         UserManager<ApplicationUser> userManager,
         RoleManager<UserRole> roleManager,
         JwtTokenGenerator jwtTokenGenerator,
         IEmailService emailService,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _userManager = userManager;
@@ -42,6 +46,7 @@ public sealed class AuthenticationService : IAuthenticationService
         _jwtTokenGenerator = jwtTokenGenerator;
         _emailService = emailService;
         _cache = cache;
+        _currentUserService = currentUserService;
     }
 
     public async Task<RegisterResult> RegisterAsync(
@@ -110,12 +115,15 @@ public sealed class AuthenticationService : IAuthenticationService
 
         _context.Settings.Add(settings);
 
+        var defaultSubcriptionId = _context.Subscriptions.Where(s => s.Name == "Default")
+            .Select(s => s.Id)
+            .FirstOrDefault();
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
             Email = email,
             UserName = userName,
-            SubscriptionId = Guid.Parse("0334e250-c1b7-42a8-9f48-15c43ba55d35"),
+            SubscriptionId = defaultSubcriptionId,
             SettingsId = settings.Id,
             IsAuthor = request.IsAuthor
         };
@@ -312,6 +320,81 @@ public sealed class AuthenticationService : IAuthenticationService
             return CheckAuthorCodeResult.Failure("The provided email does not match the license email.");
 
         return CheckAuthorCodeResult.Success();
+    }
+
+    public async Task<MeResult> MeAsync(
+    CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        if (userId is null)
+        {
+            return MeResult.Failure("User is not authenticated.");
+        }
+
+        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
+
+        if (user is null)
+        {
+            return MeResult.Failure("User not found.");
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        return MeResult.Success(
+            new MeResponse(
+                user.Id,
+                user.UserName!,
+                user.Email!,
+                user.Followers.Count,
+                user.AuthorSubscriptions.Count,
+                user.IsAuthor));
+    }
+
+    public async Task<LogoutResult> LogoutAsync(
+    CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        if (userId is null)
+        {
+            return LogoutResult.Failure("User is not authenticated.");
+        }
+
+        var jti = _currentUserService.Jti;
+
+        if (string.IsNullOrWhiteSpace(jti))
+        {
+            return LogoutResult.Failure("Invalid token.");
+        }
+
+        var expiresAtUtc = _currentUserService.ExpiresAtUtc;
+
+        if (expiresAtUtc is null)
+        {
+            return LogoutResult.Failure("Invalid token expiration.");
+        }
+
+        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
+
+        if (user is null)
+        {
+            return LogoutResult.Failure("User not found.");
+        }
+
+        var revokedToken = new RevokedToken
+        {
+            Id = Guid.NewGuid(),
+            Jti = jti,
+            ExpiresAtUtc = expiresAtUtc.Value,
+            RevokedAtUtc = DateTime.UtcNow
+        };
+
+        _context.RevokedTokens.Add(revokedToken);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return LogoutResult.Success();
     }
 
     private static string GetPasswordResetCacheKey(string email) =>

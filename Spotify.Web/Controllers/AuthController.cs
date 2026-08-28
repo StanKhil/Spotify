@@ -1,18 +1,20 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using System.Security.Claims;
 using Spotify.Application.DTOs.Auth;
-using Spotify.Application.Interfaces;
 using Spotify.Application.DTOs.ForgotPassword;
+using System.Security.Claims;
 using ApplicationAuthenticationService = Spotify.Application.Interfaces.IAuthenticationService;
 
 namespace Spotify.Web.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+
 public sealed class AuthController : ControllerBase
 {
     private readonly ApplicationAuthenticationService _authenticationService;
@@ -184,6 +186,26 @@ public sealed class AuthController : ControllerBase
 
         return Ok(result);
 
+    }
+
+    [HttpGet("me")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<ActionResult<MeResult>> Me(
+       CancellationToken cancellationToken)
+    {
+        var result = await _authenticationService.MeAsync(cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPost("logout")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<ActionResult<LogoutResult>> Logout(
+        CancellationToken cancellationToken)
+    {
+        var result = await _authenticationService.LogoutAsync(cancellationToken);
+
+        return Ok(result);
     }
 
     private IActionResult RedirectWithAccessToken(AuthenticationResponse authentication)
