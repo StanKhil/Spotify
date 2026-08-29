@@ -14,7 +14,6 @@ namespace Spotify.Web.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-
 public sealed class AuthController : ControllerBase
 {
     private readonly ApplicationAuthenticationService _authenticationService;
@@ -189,7 +188,6 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpGet("me")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<MeResult>> Me(
        CancellationToken cancellationToken)
     {
