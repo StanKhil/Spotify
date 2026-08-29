@@ -361,3 +361,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 /Spotify.Web/appsettings.json
+/Spotify.Web/appsettings.Development.json
