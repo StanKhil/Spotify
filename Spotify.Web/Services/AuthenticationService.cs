@@ -325,6 +325,7 @@ public sealed class AuthenticationService : IAuthenticationService
     public async Task<MeResult> MeAsync(
     CancellationToken cancellationToken = default)
     {
+
         var userId = _currentUserService.UserId;
 
         if (userId is null)

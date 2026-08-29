@@ -188,6 +188,7 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpGet("me")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<MeResult>> Me(
        CancellationToken cancellationToken)
     {
