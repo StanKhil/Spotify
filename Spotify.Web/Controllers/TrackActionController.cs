@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Spotify.Application.DTOs.Track;
 using Spotify.Application.Interfaces;
 using Spotify.Domain.Entities.User;
+using Spotify.Infrastructure.Services;
 
 namespace Spotify.Web.Controllers;
 
@@ -14,13 +16,16 @@ public sealed class TrackActionController : ControllerBase
 {
     private readonly ITrackActionService _trackActionService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ITrackService _trackService;
 
     public TrackActionController(
         ITrackActionService trackActionService,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        ITrackService trackService)
     {
         _trackActionService = trackActionService;
         _userManager = userManager;
+        _trackService = trackService;
     }
 
     [HttpPost("{trackId}/play")]
@@ -85,4 +90,15 @@ public sealed class TrackActionController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("liked/{maxPerPage}/{page}/{userId:guid}")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<TrackResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IReadOnlyCollection<TrackResponse>>> GetLikedTracks(
+        int maxPerPage, int page, Guid userId, CancellationToken cancellationToken)
+    {
+        var tracks = await _trackService.GetLikedTracksAsync(maxPerPage, page, userId, cancellationToken);
+        return Ok(tracks);
+    }
+
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.DTOs.Track;
 using Spotify.Application.Interfaces;
 
@@ -6,6 +8,7 @@ namespace Spotify.Web.Controllers;
 
 [ApiController]
 [Route("api/admin/tracks")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class TrackController : ControllerBase
 {
     private readonly ITrackService _trackService;

@@ -83,6 +83,8 @@ namespace Spotify
             builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IPlaybackService, PlaybackService>();
+            builder.Services.AddScoped<IAudioUrlResolver, AudioUrlResolver>();
+            
 
             builder.Services.AddSingleton<ILocalAudioStorageService, LocalAudioStorageService>();
 

@@ -10,4 +10,5 @@ public interface ITrackService
     Task<UpdateTrackResult> EditTrackAsync(Guid id, UpdateTrackRequest request, CancellationToken cancellationToken = default);
     Task<DeleteTrackResult> DeleteTrackAsync(Guid id, CancellationToken cancellationToken = default);
     Task<BatchDeleteTracksResult> BatchDeleteTracksAsync(BatchDeleteTracksRequest request, CancellationToken cancellationToken = default);
+    Task<GetLikedTracksResult> GetLikedTracksAsync(int maxPerPage, int page, Guid userId, CancellationToken cancellationToken = default); 
 }
