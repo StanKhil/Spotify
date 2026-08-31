@@ -109,6 +109,24 @@ public sealed class AuthorActionService : IAuthorActionService
             false);
     }
 
+    public async Task<IEnumerable<AuthorResponse>> GetSubscribed(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var subscribedAuthors =
+            await _context.AuthorSubscriptions
+                .Where(x => x.ApplicationUserId == userId)
+                .Select(x => x.Author)
+                .ToListAsync(cancellationToken);
+        return subscribedAuthors
+            .Select(author => new AuthorResponse(
+                author.Id,
+                author.UserName!,
+                author.Email!,
+                author.AuthoredContent.Count))
+            .ToList();
+    }
+
     private async Task<ApplicationUser?> GetAuthorAsync(
         Guid authorId,
         CancellationToken cancellationToken)

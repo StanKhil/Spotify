@@ -13,5 +13,9 @@ namespace Spotify.Application.Interfaces
             Guid authorId,
             Guid userId,
             CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<AuthorResponse>> GetSubscribed(
+            Guid userId,
+            CancellationToken cancellationToken = default);
     }
 }

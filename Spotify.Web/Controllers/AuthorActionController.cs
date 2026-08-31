@@ -64,4 +64,24 @@ public sealed class AuthorActionController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("subscribed/{userId:guid}")]
+    public async Task<IActionResult> GetSubscribed(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user is null)
+            return Unauthorized();
+
+        var result = await _authorActionService.GetSubscribed(
+            userId,
+            cancellationToken);
+
+        if (result is null)
+            return NotFound();
+
+        return Ok(result);
+    }
 }
