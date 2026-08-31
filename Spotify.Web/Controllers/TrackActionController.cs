@@ -16,16 +16,13 @@ public sealed class TrackActionController : ControllerBase
 {
     private readonly ITrackActionService _trackActionService;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ITrackService _trackService;
 
     public TrackActionController(
         ITrackActionService trackActionService,
-        UserManager<ApplicationUser> userManager,
-        ITrackService trackService)
+        UserManager<ApplicationUser> userManager)
     {
         _trackActionService = trackActionService;
         _userManager = userManager;
-        _trackService = trackService;
     }
 
     [HttpPost("{trackId}/play")]
@@ -97,7 +94,7 @@ public sealed class TrackActionController : ControllerBase
     public async Task<ActionResult<IReadOnlyCollection<TrackResponse>>> GetLikedTracks(
         int maxPerPage, int page, Guid userId, CancellationToken cancellationToken)
     {
-        var tracks = await _trackService.GetLikedTracksAsync(maxPerPage, page, userId, cancellationToken);
+        var tracks = await _trackActionService.GetLikedTracksAsync(maxPerPage, page, userId, cancellationToken);
         return Ok(tracks);
     }
 

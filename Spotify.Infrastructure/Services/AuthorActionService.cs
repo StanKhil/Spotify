@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Spotify.Application.DTOs.Author;
+using Spotify.Application.DTOs.Track;
 using Spotify.Application.Interfaces;
+using Spotify.Domain.Entities.Content;
 using Spotify.Domain.Entities.User;
 using Spotify.Infrastructure.Persistance.Context;
-using Spotify.Domain.Entities.Content;
 
 namespace Spotify.Infrastructure.Services;
 
@@ -109,22 +110,43 @@ public sealed class AuthorActionService : IAuthorActionService
             false);
     }
 
-    public async Task<IEnumerable<AuthorResponse>> GetSubscribed(
+    public async Task<SubscribedAuthorsResult> GetSubscribed(
+        int maxPerPage,
+        int page,
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var subscribedAuthors =
-            await _context.AuthorSubscriptions
-                .Where(x => x.ApplicationUserId == userId)
-                .Select(x => x.Author)
-                .ToListAsync(cancellationToken);
-        return subscribedAuthors
-            .Select(author => new AuthorResponse(
-                author.Id,
-                author.UserName!,
-                author.Email!,
-                author.AuthoredContent.Count))
-            .ToList();
+        if (maxPerPage <= 0 || page <= 0)
+        {
+            return SubscribedAuthorsResult.Failure(
+                "Invalid pagination parameters.");
+        }
+
+        var subscribedAuthorsQuery = _context.AuthorSubscriptions
+            .Where(a => a.ApplicationUserId == userId);
+            
+        var totalSubscribedAuthors = await subscribedAuthorsQuery.CountAsync(cancellationToken);
+        var totalPages = (int)Math.Ceiling((double)totalSubscribedAuthors / maxPerPage);
+
+        var subscriedAuthors = await subscribedAuthorsQuery
+            .OrderByDescending(s => s.CreatedAt)
+            .Include(s => s.Author)
+            .Skip((page - 1) * maxPerPage)
+            .Take(maxPerPage)
+            .ToListAsync(cancellationToken);
+
+        var response = new List<AuthorResponse>();
+        foreach(var authorSub in subscriedAuthors)
+        {
+            response.Add(new AuthorResponse(authorSub.AuthorId, 
+                authorSub.Author.Email!, 
+                authorSub.Author.UserName!, 
+                authorSub.Author.AuthoredContent.Count));
+        }
+
+        return SubscribedAuthorsResult.Success(
+            new SubscribedAuthorsResponse(
+                response));
     }
 
     private async Task<ApplicationUser?> GetAuthorAsync(

@@ -11,12 +11,10 @@ namespace Spotify.Infrastructure.Services;
 public sealed class TrackService : ITrackService
 {
     private readonly ApplicationContext _context;
-    private readonly IAudioUrlResolver _audioUrlResolver;
 
-    public TrackService(ApplicationContext context, IAudioUrlResolver audioUrlResolver)
+    public TrackService(ApplicationContext context)
     {
         _context = context;
-        _audioUrlResolver = audioUrlResolver;
     }
 
     public async Task<IReadOnlyCollection<TrackResponse>> GetTracksAsync(
@@ -213,77 +211,7 @@ public sealed class TrackService : ITrackService
         return BatchDeleteTracksResult.Success(tracks.Count);
     }
 
-    public async Task<GetLikedTracksResult> GetLikedTracksAsync(
-    int maxPerPage,
-    int page,
-    Guid userId,
-    CancellationToken cancellationToken = default)
-    {
-        if (maxPerPage <= 0 || page <= 0)
-        {
-            return GetLikedTracksResult.Failure(
-                "Invalid pagination parameters.");
-        }
-
-        var likedTracksQuery = _context.Likes
-            .Where(l => l.ApplicationUserId == userId)
-            .Select(l => l.AuthorContent.Item)
-            .OfType<Track>()
-            .Where(t =>
-                t.DeletedAt == null &&
-                !t.IsDraft);
-
-        var totalLikedTracks = await likedTracksQuery
-            .CountAsync(cancellationToken);
-
-        var totalPages = (int)Math.Ceiling(
-            (double)totalLikedTracks / maxPerPage);
-
-        var tracks = await likedTracksQuery
-            .Include(t => t.AudioItem)
-            .Include(t => t.TrackTags)
-            .OrderByDescending(t => t.CreatedAt)
-            .Skip((page - 1) * maxPerPage)
-            .Take(maxPerPage)
-            .ToListAsync(cancellationToken);
-
-        var trackResponses = new List<TrackResponse>();
-
-        foreach (var track in tracks)
-        {
-            var audioUrl = track.AudioItem is null
-                ? null
-                : await _audioUrlResolver.ResolveAsync(
-                    track.AudioItem,
-                    cancellationToken);
-
-            trackResponses.Add(new TrackResponse(
-                track.Id,
-                track.Name,
-                track.Description,
-                track.DurationSeconds,
-                track.AlbumId,
-                track.MoodId,
-                track.GenreId,
-                track.PlaysNumber,
-                track.IsAdult,
-                track.IsDraft,
-                track.AudioItemId,
-                track.ImageItemId,
-                track.TrackTags
-                    .Select(x => x.TagId)
-                    .ToList(),
-                track.CreatedAt,
-                audioUrl
-            ));
-        }
-
-        return GetLikedTracksResult.Success(
-            new TrackResponseCollection(
-                trackResponses,
-                totalLikedTracks,
-                totalPages));
-    }
+    
 
     private static TrackResponse MapToResponse(Track track) => new(
         track.Id, track.Name, track.Description, track.DurationSeconds,
