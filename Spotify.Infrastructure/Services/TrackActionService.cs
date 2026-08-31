@@ -183,11 +183,9 @@ public sealed class TrackActionService : ITrackActionService
 
         foreach (var track in tracks)
         {
-            var audioUrl = track.AudioItem is null
-                ? null
-                : await _audioUrlResolver.ResolveAsync(
-                    track.AudioItem,
-                    cancellationToken);
+            var audioUrl = await _audioUrlResolver.ResolveAsync(
+            track,
+            cancellationToken);
 
             trackResponses.Add(new TrackResponse(
                 track.Id,
@@ -251,41 +249,84 @@ public sealed class TrackActionService : ITrackActionService
                 cancellationToken);
     }
 
+    private async Task<Album?> GetOrCreateJamendoAlbumAsync(
+    string jamendoAlbumId,
+    CancellationToken cancellationToken)
+    {
+        var existingAlbum = await _context.Albums
+            .FirstOrDefaultAsync(
+                x => x.Provider == AudioProvider.Jamendo &&
+                     x.ExternalContentId == jamendoAlbumId &&
+                     x.DeletedAt == null,
+                cancellationToken);
+
+        if (existingAlbum is not null)
+            return existingAlbum;
+
+        var jamendoAlbum = await _jamendoService.GetAlbumAsync(
+            jamendoAlbumId,
+            cancellationToken);
+
+        if (jamendoAlbum is null)
+            return null;
+
+        var album = new Album
+        {
+            Id = Guid.NewGuid(),
+            Name = jamendoAlbum.Name,
+
+            Provider = AudioProvider.Jamendo,
+            ExternalContentId = jamendoAlbum.Id,
+            CoverImage = null,
+            IsDraft = false,
+        };
+
+        _context.Albums.Add(album);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return album;
+    }
+
     private async Task<Track?> GetOrCreateJamendoTrackAsync(
-        string jamendoTrackId,
-        CancellationToken cancellationToken)
+    string jamendoTrackId,
+    CancellationToken cancellationToken)
     {
         var existingTrack = await _context.Tracks
             .Include(x => x.AudioItem)
             .Include(x => x.Authors)
             .FirstOrDefaultAsync(
-                x => x.AudioItem != null &&
-                     x.AudioItem.Provider == AudioProvider.Jamendo &&
-                     x.AudioItem.ExternalContentId == jamendoTrackId &&
+                x => x.Provider == AudioProvider.Jamendo &&
+                     x.ExternalContentId == jamendoTrackId &&
                      x.DeletedAt == null,
                 cancellationToken);
 
         if (existingTrack is not null)
-        {
             return existingTrack;
-        }
 
         var jamendoTrack = await _jamendoService.GetTrackAsync(
             jamendoTrackId,
             cancellationToken);
 
         if (jamendoTrack is null)
-        {
             return null;
+
+        Album? album = null;
+
+        if (!string.IsNullOrWhiteSpace(jamendoTrack.AlbumId))
+        {
+            album = await GetOrCreateJamendoAlbumAsync(
+                jamendoTrack.AlbumId,
+                cancellationToken);
         }
 
         var audioItem = new AudioItem
         {
             Id = Guid.NewGuid(),
             Provider = AudioProvider.Jamendo,
-            ExternalContentId = jamendoTrack.Id,
-            ContentType = "audio/mpeg",
             StorageKey = null,
+            ContentType = "audio/mpeg",
+            BitrateKbps = null,
             LicenseUrl = null,
             IsDownloadAllowed = false
         };
@@ -293,9 +334,17 @@ public sealed class TrackActionService : ITrackActionService
         var track = new Track
         {
             Id = Guid.NewGuid(),
+
             Name = jamendoTrack.Name,
             DurationSeconds = jamendoTrack.DurationSeconds,
+
+            Provider = AudioProvider.Jamendo,
+            ExternalContentId = jamendoTrack.Id,
+
+            AlbumId = album?.Id,
+
             AudioItem = audioItem,
+
             IsDraft = false,
             DeletedAt = null,
             PlaysNumber = 0
@@ -311,8 +360,7 @@ public sealed class TrackActionService : ITrackActionService
 
         _context.Tracks.Add(track);
 
-        await _context.SaveChangesAsync(
-            cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
 
         return track;
     }

@@ -23,31 +23,30 @@ namespace Spotify.Infrastructure.Services
         }
 
         public async Task<string?> ResolveAsync(
-            AudioItem audioItem,
-            CancellationToken cancellationToken = default)
+    AudioContent content,
+    CancellationToken cancellationToken = default)
         {
-            if (audioItem.Provider == AudioProvider.Jamendo)
+            if (content.AudioItem is null)
+                return null;
+
+            if (content.Provider == AudioProvider.Jamendo)
             {
-                if (string.IsNullOrWhiteSpace(audioItem.ExternalContentId))
-                {
+                if (string.IsNullOrWhiteSpace(content.ExternalContentId))
                     return null;
-                }
 
                 return await _jamendoService.GetTrackStreamUrlAsync(
-                    audioItem.ExternalContentId,
+                    content.ExternalContentId,
                     cancellationToken);
             }
 
-            if (string.IsNullOrWhiteSpace(audioItem.StorageKey))
-            {
+            if (string.IsNullOrWhiteSpace(content.AudioItem.StorageKey))
                 return null;
-            }
 
             var expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(
                 _playbackOptions.LocalUrlLifetimeMinutes);
 
             return _localPlaybackUrlService.CreateStreamUrl(
-                audioItem.Id,
+                content.AudioItem.Id,
                 expiresAtUtc);
         }
     }

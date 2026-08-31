@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Spotify.Infrastructure.Persistance.Context;
 
@@ -11,9 +12,11 @@ using Spotify.Infrastructure.Persistance.Context;
 namespace Spotify.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20260831071855_AudioAbstraction")]
+    partial class AudioAbstraction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1446,7 +1449,7 @@ namespace Spotify.Infrastructure.Migrations
                 {
                     b.HasBaseType("Spotify.Domain.Entities.Content.AudioContent");
 
-                    b.Property<Guid?>("CoverImageId")
+                    b.Property<Guid>("CoverImageId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDraft")
@@ -1813,7 +1816,8 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasOne("Spotify.Domain.Entities.Content.CoverImage", "CoverImage")
                         .WithMany("Albums")
                         .HasForeignKey("CoverImageId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("CoverImage");
                 });

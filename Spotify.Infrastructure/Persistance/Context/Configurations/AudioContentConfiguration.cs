@@ -9,6 +9,10 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
         public void Configure(EntityTypeBuilder<AudioContent> builder)
         {
             builder.HasKey(x => x.Id);
+            builder.Property(x => x.Provider)
+                .IsRequired();
+            builder.Property(x => x.ExternalContentId)
+                .HasMaxLength(200);
 
             builder.Property(x => x.Name)
                 .IsRequired()
@@ -45,6 +49,9 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
                 .WithOne(x => x.Item)
                 .HasForeignKey(x => x.ItemId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasIndex(x => new { x.Provider, x.ExternalContentId })
+                .IsUnique();
         }
     }
 }
