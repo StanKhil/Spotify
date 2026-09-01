@@ -99,6 +99,7 @@ namespace Spotify
 
             builder.Services.AddScoped<IRegionService, RegionService>();
             builder.Services.AddScoped<IJamendoService, JamendoService>();
+            builder.Services.AddScoped<IFromJamendoToLocalService, FromJamendoToLocalService>();
 
             builder.Services.AddSingleton(jwtOptions);
             builder.Services.AddSingleton<JwtTokenGenerator>();

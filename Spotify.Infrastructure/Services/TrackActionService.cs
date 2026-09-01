@@ -12,16 +12,19 @@ public sealed class TrackActionService : ITrackActionService
 {
     private readonly ApplicationContext _context;
     private readonly IJamendoService _jamendoService;
+    private readonly IFromJamendoToLocalService _fromJamendoToLocalService;
     private readonly IAudioUrlResolver _audioUrlResolver;
 
     public TrackActionService(
         ApplicationContext context,
         IJamendoService jamendoService,
-        IAudioUrlResolver audioUrlResolver)
+        IAudioUrlResolver audioUrlResolver,
+        IFromJamendoToLocalService fromJamendoToLocalService)
     {
         _context = context;
         _jamendoService = jamendoService;
         _audioUrlResolver = audioUrlResolver;
+        _fromJamendoToLocalService = fromJamendoToLocalService;
     }
 
     public async Task<TrackActionResponse?> PlayAsync(
@@ -226,9 +229,9 @@ public sealed class TrackActionService : ITrackActionService
                 cancellationToken);
         }
 
-        if (IsJamendoTrackId(trackId))
+        if (_fromJamendoToLocalService.IsJamendoId(trackId))
         {
-            return await GetOrCreateJamendoTrackAsync(
+            return await _fromJamendoToLocalService.GetOrCreateJamendoTrackAsync(
                 trackId,
                 cancellationToken);
         }
@@ -249,122 +252,6 @@ public sealed class TrackActionService : ITrackActionService
                 cancellationToken);
     }
 
-    private async Task<Album?> GetOrCreateJamendoAlbumAsync(
-    string jamendoAlbumId,
-    CancellationToken cancellationToken)
-    {
-        var existingAlbum = await _context.Albums
-            .FirstOrDefaultAsync(
-                x => x.Provider == AudioProvider.Jamendo &&
-                     x.ExternalContentId == jamendoAlbumId &&
-                     x.DeletedAt == null,
-                cancellationToken);
-
-        if (existingAlbum is not null)
-            return existingAlbum;
-
-        var jamendoAlbum = await _jamendoService.GetAlbumAsync(
-            jamendoAlbumId,
-            cancellationToken);
-
-        if (jamendoAlbum is null)
-            return null;
-
-        var album = new Album
-        {
-            Id = Guid.NewGuid(),
-            Name = jamendoAlbum.Name,
-
-            Provider = AudioProvider.Jamendo,
-            ExternalContentId = jamendoAlbum.Id,
-            CoverImage = null,
-            IsDraft = false,
-        };
-
-        _context.Albums.Add(album);
-
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return album;
-    }
-
-    private async Task<Track?> GetOrCreateJamendoTrackAsync(
-    string jamendoTrackId,
-    CancellationToken cancellationToken)
-    {
-        var existingTrack = await _context.Tracks
-            .Include(x => x.AudioItem)
-            .Include(x => x.Authors)
-            .FirstOrDefaultAsync(
-                x => x.Provider == AudioProvider.Jamendo &&
-                     x.ExternalContentId == jamendoTrackId &&
-                     x.DeletedAt == null,
-                cancellationToken);
-
-        if (existingTrack is not null)
-            return existingTrack;
-
-        var jamendoTrack = await _jamendoService.GetTrackAsync(
-            jamendoTrackId,
-            cancellationToken);
-
-        if (jamendoTrack is null)
-            return null;
-
-        Album? album = null;
-
-        if (!string.IsNullOrWhiteSpace(jamendoTrack.AlbumId))
-        {
-            album = await GetOrCreateJamendoAlbumAsync(
-                jamendoTrack.AlbumId,
-                cancellationToken);
-        }
-
-        var audioItem = new AudioItem
-        {
-            Id = Guid.NewGuid(),
-            Provider = AudioProvider.Jamendo,
-            StorageKey = null,
-            ContentType = "audio/mpeg",
-            BitrateKbps = null,
-            LicenseUrl = null,
-            IsDownloadAllowed = false
-        };
-
-        var track = new Track
-        {
-            Id = Guid.NewGuid(),
-
-            Name = jamendoTrack.Name,
-            DurationSeconds = jamendoTrack.DurationSeconds,
-
-            Provider = AudioProvider.Jamendo,
-            ExternalContentId = jamendoTrack.Id,
-
-            AlbumId = album?.Id,
-
-            AudioItem = audioItem,
-
-            IsDraft = false,
-            DeletedAt = null,
-            PlaysNumber = 0
-        };
-
-        var authorContent = new AuthorContent
-        {
-            Id = Guid.NewGuid(),
-            Item = track
-        };
-
-        track.Authors.Add(authorContent);
-
-        _context.Tracks.Add(track);
-
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return track;
-    }
-
     private async Task<bool> IsLikedAsync(
         Guid userId,
         Guid authorContentId,
@@ -375,11 +262,5 @@ public sealed class TrackActionService : ITrackActionService
                 x => x.ApplicationUserId == userId &&
                      x.AuthorContentId == authorContentId,
                 cancellationToken);
-    }
-
-    private static bool IsJamendoTrackId(string trackId)
-    {
-        return !string.IsNullOrWhiteSpace(trackId) &&
-               trackId.All(char.IsDigit);
     }
 }
