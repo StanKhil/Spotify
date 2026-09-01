@@ -249,6 +249,120 @@ public sealed class JamendoApiClient
         return MapAlbumWithTracks(results[0]);
     }
 
+    public async Task<JamendoAuthorDto?> GetAuthorAsync(
+        string authorId,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(authorId))
+        {
+            return null;
+        }
+
+        var results = await GetResultsAsync(
+            "artists/",
+            new Dictionary<string, string?>
+            {
+                ["id"] = authorId,
+                ["limit"] = "1"
+            },
+            cancellationToken);
+
+        return results.GetArrayLength() == 0 ? null : MapAuthor(results[0]);
+    }
+
+    public async Task<IReadOnlyCollection<JamendoAuthorDto>> SearchAuthorsAsync(
+        string query,
+        int limit = 20,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            throw new ArgumentException("Search query cannot be empty.", nameof(query));
+        }
+
+        ValidateLimit(limit);
+        var results = await GetResultsAsync(
+            "artists/",
+            new Dictionary<string, string?>
+            {
+                ["namesearch"] = query,
+                ["limit"] = limit.ToString(CultureInfo.InvariantCulture)
+            },
+            cancellationToken);
+
+        return results.EnumerateArray().Select(MapAuthor).ToArray();
+    }
+
+    public async Task<JamendoAuthorTracksDto?> GetTracksByAuthorAsync(
+        string authorId,
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(authorId))
+        {
+            return null;
+        }
+
+        ValidateLimit(limit);
+        var results = await GetResultsAsync(
+            "artists/tracks/",
+            new Dictionary<string, string?>
+            {
+                ["id"] = authorId,
+                ["track_type"] = "single albumtrack",
+                ["audioformat"] = _options.AudioFormat,
+                ["limit"] = limit.ToString(CultureInfo.InvariantCulture)
+            },
+            cancellationToken);
+
+        if (results.GetArrayLength() == 0)
+        {
+            return null;
+        }
+
+        var author = results[0];
+        var tracks = author.TryGetProperty("tracks", out var tracksElement) &&
+                     tracksElement.ValueKind == JsonValueKind.Array
+            ? tracksElement.EnumerateArray().Select(track => MapAuthorTrack(track, author)).ToArray()
+            : [];
+
+        return new JamendoAuthorTracksDto(MapAuthor(author), tracks);
+    }
+
+    public async Task<JamendoAuthorAlbumsDto?> GetAlbumsByAuthorAsync(
+        string authorId,
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(authorId))
+        {
+            return null;
+        }
+
+        ValidateLimit(limit);
+        var results = await GetResultsAsync(
+            "artists/albums/",
+            new Dictionary<string, string?>
+            {
+                ["id"] = authorId,
+                ["limit"] = limit.ToString(CultureInfo.InvariantCulture)
+            },
+            cancellationToken);
+
+        if (results.GetArrayLength() == 0)
+        {
+            return null;
+        }
+
+        var author = results[0];
+        var albums = author.TryGetProperty("albums", out var albumsElement) &&
+                     albumsElement.ValueKind == JsonValueKind.Array
+            ? albumsElement.EnumerateArray().Select(album => MapAuthorAlbum(album, author)).ToArray()
+            : [];
+
+        return new JamendoAuthorAlbumsDto(MapAuthor(author), albums);
+    }
+
     private static JamendoTrackDto MapTrack(
         JsonElement track)
     {
@@ -265,6 +379,40 @@ public sealed class JamendoApiClient
             IsExplicit: false,
             Provider: "Jamendo");
     }
+
+    private static JamendoAuthorDto MapAuthor(JsonElement author) =>
+        new(
+            Id: GetString(author, "id"),
+            Name: GetString(author, "name"),
+            ImageUrl: GetString(author, "image"),
+            WebsiteUrl: GetString(author, "website"),
+            ShortUrl: GetString(author, "shorturl"),
+            ShareUrl: GetString(author, "shareurl"),
+            JoinedAt: ParseDate(author, "joindate"));
+
+    private static JamendoTrackDto MapAuthorTrack(JsonElement track, JsonElement author) =>
+        new(
+            Id: GetString(track, "id"),
+            Name: GetString(track, "name"),
+            ArtistName: GetString(author, "name"),
+            ArtistId: GetString(author, "id"),
+            AlbumName: GetString(track, "album_name"),
+            AlbumId: GetString(track, "album_id"),
+            DurationSeconds: GetInt(track, "duration"),
+            AudioUrl: GetString(track, "audio"),
+            ImageUrl: GetString(track, "image"),
+            IsExplicit: false,
+            Provider: "Jamendo");
+
+    private static JamendoAlbumDto MapAuthorAlbum(JsonElement album, JsonElement author) =>
+        new(
+            Id: GetString(album, "id"),
+            Name: GetString(album, "name"),
+            ArtistId: GetString(author, "id"),
+            ArtistName: GetString(author, "name"),
+            ImageUrl: GetString(album, "image"),
+            TracksCount: GetInt(album, "tracks_count"),
+            ReleaseDate: ParseDate(album, "releasedate"));
 
     private static JamendoAlbumDto MapAlbum(
         JsonElement album)
@@ -382,6 +530,40 @@ public sealed class JamendoApiClient
         }
 
         return 0;
+    }
+
+    private async Task<JsonElement> GetResultsAsync(
+        string endpoint,
+        IDictionary<string, string?> parameters,
+        CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+        parameters["client_id"] = _options.ClientId;
+        parameters["format"] = "json";
+
+        var requestUri = QueryHelpers.AddQueryString(endpoint, parameters);
+        using var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+        if (!document.RootElement.TryGetProperty("results", out var results) ||
+            results.ValueKind != JsonValueKind.Array)
+        {
+            using var emptyResults = JsonDocument.Parse("[]");
+            return emptyResults.RootElement.Clone();
+        }
+
+        return results.Clone();
+    }
+
+    private static void ValidateLimit(int limit)
+    {
+        if (limit <= 0 || limit > 200)
+        {
+            throw new ArgumentOutOfRangeException(nameof(limit), "Limit must be between 1 and 200.");
+        }
     }
 
     private static DateTime? ParseDate(

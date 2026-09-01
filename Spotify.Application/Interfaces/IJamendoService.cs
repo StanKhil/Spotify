@@ -25,5 +25,24 @@ namespace Spotify.Application.Interfaces
         Task<JamendoAlbumTrackDto?> GetAlbumAsync(
             string albumId,
             CancellationToken cancellationToken = default);
+
+        Task<JamendoAuthorDto?> GetAuthorAsync(
+            string authorId,
+            CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyCollection<JamendoAuthorDto>> SearchAuthorsAsync(
+            string query,
+            int limit = 20,
+            CancellationToken cancellationToken = default);
+
+        Task<JamendoAuthorTracksDto?> GetTracksByAuthorAsync(
+            string authorId,
+            int limit = 50,
+            CancellationToken cancellationToken = default);
+
+        Task<JamendoAuthorAlbumsDto?> GetAlbumsByAuthorAsync(
+            string authorId,
+            int limit = 50,
+            CancellationToken cancellationToken = default);
     }
 }
