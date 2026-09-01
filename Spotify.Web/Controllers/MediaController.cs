@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.Interfaces;
 
 namespace Spotify.Web.Controllers;
 
 [ApiController]
 [Route("api/admin/media")]
+[Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class MediaController : ControllerBase
 {
     private readonly IMediaService _mediaService;

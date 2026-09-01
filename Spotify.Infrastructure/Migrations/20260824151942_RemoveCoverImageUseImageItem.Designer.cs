@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Spotify.Infrastructure.Persistance.Context;
 
@@ -11,9 +12,11 @@ using Spotify.Infrastructure.Persistance.Context;
 namespace Spotify.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20260824151942_RemoveCoverImageUseImageItem")]
+    partial class RemoveCoverImageUseImageItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -104,13 +107,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("UserRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            RoleId = new Guid("22222222-2222-2222-2222-222222222222")
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
@@ -159,10 +155,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.Property<int>("DurationSeconds")
                         .HasColumnType("int");
 
-                    b.Property<string>("ExternalContentId")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<string>("GenreId")
                         .HasColumnType("nvarchar(450)");
 
@@ -177,9 +169,6 @@ namespace Spotify.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<int>("Provider")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AudioItemId");
@@ -187,10 +176,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("GenreId");
 
                     b.HasIndex("ImageItemId");
-
-                    b.HasIndex("Provider", "ExternalContentId")
-                        .IsUnique()
-                        .HasFilter("[ExternalContentId] IS NOT NULL");
 
                     b.ToTable("AudioContent");
 
@@ -215,6 +200,10 @@ namespace Spotify.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ExternalContentId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<bool>("IsDownloadAllowed")
                         .HasColumnType("bit");
 
@@ -234,46 +223,11 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Provider", "ExternalContentId")
+                        .IsUnique()
+                        .HasFilter("[ExternalContentId] IS NOT NULL");
+
                     b.ToTable("AudioItems");
-                });
-
-            modelBuilder.Entity("Spotify.Domain.Entities.Content.Author", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ExternalAuthorId")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExternalAuthorId")
-                        .IsUnique()
-                        .HasFilter("[ExternalAuthorId] IS NOT NULL");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL");
-
-                    b.ToTable("Authors");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("77777777-7777-7777-7777-777777777777"),
-                            Name = "Admin Author",
-                            UserId = new Guid("66666666-6666-6666-6666-666666666666")
-                        });
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.AuthorContent", b =>
@@ -594,404 +548,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("CountryId");
 
                     b.ToTable("Cities");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("1111111a-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1084aaa8-e8c0-42eb-8153-4e0d79955220"),
-                            Name = "New York"
-                        },
-                        new
-                        {
-                            Id = new Guid("1111111b-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1084aaa8-e8c0-42eb-8153-4e0d79955220"),
-                            Name = "Los Angeles"
-                        },
-                        new
-                        {
-                            Id = new Guid("1111111c-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1084aaa8-e8c0-42eb-8153-4e0d79955220"),
-                            Name = "Chicago"
-                        },
-                        new
-                        {
-                            Id = new Guid("1111111d-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1084aaa8-e8c0-42eb-8153-4e0d79955220"),
-                            Name = "Houston"
-                        },
-                        new
-                        {
-                            Id = new Guid("2222222a-2222-2222-2222-222222222222"),
-                            CountryId = new Guid("2084aaa8-e8c0-42eb-8153-4e0d79955221"),
-                            Name = "Beijing"
-                        },
-                        new
-                        {
-                            Id = new Guid("2222222b-2222-2222-2222-222222222222"),
-                            CountryId = new Guid("2084aaa8-e8c0-42eb-8153-4e0d79955221"),
-                            Name = "Shanghai"
-                        },
-                        new
-                        {
-                            Id = new Guid("2222222c-2222-2222-2222-222222222222"),
-                            CountryId = new Guid("2084aaa8-e8c0-42eb-8153-4e0d79955221"),
-                            Name = "Guangzhou"
-                        },
-                        new
-                        {
-                            Id = new Guid("2222222d-2222-2222-2222-222222222222"),
-                            CountryId = new Guid("2084aaa8-e8c0-42eb-8153-4e0d79955221"),
-                            Name = "Shenzhen"
-                        },
-                        new
-                        {
-                            Id = new Guid("3333333a-3333-3333-3333-333333333333"),
-                            CountryId = new Guid("3084aaa8-e8c0-42eb-8153-4e0d79955222"),
-                            Name = "Mumbai"
-                        },
-                        new
-                        {
-                            Id = new Guid("3333333b-3333-3333-3333-333333333333"),
-                            CountryId = new Guid("3084aaa8-e8c0-42eb-8153-4e0d79955222"),
-                            Name = "Delhi"
-                        },
-                        new
-                        {
-                            Id = new Guid("3333333c-3333-3333-3333-333333333333"),
-                            CountryId = new Guid("3084aaa8-e8c0-42eb-8153-4e0d79955222"),
-                            Name = "Bangalore"
-                        },
-                        new
-                        {
-                            Id = new Guid("3333333d-3333-3333-3333-333333333333"),
-                            CountryId = new Guid("3084aaa8-e8c0-42eb-8153-4e0d79955222"),
-                            Name = "Hyderabad"
-                        },
-                        new
-                        {
-                            Id = new Guid("4444444a-4444-4444-4444-444444444444"),
-                            CountryId = new Guid("4084aaa8-e8c0-42eb-8153-4e0d79955223"),
-                            Name = "São Paulo"
-                        },
-                        new
-                        {
-                            Id = new Guid("4444444b-4444-4444-4444-444444444444"),
-                            CountryId = new Guid("4084aaa8-e8c0-42eb-8153-4e0d79955223"),
-                            Name = "Rio de Janeiro"
-                        },
-                        new
-                        {
-                            Id = new Guid("4444444c-4444-4444-4444-444444444444"),
-                            CountryId = new Guid("4084aaa8-e8c0-42eb-8153-4e0d79955223"),
-                            Name = "Brasília"
-                        },
-                        new
-                        {
-                            Id = new Guid("4444444d-4444-4444-4444-444444444444"),
-                            CountryId = new Guid("4084aaa8-e8c0-42eb-8153-4e0d79955223"),
-                            Name = "Salvador"
-                        },
-                        new
-                        {
-                            Id = new Guid("5555555a-5555-5555-5555-555555555555"),
-                            CountryId = new Guid("5084aaa8-e8c0-42eb-8153-4e0d79955224"),
-                            Name = "Berlin"
-                        },
-                        new
-                        {
-                            Id = new Guid("5555555b-5555-5555-5555-555555555555"),
-                            CountryId = new Guid("5084aaa8-e8c0-42eb-8153-4e0d79955224"),
-                            Name = "Munich"
-                        },
-                        new
-                        {
-                            Id = new Guid("5555555c-5555-5555-5555-555555555555"),
-                            CountryId = new Guid("5084aaa8-e8c0-42eb-8153-4e0d79955224"),
-                            Name = "Hamburg"
-                        },
-                        new
-                        {
-                            Id = new Guid("5555555d-5555-5555-5555-555555555555"),
-                            CountryId = new Guid("5084aaa8-e8c0-42eb-8153-4e0d79955224"),
-                            Name = "Frankfurt"
-                        },
-                        new
-                        {
-                            Id = new Guid("6666666a-6666-6666-6666-666666666666"),
-                            CountryId = new Guid("6084aaa8-e8c0-42eb-8153-4e0d79955225"),
-                            Name = "London"
-                        },
-                        new
-                        {
-                            Id = new Guid("6666666b-6666-6666-6666-666666666666"),
-                            CountryId = new Guid("6084aaa8-e8c0-42eb-8153-4e0d79955225"),
-                            Name = "Manchester"
-                        },
-                        new
-                        {
-                            Id = new Guid("6666666c-6666-6666-6666-666666666666"),
-                            CountryId = new Guid("6084aaa8-e8c0-42eb-8153-4e0d79955225"),
-                            Name = "Birmingham"
-                        },
-                        new
-                        {
-                            Id = new Guid("6666666d-6666-6666-6666-666666666666"),
-                            CountryId = new Guid("6084aaa8-e8c0-42eb-8153-4e0d79955225"),
-                            Name = "Leeds"
-                        },
-                        new
-                        {
-                            Id = new Guid("7777777a-7777-7777-7777-777777777777"),
-                            CountryId = new Guid("7084aaa8-e8c0-42eb-8153-4e0d79955226"),
-                            Name = "Paris"
-                        },
-                        new
-                        {
-                            Id = new Guid("7777777b-7777-7777-7777-777777777777"),
-                            CountryId = new Guid("7084aaa8-e8c0-42eb-8153-4e0d79955226"),
-                            Name = "Lyon"
-                        },
-                        new
-                        {
-                            Id = new Guid("7777777c-7777-7777-7777-777777777777"),
-                            CountryId = new Guid("7084aaa8-e8c0-42eb-8153-4e0d79955226"),
-                            Name = "Marseille"
-                        },
-                        new
-                        {
-                            Id = new Guid("7777777d-7777-7777-7777-777777777777"),
-                            CountryId = new Guid("7084aaa8-e8c0-42eb-8153-4e0d79955226"),
-                            Name = "Toulouse"
-                        },
-                        new
-                        {
-                            Id = new Guid("8888888a-8888-8888-8888-888888888888"),
-                            CountryId = new Guid("8084aaa8-e8c0-42eb-8153-4e0d79955227"),
-                            Name = "Rome"
-                        },
-                        new
-                        {
-                            Id = new Guid("8888888b-8888-8888-8888-888888888888"),
-                            CountryId = new Guid("8084aaa8-e8c0-42eb-8153-4e0d79955227"),
-                            Name = "Milan"
-                        },
-                        new
-                        {
-                            Id = new Guid("8888888c-8888-8888-8888-888888888888"),
-                            CountryId = new Guid("8084aaa8-e8c0-42eb-8153-4e0d79955227"),
-                            Name = "Naples"
-                        },
-                        new
-                        {
-                            Id = new Guid("8888888d-8888-8888-8888-888888888888"),
-                            CountryId = new Guid("8084aaa8-e8c0-42eb-8153-4e0d79955227"),
-                            Name = "Florence"
-                        },
-                        new
-                        {
-                            Id = new Guid("9999999a-9999-9999-9999-999999999999"),
-                            CountryId = new Guid("9084aaa8-e8c0-42eb-8153-4e0d79955228"),
-                            Name = "Madrid"
-                        },
-                        new
-                        {
-                            Id = new Guid("9999999b-9999-9999-9999-999999999999"),
-                            CountryId = new Guid("9084aaa8-e8c0-42eb-8153-4e0d79955228"),
-                            Name = "Barcelona"
-                        },
-                        new
-                        {
-                            Id = new Guid("9999999c-9999-9999-9999-999999999999"),
-                            CountryId = new Guid("9084aaa8-e8c0-42eb-8153-4e0d79955228"),
-                            Name = "Valencia"
-                        },
-                        new
-                        {
-                            Id = new Guid("9999999d-9999-9999-9999-999999999999"),
-                            CountryId = new Guid("9084aaa8-e8c0-42eb-8153-4e0d79955228"),
-                            Name = "Seville"
-                        },
-                        new
-                        {
-                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            CountryId = new Guid("a084aaa8-e8c0-42eb-8153-4e0d79955229"),
-                            Name = "Toronto"
-                        },
-                        new
-                        {
-                            Id = new Guid("aaaaaaab-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            CountryId = new Guid("a084aaa8-e8c0-42eb-8153-4e0d79955229"),
-                            Name = "Vancouver"
-                        },
-                        new
-                        {
-                            Id = new Guid("aaaaaaac-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            CountryId = new Guid("a084aaa8-e8c0-42eb-8153-4e0d79955229"),
-                            Name = "Montreal"
-                        },
-                        new
-                        {
-                            Id = new Guid("aaaaaaad-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            CountryId = new Guid("a084aaa8-e8c0-42eb-8153-4e0d79955229"),
-                            Name = "Calgary"
-                        },
-                        new
-                        {
-                            Id = new Guid("bbbbbbba-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            CountryId = new Guid("b084aaa8-e8c0-42eb-8153-4e0d7995522a"),
-                            Name = "Sydney"
-                        },
-                        new
-                        {
-                            Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            CountryId = new Guid("b084aaa8-e8c0-42eb-8153-4e0d7995522a"),
-                            Name = "Melbourne"
-                        },
-                        new
-                        {
-                            Id = new Guid("bbbbbbb1-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            CountryId = new Guid("b084aaa8-e8c0-42eb-8153-4e0d7995522a"),
-                            Name = "Brisbane"
-                        },
-                        new
-                        {
-                            Id = new Guid("bbbbbbb2-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            CountryId = new Guid("b084aaa8-e8c0-42eb-8153-4e0d7995522a"),
-                            Name = "Perth"
-                        },
-                        new
-                        {
-                            Id = new Guid("ccccccca-cccc-cccc-cccc-cccccccccccc"),
-                            CountryId = new Guid("c084aaa8-e8c0-42eb-8153-4e0d7995522b"),
-                            Name = "Tokyo"
-                        },
-                        new
-                        {
-                            Id = new Guid("cccccccb-cccc-cccc-cccc-cccccccccccc"),
-                            CountryId = new Guid("c084aaa8-e8c0-42eb-8153-4e0d7995522b"),
-                            Name = "Osaka"
-                        },
-                        new
-                        {
-                            Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
-                            CountryId = new Guid("c084aaa8-e8c0-42eb-8153-4e0d7995522b"),
-                            Name = "Kyoto"
-                        },
-                        new
-                        {
-                            Id = new Guid("ccccccc1-cccc-cccc-cccc-cccccccccccc"),
-                            CountryId = new Guid("c084aaa8-e8c0-42eb-8153-4e0d7995522b"),
-                            Name = "Yokohama"
-                        },
-                        new
-                        {
-                            Id = new Guid("ddddddda-dddd-dddd-dddd-dddddddddddd"),
-                            CountryId = new Guid("d084aaa8-e8c0-42eb-8153-4e0d7995522c"),
-                            Name = "Seoul"
-                        },
-                        new
-                        {
-                            Id = new Guid("dddddddb-dddd-dddd-dddd-dddddddddddd"),
-                            CountryId = new Guid("d084aaa8-e8c0-42eb-8153-4e0d7995522c"),
-                            Name = "Busan"
-                        },
-                        new
-                        {
-                            Id = new Guid("dddddddc-dddd-dddd-dddd-dddddddddddd"),
-                            CountryId = new Guid("d084aaa8-e8c0-42eb-8153-4e0d7995522c"),
-                            Name = "Incheon"
-                        },
-                        new
-                        {
-                            Id = new Guid("ddddddd1-dddd-dddd-dddd-dddddddddddd"),
-                            CountryId = new Guid("d084aaa8-e8c0-42eb-8153-4e0d7995522c"),
-                            Name = "Daegu"
-                        },
-                        new
-                        {
-                            Id = new Guid("ffffffff-0000-0000-0000-000000000001"),
-                            CountryId = new Guid("f084aaa8-e8c0-42eb-8153-4e0d7995522e"),
-                            Name = "Mexico City"
-                        },
-                        new
-                        {
-                            Id = new Guid("ffffffff-0000-0000-0000-000000000002"),
-                            CountryId = new Guid("f084aaa8-e8c0-42eb-8153-4e0d7995522e"),
-                            Name = "Guadalajara"
-                        },
-                        new
-                        {
-                            Id = new Guid("ffffffff-0000-0000-0000-000000000003"),
-                            CountryId = new Guid("f084aaa8-e8c0-42eb-8153-4e0d7995522e"),
-                            Name = "Monterrey"
-                        },
-                        new
-                        {
-                            Id = new Guid("ffffffff-0000-0000-0000-000000000004"),
-                            CountryId = new Guid("f084aaa8-e8c0-42eb-8153-4e0d7995522e"),
-                            Name = "Cancún"
-                        },
-                        new
-                        {
-                            Id = new Guid("1111111e-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1184aaa8-e8c0-42eb-8153-4e0d7995522f"),
-                            Name = "Amsterdam"
-                        },
-                        new
-                        {
-                            Id = new Guid("1111111f-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1184aaa8-e8c0-42eb-8153-4e0d7995522f"),
-                            Name = "Rotterdam"
-                        },
-                        new
-                        {
-                            Id = new Guid("1211111e-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1284aaa8-e8c0-42eb-8153-4e0d79955230"),
-                            Name = "Buenos Aires"
-                        },
-                        new
-                        {
-                            Id = new Guid("1211111f-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1284aaa8-e8c0-42eb-8153-4e0d79955230"),
-                            Name = "Córdoba"
-                        },
-                        new
-                        {
-                            Id = new Guid("1311111e-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1384aaa8-e8c0-42eb-8153-4e0d79955231"),
-                            Name = "Stockholm"
-                        },
-                        new
-                        {
-                            Id = new Guid("1311111f-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1384aaa8-e8c0-42eb-8153-4e0d79955231"),
-                            Name = "Gothenburg"
-                        },
-                        new
-                        {
-                            Id = new Guid("1411111e-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1484aaa8-e8c0-42eb-8153-4e0d79955232"),
-                            Name = "Zurich"
-                        },
-                        new
-                        {
-                            Id = new Guid("1411111f-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1484aaa8-e8c0-42eb-8153-4e0d79955232"),
-                            Name = "Geneva"
-                        },
-                        new
-                        {
-                            Id = new Guid("1511111e-1111-1111-1111-111111111111"),
-                            CountryId = new Guid("1584aaa8-e8c0-42eb-8153-4e0d79955233"),
-                            Name = "Singapore"
-                        },
-                        new
-                        {
-                            Id = new Guid("5758bf18-11e6-44a6-ae60-1d8ab273eb49"),
-                            CountryId = new Guid("1584aaa8-e8c0-42eb-8153-4e0d79955233"),
-                            Name = "Marina Bay"
-                        });
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Location.Country", b =>
@@ -1009,127 +565,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Countries");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("1084aaa8-e8c0-42eb-8153-4e0d79955220"),
-                            Name = "United States"
-                        },
-                        new
-                        {
-                            Id = new Guid("2084aaa8-e8c0-42eb-8153-4e0d79955221"),
-                            Name = "China"
-                        },
-                        new
-                        {
-                            Id = new Guid("3084aaa8-e8c0-42eb-8153-4e0d79955222"),
-                            Name = "India"
-                        },
-                        new
-                        {
-                            Id = new Guid("4084aaa8-e8c0-42eb-8153-4e0d79955223"),
-                            Name = "Brazil"
-                        },
-                        new
-                        {
-                            Id = new Guid("5084aaa8-e8c0-42eb-8153-4e0d79955224"),
-                            Name = "Germany"
-                        },
-                        new
-                        {
-                            Id = new Guid("6084aaa8-e8c0-42eb-8153-4e0d79955225"),
-                            Name = "United Kingdom"
-                        },
-                        new
-                        {
-                            Id = new Guid("7084aaa8-e8c0-42eb-8153-4e0d79955226"),
-                            Name = "France"
-                        },
-                        new
-                        {
-                            Id = new Guid("8084aaa8-e8c0-42eb-8153-4e0d79955227"),
-                            Name = "Italy"
-                        },
-                        new
-                        {
-                            Id = new Guid("9084aaa8-e8c0-42eb-8153-4e0d79955228"),
-                            Name = "Spain"
-                        },
-                        new
-                        {
-                            Id = new Guid("a084aaa8-e8c0-42eb-8153-4e0d79955229"),
-                            Name = "Canada"
-                        },
-                        new
-                        {
-                            Id = new Guid("b084aaa8-e8c0-42eb-8153-4e0d7995522a"),
-                            Name = "Australia"
-                        },
-                        new
-                        {
-                            Id = new Guid("c084aaa8-e8c0-42eb-8153-4e0d7995522b"),
-                            Name = "Japan"
-                        },
-                        new
-                        {
-                            Id = new Guid("d084aaa8-e8c0-42eb-8153-4e0d7995522c"),
-                            Name = "South Korea"
-                        },
-                        new
-                        {
-                            Id = new Guid("f084aaa8-e8c0-42eb-8153-4e0d7995522e"),
-                            Name = "Mexico"
-                        },
-                        new
-                        {
-                            Id = new Guid("1184aaa8-e8c0-42eb-8153-4e0d7995522f"),
-                            Name = "Netherlands"
-                        },
-                        new
-                        {
-                            Id = new Guid("1284aaa8-e8c0-42eb-8153-4e0d79955230"),
-                            Name = "Argentina"
-                        },
-                        new
-                        {
-                            Id = new Guid("1384aaa8-e8c0-42eb-8153-4e0d79955231"),
-                            Name = "Sweden"
-                        },
-                        new
-                        {
-                            Id = new Guid("1484aaa8-e8c0-42eb-8153-4e0d79955232"),
-                            Name = "Switzerland"
-                        },
-                        new
-                        {
-                            Id = new Guid("1584aaa8-e8c0-42eb-8153-4e0d79955233"),
-                            Name = "Singapore"
-                        });
-                });
-
-            modelBuilder.Entity("Spotify.Domain.Entities.Security.RevokedToken", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Jti")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("RevokedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Jti")
-                        .IsUnique();
-
-                    b.ToTable("RevokedTokens");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.ApplicationUser", b =>
@@ -1150,6 +585,9 @@ namespace Spotify.Infrastructure.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAuthor")
                         .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
@@ -1206,24 +644,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("SubscriptionId");
 
                     b.ToTable("ApplicationUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("66666666-6666-6666-6666-666666666666"),
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "66666666-6666-6666-6666-666666666666",
-                            Email = "admin@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ADMIN@EXAMPLE.COM",
-                            NormalizedUserName = "ADMIN",
-                            PhoneNumberConfirmed = false,
-                            SettingsId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            SubscriptionId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            TwoFactorEnabled = false,
-                            UserName = "admin"
-                        });
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.License", b =>
@@ -1282,13 +702,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Settings");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            Language = 2
-                        });
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.Subscription", b =>
@@ -1311,29 +724,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Subscriptions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            Description = "Default subscription",
-                            Name = "Default",
-                            Price = 0m
-                        },
-                        new
-                        {
-                            Id = new Guid("44444444-4444-4444-4444-444444444444"),
-                            Description = "Premium subscription",
-                            Name = "Premium",
-                            Price = 9.99m
-                        },
-                        new
-                        {
-                            Id = new Guid("55555555-5555-5555-5555-555555555555"),
-                            Description = "Student subscription",
-                            Name = "Student",
-                            Price = 4.99m
-                        });
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.UserProfile", b =>
@@ -1366,17 +756,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("CountryId");
 
                     b.ToTable("UserProfiles");
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            Birthdate = new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            CityId = new Guid("5758bf18-11e6-44a6-ae60-1d8ab273eb49"),
-                            CountryId = new Guid("1084aaa8-e8c0-42eb-8153-4e0d79955220"),
-                            IsAdult = true,
-                            RegisteredAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.UserRole", b =>
@@ -1422,32 +801,6 @@ namespace Spotify.Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("Roles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CanCreate = true,
-                            CanDelete = false,
-                            CanRead = true,
-                            CanUpdate = false,
-                            ConcurrencyStamp = "11111111-1111-1111-1111-111111111111",
-                            Description = "Default role for self-registered users",
-                            Name = "Self-Registered",
-                            NormalizedName = "SELF-REGISTERED"
-                        },
-                        new
-                        {
-                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CanCreate = true,
-                            CanDelete = true,
-                            CanRead = true,
-                            CanUpdate = true,
-                            ConcurrencyStamp = "22222222-2222-2222-2222-222222222222",
-                            Description = "Administrator role with full permissions",
-                            Name = "Admin",
-                            NormalizedName = "ADMIN"
-                        });
                 });
 
             modelBuilder.Entity("Episode", b =>
@@ -1591,16 +944,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.Navigation("ImageItem");
                 });
 
-            modelBuilder.Entity("Spotify.Domain.Entities.Content.Author", b =>
-                {
-                    b.HasOne("Spotify.Domain.Entities.User.ApplicationUser", "User")
-                        .WithOne("Author")
-                        .HasForeignKey("Spotify.Domain.Entities.Content.Author", "UserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Spotify.Domain.Entities.Content.AuthorContent", b =>
                 {
                     b.HasOne("Spotify.Domain.Entities.Content.AudioContent", "Item")
@@ -1620,7 +963,7 @@ namespace Spotify.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Spotify.Domain.Entities.Content.Author", "Author")
+                    b.HasOne("Spotify.Domain.Entities.User.ApplicationUser", "Author")
                         .WithMany("AuthoredContent")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1639,7 +982,7 @@ namespace Spotify.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Spotify.Domain.Entities.Content.Author", "Author")
+                    b.HasOne("Spotify.Domain.Entities.User.ApplicationUser", "Author")
                         .WithMany("Followers")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -1866,13 +1209,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.Navigation("Authors");
                 });
 
-            modelBuilder.Entity("Spotify.Domain.Entities.Content.Author", b =>
-                {
-                    b.Navigation("AuthoredContent");
-
-                    b.Navigation("Followers");
-                });
-
             modelBuilder.Entity("Spotify.Domain.Entities.Content.AuthorContent", b =>
                 {
                     b.Navigation("Authors");
@@ -1902,9 +1238,11 @@ namespace Spotify.Infrastructure.Migrations
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.ApplicationUser", b =>
                 {
-                    b.Navigation("Author");
-
                     b.Navigation("AuthorSubscriptions");
+
+                    b.Navigation("AuthoredContent");
+
+                    b.Navigation("Followers");
 
                     b.Navigation("Likes");
 

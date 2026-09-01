@@ -48,7 +48,6 @@ namespace Spotify.Infrastructure.Services
 
                 Provider = AudioProvider.Jamendo,
                 ExternalContentId = jamendoAlbum.Id,
-                CoverImage = null,
                 IsDraft = false,
             };
 

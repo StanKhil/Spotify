@@ -8,7 +8,7 @@ namespace Spotify.Web.Controllers;
 
 [ApiController]
 [Route("api/admin/tracks")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class TrackController : ControllerBase
 {
     private readonly ITrackService _trackService;

@@ -16,7 +16,8 @@ public sealed class LocalAudioStorageService : ILocalAudioStorageService
 
     public string? GetSafeFilePath(string storageKey)
     {
-        var filePath = Path.GetFullPath(Path.Combine(_rootPath, storageKey));
+        var trimmedKey = storageKey.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
+        var filePath = Path.GetFullPath(Path.Combine(_rootPath, trimmedKey));
         var rootWithSeparator = _rootPath.EndsWith(Path.DirectorySeparatorChar)
             ? _rootPath
             : _rootPath + Path.DirectorySeparatorChar;
