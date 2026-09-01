@@ -5,12 +5,12 @@ namespace Spotify.Application.Interfaces
     public interface IAuthorActionService
     {
         Task<AuthorActionResponse?> SubscribeAsync(
-            Guid authorId,
+            string authorId,
             Guid userId,
             CancellationToken cancellationToken = default);
 
         Task<AuthorActionResponse?> UnsubscribeAsync(
-            Guid authorId,
+            string authorId,
             Guid userId,
             CancellationToken cancellationToken = default);
 

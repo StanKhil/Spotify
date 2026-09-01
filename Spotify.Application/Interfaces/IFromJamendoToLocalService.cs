@@ -11,6 +11,10 @@ namespace Spotify.Application.Interfaces
             string jamendoTrackId,
             CancellationToken cancellationToken);
 
+        Task<Author?> GetOrCreateJamendoAuthorAsync(
+            string jamendoAuthorId,
+            CancellationToken cancellationToken);
+
         bool IsJamendoId(string trackId);
     }
 }

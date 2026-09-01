@@ -40,7 +40,7 @@ public sealed class AuthorService : IAuthorService
             .Select(x => x.UserId)
             .ToListAsync(cancellationToken);
 
-        var authors = await _context.ApplicationUsers
+        var authors = await _context.Authors
             .Where(u => authorUserIds.Contains(u.Id))
             .ToListAsync(cancellationToken);
 
@@ -51,7 +51,7 @@ public sealed class AuthorService : IAuthorService
             var contentCount = await _context.AuthorContentAuthors
                 .CountAsync(x => x.AuthorId == author.Id, cancellationToken);
 
-            result.Add(new AuthorResponse(author.Id, author.Email!, author.UserName!, contentCount));
+            result.Add(new AuthorResponse(author.Id, author.Name!, contentCount));
         }
 
         return result;
@@ -60,16 +60,16 @@ public sealed class AuthorService : IAuthorService
     public async Task<AuthorResponse?> GetAuthorByIdAsync(
         Guid id, CancellationToken cancellationToken = default)
     {
-        var author = await _context.ApplicationUsers.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var author = await _context.Authors.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        if (author is null || !await _userManager.IsInRoleAsync(author, AuthorRoleName))
+        if (author is null || !await _userManager.IsInRoleAsync(author.User! , AuthorRoleName))
         {
             return null;
         }
 
         var contentCount = await _context.AuthorContentAuthors.CountAsync(x => x.AuthorId == id, cancellationToken);
 
-        return new AuthorResponse(author.Id, author.Email!, author.UserName!, contentCount);
+        return new AuthorResponse(author.Id, author.Name!, contentCount);
     }
 
     public async Task<CreateAuthorResult> CreateAuthorAsync(
@@ -113,7 +113,7 @@ public sealed class AuthorService : IAuthorService
             return CreateAuthorResult.Failure(addToRoleResult.Errors.Select(x => x.Description).ToArray());
         }
 
-        return CreateAuthorResult.Success(new AuthorResponse(user.Id, user.Email!, user.UserName!, 0));
+        return CreateAuthorResult.Success(new AuthorResponse(user.Id, user.UserName!, 0));
     }
 
     public async Task<DeleteAuthorResult> DeleteAuthorAsync(

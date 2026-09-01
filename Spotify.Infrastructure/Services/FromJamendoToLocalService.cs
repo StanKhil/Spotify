@@ -136,6 +136,36 @@ namespace Spotify.Infrastructure.Services
             return track;
         }
 
+        public async Task<Author?> GetOrCreateJamendoAuthorAsync(
+            string jamendoAuthorId,
+            CancellationToken cancellationToken)
+        {
+            var existingAuthor = await _context.Authors
+                .FirstOrDefaultAsync(
+                    x => x.ExternalAuthorId == jamendoAuthorId,
+                    cancellationToken);
+
+            if (existingAuthor is not null)
+                return existingAuthor;
+
+            var jamendoAuthor = await _jamendoService.GetAuthorAsync(
+                jamendoAuthorId,
+                cancellationToken);
+
+            if (jamendoAuthor is null)
+                return null;
+
+            var author = new Author
+            {
+                Id = Guid.NewGuid(),
+                Name = jamendoAuthor.Name,
+                ExternalAuthorId = jamendoAuthor.Id
+            };
+            _context.Authors.Add(author);
+            await _context.SaveChangesAsync(cancellationToken);
+            return author;
+        }
+
         public bool IsJamendoId(string trackId)
         {
             return !string.IsNullOrWhiteSpace(trackId) &&

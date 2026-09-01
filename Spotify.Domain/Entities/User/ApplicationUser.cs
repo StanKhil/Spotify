@@ -7,18 +7,16 @@ namespace Spotify.Domain.Entities.User
     {
         public Guid SubscriptionId { get; set; }
         public Subscription Subscription { get; set; } = null!;
-        public Boolean IsAuthor { get; set; } = false;
         public Guid SettingsId { get; set; }
         public Settings Settings { get; set; } = null!;
 
         public UserProfile Profile { get; set; } = null!;
-
-        public ICollection<AuthorContentAuthor> AuthoredContent { get; set; } = [];
+        public Author? Author { get; set; }
         public ICollection<ListeningHistory> ListeningHistory { get; set; }
     = new List<ListeningHistory>();
         public ICollection<Playlist> Playlists { get; set; } = [];
         public ICollection<Like> Likes { get; set; } = [];
         public ICollection<AuthorSubscription> AuthorSubscriptions { get; set; } = [];
-        public ICollection<AuthorSubscription> Followers { get; set; } = [];
+
     }
 }

@@ -24,9 +24,9 @@ public sealed class AuthorActionController : ControllerBase
         _userManager = userManager;
     }
 
-    [HttpPost("{authorId:guid}/subscribe")]
+    [HttpPost("{authorId}/subscribe")]
     public async Task<IActionResult> Subscribe(
-        Guid authorId,
+        string authorId,
         CancellationToken cancellationToken)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -45,9 +45,9 @@ public sealed class AuthorActionController : ControllerBase
         return Ok(result);
     }
 
-    [HttpDelete("{authorId:guid}/subscribe")]
+    [HttpDelete("{authorId}/subscribe")]
     public async Task<IActionResult> Unsubscribe(
-        Guid authorId,
+        string authorId,
         CancellationToken cancellationToken)
     {
         var user = await _userManager.GetUserAsync(User);

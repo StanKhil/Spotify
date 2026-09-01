@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Spotify.Application.DTOs.Auth
+﻿namespace Spotify.Application.DTOs.Auth
 {
     public sealed record MeResponse(
         Guid Id, 
@@ -10,7 +6,7 @@ namespace Spotify.Application.DTOs.Auth
         string Email,
         int FollowersCount,
         int FollowingCount,
-        Boolean IsAuthor
+        Spotify.Domain.Entities.Content.Author? author
     );
 
 }

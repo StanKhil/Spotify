@@ -42,6 +42,7 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<ListeningHistory> ListeningHistories { get; set; } = null!;
         public DbSet<AuthorSubscription> AuthorSubscriptions { get; set; } = null!;
         public DbSet<RevokedToken> RevokedTokens { get; set; }
+        public DbSet<Author> Authors { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -133,6 +134,15 @@ namespace Spotify.Infrastructure.Persistance.Context
                     Language = Language.Ukrainian,
                 });
 
+            builder.Entity<Author>().HasData(
+                new Author
+                {
+                    Id = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                    Name = "Admin Author",
+                    ExternalAuthorId = null,
+                    UserId = Guid.Parse("66666666-6666-6666-6666-666666666666")
+                });
+
             builder.Entity<ApplicationUser>().HasData(
                 new ApplicationUser
                 {
@@ -145,8 +155,6 @@ namespace Spotify.Infrastructure.Persistance.Context
                     NormalizedEmail = "ADMIN@EXAMPLE.COM",
 
                     EmailConfirmed = true,
-
-                    IsAuthor = true,
 
                     SubscriptionId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
 

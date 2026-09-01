@@ -11,39 +11,54 @@ namespace Spotify.Infrastructure.Services;
 public sealed class AuthorActionService : IAuthorActionService
 {
     private readonly ApplicationContext _context;
+    private readonly IFromJamendoToLocalService _fromJamendoToLocalService;
 
-    public AuthorActionService(ApplicationContext context)
+    public AuthorActionService(ApplicationContext context,
+        IFromJamendoToLocalService fromJamendoToLocalService)
     {
         _context = context;
+        _fromJamendoToLocalService = fromJamendoToLocalService;
     }
 
     public async Task<AuthorActionResponse?> SubscribeAsync(
-        Guid authorId,
+        string authorId,
         Guid userId,
         CancellationToken cancellationToken = default)
     {
+        if (_fromJamendoToLocalService.IsJamendoId(authorId.ToString()))
+        {
+            var jamendoAuthor = await _fromJamendoToLocalService.GetOrCreateJamendoAuthorAsync(
+                authorId.ToString(),
+                cancellationToken);
+
+            if (jamendoAuthor is null)
+                return null;
+
+            authorId = jamendoAuthor.Id.ToString();
+        }
+
         var author = await GetAuthorAsync(
-            authorId,
+            Guid.Parse(authorId),
             cancellationToken);
 
         if (author is null)
             return null;
 
-        if (author.Id == userId)
-        {
-            return new AuthorActionResponse(
-                author.Id,
-                await GetSubscriptionsCountAsync(
-                    author.Id,
-                    cancellationToken),
-                false);
-        }
+        //if (author.User != null && author.User.Id != userId)
+        //{
+        //    return new AuthorActionResponse(
+        //        author.Id,
+        //        await GetSubscriptionsCountAsync(
+        //            author.Id,
+        //            cancellationToken),
+        //        false);
+        //}
 
         var alreadySubscribed =
             await _context.AuthorSubscriptions
                 .AnyAsync(
                     x => x.ApplicationUserId == userId &&
-                         x.AuthorId == authorId,
+                         x.AuthorId == Guid.Parse(authorId),
                     cancellationToken);
 
         if (!alreadySubscribed)
@@ -53,7 +68,7 @@ public sealed class AuthorActionService : IAuthorActionService
                 {
                     Id = Guid.NewGuid(),
                     ApplicationUserId = userId,
-                    AuthorId = authorId,
+                    AuthorId = Guid.Parse(authorId),
                     CreatedAt = DateTime.UtcNow
                 });
 
@@ -73,12 +88,12 @@ public sealed class AuthorActionService : IAuthorActionService
     }
 
     public async Task<AuthorActionResponse?> UnsubscribeAsync(
-        Guid authorId,
+        string authorId,
         Guid userId,
         CancellationToken cancellationToken = default)
     {
         var author = await GetAuthorAsync(
-            authorId,
+            Guid.Parse(authorId),
             cancellationToken);
 
         if (author is null)
@@ -88,7 +103,7 @@ public sealed class AuthorActionService : IAuthorActionService
             await _context.AuthorSubscriptions
                 .FirstOrDefaultAsync(
                     x => x.ApplicationUserId == userId &&
-                         x.AuthorId == authorId,
+                         x.AuthorId == Guid.Parse(authorId),
                     cancellationToken);
 
         if (subscription is not null)
@@ -131,6 +146,7 @@ public sealed class AuthorActionService : IAuthorActionService
         var subscriedAuthors = await subscribedAuthorsQuery
             .OrderByDescending(s => s.CreatedAt)
             .Include(s => s.Author)
+            .ThenInclude(a => a.User)
             .Skip((page - 1) * maxPerPage)
             .Take(maxPerPage)
             .ToListAsync(cancellationToken);
@@ -139,8 +155,7 @@ public sealed class AuthorActionService : IAuthorActionService
         foreach(var authorSub in subscriedAuthors)
         {
             response.Add(new AuthorResponse(authorSub.AuthorId, 
-                authorSub.Author.Email!, 
-                authorSub.Author.UserName!, 
+                authorSub.Author.Name, 
                 authorSub.Author.AuthoredContent.Count));
         }
 
@@ -149,15 +164,22 @@ public sealed class AuthorActionService : IAuthorActionService
                 response));
     }
 
-    private async Task<ApplicationUser?> GetAuthorAsync(
+    private async Task<Author?> GetAuthorAsync(
         Guid authorId,
         CancellationToken cancellationToken)
     {
-        return await _context.ApplicationUsers
-            .FirstOrDefaultAsync(
-                x => x.Id == authorId &&
-                     x.IsAuthor,
-                cancellationToken);
+        var localAuthor = await _context.Authors
+            .Where(x => x.Id == authorId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (localAuthor == null)
+        {
+            return await _context.Authors
+                .Where(a => a.ExternalAuthorId == authorId.ToString())
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return localAuthor;
     }
 
     private async Task<int> GetSubscriptionsCountAsync(

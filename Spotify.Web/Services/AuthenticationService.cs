@@ -5,6 +5,7 @@ using Spotify.Application.DTOs.Auth;
 using Spotify.Application.DTOs.ForgotPassword;
 using Spotify.Application.DTOs.License;
 using Spotify.Application.Interfaces;
+using Spotify.Domain.Entities.Content;
 using Spotify.Domain.Entities.Security;
 using Spotify.Domain.Entities.User;
 using Spotify.Domain.Enumerations;
@@ -118,14 +119,28 @@ public sealed class AuthenticationService : IAuthenticationService
         var defaultSubcriptionId = _context.Subscriptions.Where(s => s.Name == "Default")
             .Select(s => s.Id)
             .FirstOrDefault();
+
+        Author? author = null;
+        Guid userId = Guid.NewGuid();
+        if (request.IsAuthor)
+        {
+            author = new Author
+            {
+                Id = Guid.NewGuid(),
+                Name = userName,
+                ExternalAuthorId = null,
+                UserId = userId
+            };
+            _context.Authors.Add(author);
+        }
+
         var user = new ApplicationUser
         {
-            Id = Guid.NewGuid(),
+            Id = userId,
             Email = email,
             UserName = userName,
             SubscriptionId = defaultSubcriptionId,
-            SettingsId = settings.Id,
-            IsAuthor = request.IsAuthor
+            SettingsId = settings.Id
         };
 
         var createUserResult = await _userManager.CreateAsync(user, request.Password);
@@ -341,15 +356,22 @@ public sealed class AuthenticationService : IAuthenticationService
         }
 
         var roles = await _userManager.GetRolesAsync(user);
+        Author? author = null;
+        int followersCount = 0;
+        if(user.Author != null)
+        {
+            author = user.Author;
+            followersCount = author.Followers.Count;
+        }
 
         return MeResult.Success(
             new MeResponse(
                 user.Id,
                 user.UserName!,
                 user.Email!,
-                user.Followers.Count,
+                followersCount,
                 user.AuthorSubscriptions.Count,
-                user.IsAuthor));
+                author));
     }
 
     public async Task<LogoutResult> LogoutAsync(

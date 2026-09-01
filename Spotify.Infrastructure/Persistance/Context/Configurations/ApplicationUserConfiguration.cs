@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Spotify.Domain.Entities.Content;
 using Spotify.Domain.Entities.User;
 
 namespace Spotify.Infrastructure.Persistance.Context.Configurations;
@@ -23,9 +24,9 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
             .HasForeignKey(x => x.ApplicationUserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(x => x.AuthoredContent)
-            .WithOne(x => x.Author)
-            .HasForeignKey(x => x.AuthorId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Author)
+            .WithOne(x => x.User)
+            .HasForeignKey<Author>(x => x.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
