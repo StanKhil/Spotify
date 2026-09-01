@@ -21,5 +21,7 @@ namespace Spotify.Application.Interfaces
             string trackId,
             Guid userId,
             CancellationToken cancellationToken = default);
+
+        Task<GetLikedTracksResult> GetLikedTracksAsync(int maxPerPage, int page, Guid userId, CancellationToken cancellationToken = default);
     }
 }

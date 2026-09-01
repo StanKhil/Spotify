@@ -5,7 +5,7 @@ public sealed record AlbumResponse(
     string Name,
     string? Description,
     int DurationSeconds,
-    Guid CoverImageId,
+    Guid? CoverImageId,
     bool IsDraft,
     string? GenreId,
     DateTime CreatedAt);

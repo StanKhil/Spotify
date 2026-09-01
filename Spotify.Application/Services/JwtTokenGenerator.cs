@@ -50,4 +50,16 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             user.Id,
             user.UserName ?? string.Empty);
     }
+
+    public string GetUserIdFromToken(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        {
+            throw new InvalidOperationException("Invalid token or user ID claim.");
+        }
+        return userId.ToString();
+    }
 }

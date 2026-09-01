@@ -7,7 +7,6 @@ public class AudioItem
     public Guid Id { get; set; }
     public AudioProvider Provider { get; set; }
     public string? StorageKey { get; set; }
-    public string? ExternalContentId { get; set; }
     public string? ContentType { get; set; }
     public int? BitrateKbps { get; set; }
     public string? LicenseUrl { get; set; }

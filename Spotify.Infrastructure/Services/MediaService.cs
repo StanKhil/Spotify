@@ -45,7 +45,6 @@ public sealed class MediaService : IMediaService
             Id = Guid.NewGuid(),
             Provider = AudioProvider.LocalStorage,
             StorageKey = url,
-            ExternalContentId = null,
             ContentType = contentType,
             BitrateKbps = null,
             LicenseUrl = null,

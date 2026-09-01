@@ -1,4 +1,5 @@
 using Spotify.Domain.Entities.User;
+using Spotify.Domain.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,6 +12,10 @@ public abstract class AudioContent
     public string Name { get; set; } = null!;
     public int DurationSeconds { get; set; }
     public string? Description { get; set; }
+    public AudioProvider Provider { get; set; }
+
+    public string? ExternalContentId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? DeletedAt { get; set; }
     public bool IsForAdult { get; set; }

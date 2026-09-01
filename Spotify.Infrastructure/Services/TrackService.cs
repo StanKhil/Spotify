@@ -326,5 +326,5 @@ public sealed class TrackService : ITrackService
         track.Id, track.Name, track.Description, track.DurationSeconds,
         track.AlbumId ?? Guid.Empty, track.MoodId, track.GenreId, track.PlaysNumber,
         track.IsAdult, track.IsDraft, track.AudioItemId, track.ImageItemId,
-        track.TrackTags.Select(x => x.TagId).ToList(), track.CreatedAt);
+        track.TrackTags.Select(x => x.TagId).ToList(), track.CreatedAt, null);
 }

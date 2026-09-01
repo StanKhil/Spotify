@@ -81,6 +81,78 @@ namespace Spotify.Web.Controllers
             return Ok(album);
         }
 
+        [HttpGet("authors/search")]
+        public async Task<IActionResult> SearchAuthors(
+            [FromQuery] string query,
+            [FromQuery] int limit = 20,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest("Query is required.");
+            }
+
+            if (!IsValidLimit(limit))
+            {
+                return BadRequest("Limit must be between 1 and 200.");
+            }
+
+            var authors = await _jamendoService.SearchAuthorsAsync(
+                query,
+                limit,
+                cancellationToken);
+
+            return Ok(authors);
+        }
+
+        [HttpGet("authors/{authorId}")]
+        public async Task<IActionResult> GetAuthor(
+            string authorId,
+            CancellationToken cancellationToken)
+        {
+            var author = await _jamendoService.GetAuthorAsync(authorId, cancellationToken);
+
+            return author is null ? NotFound() : Ok(author);
+        }
+
+        [HttpGet("authors/{authorId}/tracks")]
+        public async Task<IActionResult> GetTracksByAuthor(
+            string authorId,
+            [FromQuery] int limit = 50,
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsValidLimit(limit))
+            {
+                return BadRequest("Limit must be between 1 and 200.");
+            }
+
+            var result = await _jamendoService.GetTracksByAuthorAsync(
+                authorId,
+                limit,
+                cancellationToken);
+
+            return result is null ? NotFound() : Ok(result);
+        }
+
+        [HttpGet("authors/{authorId}/albums")]
+        public async Task<IActionResult> GetAlbumsByAuthor(
+            string authorId,
+            [FromQuery] int limit = 50,
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsValidLimit(limit))
+            {
+                return BadRequest("Limit must be between 1 and 200.");
+            }
+
+            var result = await _jamendoService.GetAlbumsByAuthorAsync(
+                authorId,
+                limit,
+                cancellationToken);
+
+            return result is null ? NotFound() : Ok(result);
+        }
+
         [HttpGet("tracks/{trackId}/playback")]
         public async Task<IActionResult> GetPlayback(
             string trackId,
@@ -101,5 +173,7 @@ namespace Spotify.Web.Controllers
                 isExternalStream = true
             });
         }
+
+        private static bool IsValidLimit(int limit) => limit is >= 1 and <= 200;
     }
 }

@@ -5,7 +5,7 @@ public sealed record TrackResponse(
     string Name,
     string? Description,
     int DurationSeconds,
-    Guid AlbumId,
+    Guid? AlbumId,
     Guid? MoodId,
     string? GenreId,
     long PlaysNumber,
@@ -14,4 +14,5 @@ public sealed record TrackResponse(
     Guid? AudioItemId,
     Guid? ImageItemId,
     IReadOnlyCollection<string> TagIds,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? AudioUrl);

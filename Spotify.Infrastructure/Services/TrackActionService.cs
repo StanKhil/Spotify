@@ -12,13 +12,19 @@ public sealed class TrackActionService : ITrackActionService
 {
     private readonly ApplicationContext _context;
     private readonly IJamendoService _jamendoService;
+    private readonly IFromJamendoToLocalService _fromJamendoToLocalService;
+    private readonly IAudioUrlResolver _audioUrlResolver;
 
     public TrackActionService(
         ApplicationContext context,
-        IJamendoService jamendoService)
+        IJamendoService jamendoService,
+        IAudioUrlResolver audioUrlResolver,
+        IFromJamendoToLocalService fromJamendoToLocalService)
     {
         _context = context;
         _jamendoService = jamendoService;
+        _audioUrlResolver = audioUrlResolver;
+        _fromJamendoToLocalService = fromJamendoToLocalService;
     }
 
     public async Task<TrackActionResponse?> PlayAsync(
@@ -142,6 +148,76 @@ public sealed class TrackActionService : ITrackActionService
             false);
     }
 
+    public async Task<GetLikedTracksResult> GetLikedTracksAsync(
+    int maxPerPage,
+    int page,
+    Guid userId,
+    CancellationToken cancellationToken = default)
+    {
+        if (maxPerPage <= 0 || page <= 0)
+        {
+            return GetLikedTracksResult.Failure(
+                "Invalid pagination parameters.");
+        }
+
+        var likedTracksQuery = _context.Likes
+            .Where(l => l.ApplicationUserId == userId)
+            .Select(l => l.AuthorContent.Item)
+            .OfType<Track>()
+            .Where(t =>
+                t.DeletedAt == null &&
+                !t.IsDraft);
+
+        var totalLikedTracks = await likedTracksQuery
+            .CountAsync(cancellationToken);
+
+        var totalPages = (int)Math.Ceiling(
+            (double)totalLikedTracks / maxPerPage);
+
+        var tracks = await likedTracksQuery
+            .Include(t => t.AudioItem)
+            .Include(t => t.TrackTags)
+            .OrderByDescending(t => t.CreatedAt)
+            .Skip((page - 1) * maxPerPage)
+            .Take(maxPerPage)
+            .ToListAsync(cancellationToken);
+
+        var trackResponses = new List<TrackResponse>();
+
+        foreach (var track in tracks)
+        {
+            var audioUrl = await _audioUrlResolver.ResolveAsync(
+            track,
+            cancellationToken);
+
+            trackResponses.Add(new TrackResponse(
+                track.Id,
+                track.Name,
+                track.Description,
+                track.DurationSeconds,
+                track.AlbumId,
+                track.MoodId,
+                track.GenreId,
+                track.PlaysNumber,
+                track.IsAdult,
+                track.IsDraft,
+                track.AudioItemId,
+                track.ImageItemId,
+                track.TrackTags
+                    .Select(x => x.TagId)
+                    .ToList(),
+                track.CreatedAt,
+                audioUrl
+            ));
+        }
+
+        return GetLikedTracksResult.Success(
+            new TrackResponseCollection(
+                trackResponses,
+                totalLikedTracks,
+                totalPages));
+    }
+
     private async Task<Track?> GetOrCreateTrackAsync(
     string trackId,
     CancellationToken cancellationToken)
@@ -153,9 +229,9 @@ public sealed class TrackActionService : ITrackActionService
                 cancellationToken);
         }
 
-        if (IsJamendoTrackId(trackId))
+        if (_fromJamendoToLocalService.IsJamendoId(trackId))
         {
-            return await GetOrCreateJamendoTrackAsync(
+            return await _fromJamendoToLocalService.GetOrCreateJamendoTrackAsync(
                 trackId,
                 cancellationToken);
         }
@@ -176,72 +252,6 @@ public sealed class TrackActionService : ITrackActionService
                 cancellationToken);
     }
 
-    private async Task<Track?> GetOrCreateJamendoTrackAsync(
-        string jamendoTrackId,
-        CancellationToken cancellationToken)
-    {
-        var existingTrack = await _context.Tracks
-            .Include(x => x.AudioItem)
-            .Include(x => x.Authors)
-            .FirstOrDefaultAsync(
-                x => x.AudioItem != null &&
-                     x.AudioItem.Provider == AudioProvider.Jamendo &&
-                     x.AudioItem.ExternalContentId == jamendoTrackId &&
-                     x.DeletedAt == null,
-                cancellationToken);
-
-        if (existingTrack is not null)
-        {
-            return existingTrack;
-        }
-
-        var jamendoTrack = await _jamendoService.GetTrackAsync(
-            jamendoTrackId,
-            cancellationToken);
-
-        if (jamendoTrack is null)
-        {
-            return null;
-        }
-
-        var audioItem = new AudioItem
-        {
-            Id = Guid.NewGuid(),
-            Provider = AudioProvider.Jamendo,
-            ExternalContentId = jamendoTrack.Id,
-            ContentType = "audio/mpeg",
-            StorageKey = null,
-            LicenseUrl = null,
-            IsDownloadAllowed = false
-        };
-
-        var track = new Track
-        {
-            Id = Guid.NewGuid(),
-            Name = jamendoTrack.Name,
-            DurationSeconds = jamendoTrack.DurationSeconds,
-            AudioItem = audioItem,
-            IsDraft = false,
-            DeletedAt = null,
-            PlaysNumber = 0
-        };
-
-        var authorContent = new AuthorContent
-        {
-            Id = Guid.NewGuid(),
-            Item = track
-        };
-
-        track.Authors.Add(authorContent);
-
-        _context.Tracks.Add(track);
-
-        await _context.SaveChangesAsync(
-            cancellationToken);
-
-        return track;
-    }
-
     private async Task<bool> IsLikedAsync(
         Guid userId,
         Guid authorContentId,
@@ -252,11 +262,5 @@ public sealed class TrackActionService : ITrackActionService
                 x => x.ApplicationUserId == userId &&
                      x.AuthorContentId == authorContentId,
                 cancellationToken);
-    }
-
-    private static bool IsJamendoTrackId(string trackId)
-    {
-        return !string.IsNullOrWhiteSpace(trackId) &&
-               trackId.All(char.IsDigit);
     }
 }
