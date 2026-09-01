@@ -18,6 +18,7 @@ namespace Spotify.Infrastructure.Services;
 public sealed class AuthenticationService : IAuthenticationService
 {
     private const string DefaultRoleName = "User";
+    private const string AdminRoleName = "Admin";
     private static readonly TimeSpan PasswordResetCodeLifetime = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan GoogleRegistrationLifetime = TimeSpan.FromMinutes(10);
 
@@ -47,6 +48,22 @@ public sealed class AuthenticationService : IAuthenticationService
     public async Task<RegisterResult> RegisterAsync(
         RegisterRequest request,
         CancellationToken cancellationToken = default)
+    {
+        return await RegisterCoreAsync(request, DefaultRoleName, checkAuthorLicense: true, cancellationToken);
+    }
+
+    public async Task<RegisterResult> RegisterAdminAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return await RegisterCoreAsync(request, AdminRoleName, checkAuthorLicense: false, cancellationToken);
+    }
+
+    private async Task<RegisterResult> RegisterCoreAsync(
+        RegisterRequest request,
+        string roleName,
+        bool checkAuthorLicense,
+        CancellationToken cancellationToken)
     {
         var email = request.Email.Trim();
         var userName = request.UserName.Trim();
@@ -82,7 +99,9 @@ public sealed class AuthenticationService : IAuthenticationService
             return RegisterResult.Failure("Country or city was not found.");
         }
 
-        if (request.IsAuthor)
+        var isAuthor = checkAuthorLicense && request.IsAuthor;
+
+        if (isAuthor)
         {
             var license = await _context.Licenses
             .FirstOrDefaultAsync(x => x.UserEmail == email, cancellationToken);
@@ -93,12 +112,13 @@ public sealed class AuthenticationService : IAuthenticationService
             else if (license.UserEmail != email)
             {
                 return RegisterResult.Failure("The provided email does not match the license email.");
-            }else if(license.UserName != userName)
+            }
+            else if (license.UserName != userName)
             {
                 return RegisterResult.Failure("The provided user name does not match the license user name.");
             }
         }
-        
+
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
@@ -117,7 +137,7 @@ public sealed class AuthenticationService : IAuthenticationService
             UserName = userName,
             SubscriptionId = Guid.Parse("0334e250-c1b7-42a8-9f48-15c43ba55d35"),
             SettingsId = settings.Id,
-            IsAuthor = request.IsAuthor
+            IsAuthor = isAuthor
         };
 
         var createUserResult = await _userManager.CreateAsync(user, request.Password);
@@ -127,14 +147,17 @@ public sealed class AuthenticationService : IAuthenticationService
             return RegisterResult.Failure(createUserResult.Errors.Select(x => x.Description).ToArray());
         }
 
-        if (!await _roleManager.RoleExistsAsync(DefaultRoleName))
+        if (!await _roleManager.RoleExistsAsync(roleName))
         {
             var createRoleResult = await _roleManager.CreateAsync(new UserRole
             {
                 Id = Guid.NewGuid(),
-                Name = DefaultRoleName,
-                Description = "Default listener role",
-                CanRead = true
+                Name = roleName,
+                Description = roleName == AdminRoleName ? "Administrator role" : "Default listener role",
+                CanRead = true,
+                CanCreate = roleName == AdminRoleName,
+                CanUpdate = roleName == AdminRoleName,
+                CanDelete = roleName == AdminRoleName
             });
 
             if (!createRoleResult.Succeeded)
@@ -144,7 +167,7 @@ public sealed class AuthenticationService : IAuthenticationService
             }
         }
 
-        var addToRoleResult = await _userManager.AddToRoleAsync(user, DefaultRoleName);
+        var addToRoleResult = await _userManager.AddToRoleAsync(user, roleName);
         if (!addToRoleResult.Succeeded)
         {
             await transaction.RollbackAsync(cancellationToken);
@@ -171,6 +194,21 @@ public sealed class AuthenticationService : IAuthenticationService
         LoginRequest request,
         CancellationToken cancellationToken = default)
     {
+        return await LoginCoreAsync(request, requiredRole: null, cancellationToken);
+    }
+
+    public async Task<LoginResult> LoginAdminAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return await LoginCoreAsync(request, requiredRole: AdminRoleName, cancellationToken);
+    }
+
+    private async Task<LoginResult> LoginCoreAsync(
+        LoginRequest request,
+        string? requiredRole,
+        CancellationToken cancellationToken)
+    {
         var email = request.Email.Trim();
         var user = await _userManager.FindByEmailAsync(email);
 
@@ -188,6 +226,12 @@ public sealed class AuthenticationService : IAuthenticationService
         }
 
         var roles = await _userManager.GetRolesAsync(user);
+
+        if (requiredRole is not null && !roles.Contains(requiredRole))
+        {
+            return LoginResult.Failure("Access denied.");
+        }
+
         return LoginResult.Success(_jwtTokenGenerator.Create(user, roles));
     }
 
@@ -308,7 +352,7 @@ public sealed class AuthenticationService : IAuthenticationService
         if (license == null)
             return CheckAuthorCodeResult.Failure("No license found for the provided email.");
 
-        if(license.UserEmail != request.UserEmail)
+        if (license.UserEmail != request.UserEmail)
             return CheckAuthorCodeResult.Failure("The provided email does not match the license email.");
 
         return CheckAuthorCodeResult.Success();

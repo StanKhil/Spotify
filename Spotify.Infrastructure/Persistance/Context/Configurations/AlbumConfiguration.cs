@@ -9,10 +9,6 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
         public void Configure(EntityTypeBuilder<Album> builder)
         {
 
-            builder.HasOne(x => x.CoverImage)
-                .WithMany(x => x.Albums)
-                .HasForeignKey(x => x.CoverImageId)
-                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

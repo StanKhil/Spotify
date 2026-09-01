@@ -10,7 +10,15 @@ public interface IAuthenticationService
         RegisterRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<RegisterResult> RegisterAdminAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<LoginResult> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<LoginResult> LoginAdminAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default);
 

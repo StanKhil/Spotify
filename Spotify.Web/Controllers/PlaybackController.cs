@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.DTOs.Playback;
@@ -9,7 +10,7 @@ namespace Spotify.Web.Controllers;
 
 [ApiController]
 [Route("api/playback")]
-[Authorize]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class PlaybackController : ControllerBase
 {
     private readonly IPlaybackService _playbackService;
