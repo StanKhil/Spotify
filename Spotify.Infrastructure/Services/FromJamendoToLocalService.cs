@@ -51,7 +51,14 @@ namespace Spotify.Infrastructure.Services
                 IsDraft = false,
             };
 
+            var authorContent = new AuthorContent
+            {
+                Id = Guid.NewGuid(),
+                Item = album
+            };
+
             _context.Albums.Add(album);
+            _context.AuthorContents.Add(authorContent);
 
             await _context.SaveChangesAsync(cancellationToken);
 
@@ -160,6 +167,7 @@ namespace Spotify.Infrastructure.Services
                 Name = jamendoAuthor.Name,
                 ExternalAuthorId = jamendoAuthor.Id
             };
+
             _context.Authors.Add(author);
             await _context.SaveChangesAsync(cancellationToken);
             return author;

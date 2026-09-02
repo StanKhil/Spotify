@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.DTOs.Track;
 using Spotify.Application.Interfaces;
 using Spotify.Domain.Entities.User;
-using Spotify.Infrastructure.Services;
 
 namespace Spotify.Web.Controllers;
 

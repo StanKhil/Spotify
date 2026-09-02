@@ -11,18 +11,15 @@ namespace Spotify.Infrastructure.Services;
 public sealed class TrackActionService : ITrackActionService
 {
     private readonly ApplicationContext _context;
-    private readonly IJamendoService _jamendoService;
     private readonly IFromJamendoToLocalService _fromJamendoToLocalService;
     private readonly IAudioUrlResolver _audioUrlResolver;
 
     public TrackActionService(
         ApplicationContext context,
-        IJamendoService jamendoService,
         IAudioUrlResolver audioUrlResolver,
         IFromJamendoToLocalService fromJamendoToLocalService)
     {
         _context = context;
-        _jamendoService = jamendoService;
         _audioUrlResolver = audioUrlResolver;
         _fromJamendoToLocalService = fromJamendoToLocalService;
     }
