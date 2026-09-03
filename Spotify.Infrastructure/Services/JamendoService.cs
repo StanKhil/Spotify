@@ -14,10 +14,15 @@ namespace Spotify.Infrastructure.Services
         }
 
         public Task<IReadOnlyCollection<JamendoTrackDto>> SearchTracksAsync(
-            string query,
-            int limit = 20,
-            CancellationToken cancellationToken = default)
-            => _client.SearchTracksAsync(query, limit, cancellationToken);
+    string query,
+    int offset = 0,
+    int limit = 20,
+    CancellationToken cancellationToken = default)
+    => _client.SearchTracksAsync(
+        query,
+        offset,
+        limit,
+        cancellationToken);
 
         public Task<JamendoTrackDto?> GetTrackAsync(
             string trackId,

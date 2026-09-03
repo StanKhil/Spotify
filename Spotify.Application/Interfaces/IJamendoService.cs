@@ -5,9 +5,10 @@ namespace Spotify.Application.Interfaces
     public interface IJamendoService
     {
         Task<IReadOnlyCollection<JamendoTrackDto>> SearchTracksAsync(
-            string query,
-            int limit = 20,
-            CancellationToken cancellationToken = default);
+    string query,
+    int offset = 0,
+    int limit = 20,
+    CancellationToken cancellationToken = default);
 
         Task<JamendoTrackDto?> GetTrackAsync(
             string trackId,

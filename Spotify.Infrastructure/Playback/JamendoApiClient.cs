@@ -19,9 +19,10 @@ public sealed class JamendoApiClient
     }
 
     public async Task<IReadOnlyCollection<JamendoTrackDto>> SearchTracksAsync(
-        string query,
-        int limit = 20,
-        CancellationToken cancellationToken = default)
+    string query,
+    int offset = 0,
+    int limit = 20,
+    CancellationToken cancellationToken = default)
     {
         EnsureConfigured();
 
@@ -29,6 +30,11 @@ public sealed class JamendoApiClient
             throw new ArgumentException(
                 "Search query cannot be empty.",
                 nameof(query));
+
+        if (offset < 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(offset),
+                "Offset cannot be negative.");
 
         if (limit <= 0 || limit > 200)
             throw new ArgumentOutOfRangeException(
@@ -41,6 +47,7 @@ public sealed class JamendoApiClient
             ["format"] = "json",
             ["search"] = query,
             ["audioformat"] = _options.AudioFormat,
+            ["offset"] = offset.ToString(),
             ["limit"] = limit.ToString()
         };
 

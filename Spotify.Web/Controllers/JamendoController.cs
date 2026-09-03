@@ -16,17 +16,29 @@ namespace Spotify.Web.Controllers
 
         [HttpGet("tracks/search")]
         public async Task<IActionResult> SearchTracks(
-            [FromQuery] string query,
-            [FromQuery] int limit = 20,
-            CancellationToken cancellationToken = default)
+    [FromQuery] string query,
+    [FromQuery] int offset = 0,
+    [FromQuery] int limit = 20,
+    CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
                 return BadRequest("Query is required.");
             }
 
+            if (offset < 0)
+            {
+                return BadRequest("Offset cannot be negative.");
+            }
+
+            if (limit <= 0 || limit > 200)
+            {
+                return BadRequest("Limit must be between 1 and 200.");
+            }
+
             var tracks = await _jamendoService.SearchTracksAsync(
                 query,
+                offset,
                 limit,
                 cancellationToken);
 
