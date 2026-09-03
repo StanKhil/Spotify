@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Spotify.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,7 +20,6 @@ namespace Spotify.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Provider = table.Column<int>(type: "int", nullable: false),
                     StorageKey = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true),
-                    ExternalContentId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
                     ContentType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     BitrateKbps = table.Column<int>(type: "int", nullable: true),
                     LicenseUrl = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
@@ -43,18 +42,6 @@ namespace Spotify.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Countries", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "CoverImages",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ImageList = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CoverImages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -120,6 +107,20 @@ namespace Spotify.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Podcasts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RevokedTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Jti = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RevokedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RevokedTokens", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -254,7 +255,6 @@ namespace Spotify.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SubscriptionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    IsAuthor = table.Column<bool>(type: "bit", nullable: false),
                     SettingsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -329,28 +329,23 @@ namespace Spotify.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AuthorSubscriptions",
+                name: "Authors",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AuthorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    ExternalAuthorId = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AuthorSubscriptions", x => x.Id);
+                    table.PrimaryKey("PK_Authors", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AuthorSubscriptions_ApplicationUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
+                        name: "FK_Authors_ApplicationUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "ApplicationUsers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_AuthorSubscriptions_ApplicationUsers_AuthorId",
-                        column: x => x.AuthorId,
-                        principalTable: "ApplicationUsers",
-                        principalColumn: "Id");
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -451,6 +446,31 @@ namespace Spotify.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AuthorSubscriptions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AuthorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuthorSubscriptions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AuthorSubscriptions_ApplicationUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "ApplicationUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AuthorSubscriptions_Authors_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "Authors",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AudioContent",
                 columns: table => new
                 {
@@ -458,6 +478,8 @@ namespace Spotify.Infrastructure.Migrations
                     Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     DurationSeconds = table.Column<int>(type: "int", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    Provider = table.Column<int>(type: "int", nullable: false),
+                    ExternalContentId = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsForAdult = table.Column<bool>(type: "bit", nullable: false),
@@ -466,7 +488,6 @@ namespace Spotify.Infrastructure.Migrations
                     GenreId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Discriminator = table.Column<string>(type: "nvarchar(13)", maxLength: 13, nullable: false),
                     PodcastId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CoverImageId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     IsDraft = table.Column<bool>(type: "bit", nullable: true),
                     AuthorContentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     AlbumId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -489,12 +510,6 @@ namespace Spotify.Infrastructure.Migrations
                         principalTable: "AudioItems",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_AudioContent_CoverImages_CoverImageId",
-                        column: x => x.CoverImageId,
-                        principalTable: "CoverImages",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_AudioContent_Genres_GenreId",
                         column: x => x.GenreId,
@@ -600,17 +615,17 @@ namespace Spotify.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_AuthorContentAuthors", x => new { x.AuthorContentId, x.AuthorId });
                     table.ForeignKey(
-                        name: "FK_AuthorContentAuthors_ApplicationUsers_AuthorId",
-                        column: x => x.AuthorId,
-                        principalTable: "ApplicationUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_AuthorContentAuthors_AuthorContents_AuthorContentId",
                         column: x => x.AuthorContentId,
                         principalTable: "AuthorContents",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AuthorContentAuthors_Authors_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "Authors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -747,8 +762,8 @@ namespace Spotify.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "ApplicationUsers",
-                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "IsAuthor", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "SettingsId", "SubscriptionId", "TwoFactorEnabled", "UserName" },
-                values: new object[] { new Guid("66666666-6666-6666-6666-666666666666"), 0, "66666666-6666-6666-6666-666666666666", "admin@example.com", true, true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", null, null, false, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), new Guid("44444444-4444-4444-4444-444444444444"), false, "admin" });
+                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "SettingsId", "SubscriptionId", "TwoFactorEnabled", "UserName" },
+                values: new object[] { new Guid("66666666-6666-6666-6666-666666666666"), 0, "66666666-6666-6666-6666-666666666666", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", null, null, false, null, new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), new Guid("44444444-4444-4444-4444-444444444444"), false, "admin" });
 
             migrationBuilder.InsertData(
                 table: "Cities",
@@ -824,6 +839,11 @@ namespace Spotify.Infrastructure.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "Authors",
+                columns: new[] { "Id", "ExternalAuthorId", "Name", "UserId" },
+                values: new object[] { new Guid("77777777-7777-7777-7777-777777777777"), null, "Admin Author", new Guid("66666666-6666-6666-6666-666666666666") });
+
+            migrationBuilder.InsertData(
                 table: "UserProfiles",
                 columns: new[] { "UserId", "Birthdate", "CityId", "CountryId", "DeletedAt", "IsAdult", "RegisteredAt" },
                 values: new object[] { new Guid("66666666-6666-6666-6666-666666666666"), new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), new Guid("5758bf18-11e6-44a6-ae60-1d8ab273eb49"), new Guid("1084aaa8-e8c0-42eb-8153-4e0d79955220"), null, true, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) });
@@ -881,11 +901,6 @@ namespace Spotify.Infrastructure.Migrations
                 column: "AuthorContentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AudioContent_CoverImageId",
-                table: "AudioContent",
-                column: "CoverImageId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AudioContent_GenreId",
                 table: "AudioContent",
                 column: "GenreId");
@@ -906,8 +921,8 @@ namespace Spotify.Infrastructure.Migrations
                 column: "PodcastId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AudioItems_Provider_ExternalContentId",
-                table: "AudioItems",
+                name: "IX_AudioContent_Provider_ExternalContentId",
+                table: "AudioContent",
                 columns: new[] { "Provider", "ExternalContentId" },
                 unique: true,
                 filter: "[ExternalContentId] IS NOT NULL");
@@ -927,6 +942,20 @@ namespace Spotify.Infrastructure.Migrations
                 name: "IX_AuthorContents_ItemId",
                 table: "AuthorContents",
                 column: "ItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Authors_ExternalAuthorId",
+                table: "Authors",
+                column: "ExternalAuthorId",
+                unique: true,
+                filter: "[ExternalAuthorId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Authors_UserId",
+                table: "Authors",
+                column: "UserId",
+                unique: true,
+                filter: "[UserId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuthorSubscriptions_ApplicationUserId_AuthorId",
@@ -995,6 +1024,12 @@ namespace Spotify.Infrastructure.Migrations
                 name: "IX_PlaylistTracks_TrackId",
                 table: "PlaylistTracks",
                 column: "TrackId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RevokedTokens_Jti",
+                table: "RevokedTokens",
+                column: "Jti",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
@@ -1082,6 +1117,9 @@ namespace Spotify.Infrastructure.Migrations
                 name: "Plugins");
 
             migrationBuilder.DropTable(
+                name: "RevokedTokens");
+
+            migrationBuilder.DropTable(
                 name: "SystemSettings");
 
             migrationBuilder.DropTable(
@@ -1095,6 +1133,9 @@ namespace Spotify.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserRoles");
+
+            migrationBuilder.DropTable(
+                name: "Authors");
 
             migrationBuilder.DropTable(
                 name: "Playlists");
@@ -1128,9 +1169,6 @@ namespace Spotify.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AudioContent");
-
-            migrationBuilder.DropTable(
-                name: "CoverImages");
 
             migrationBuilder.DropTable(
                 name: "Genres");

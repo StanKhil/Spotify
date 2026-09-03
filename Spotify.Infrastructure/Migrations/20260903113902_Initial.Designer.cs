@@ -12,8 +12,8 @@ using Spotify.Infrastructure.Persistance.Context;
 namespace Spotify.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20260901112836_AuthorEntityAdded")]
-    partial class AuthorEntityAdded
+    [Migration("20260903113902_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -336,21 +336,6 @@ namespace Spotify.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("AuthorSubscriptions", (string)null);
-                });
-
-            modelBuilder.Entity("Spotify.Domain.Entities.Content.CoverImage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ImageList")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CoverImages");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.Genre", b =>
@@ -1484,13 +1469,8 @@ namespace Spotify.Infrastructure.Migrations
                 {
                     b.HasBaseType("Spotify.Domain.Entities.Content.AudioContent");
 
-                    b.Property<Guid?>("CoverImageId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("IsDraft")
                         .HasColumnType("bit");
-
-                    b.HasIndex("CoverImageId");
 
                     b.HasDiscriminator().HasValue("Album");
                 });
@@ -1856,16 +1836,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.Navigation("Podcast");
                 });
 
-            modelBuilder.Entity("Spotify.Domain.Entities.Content.Album", b =>
-                {
-                    b.HasOne("Spotify.Domain.Entities.Content.CoverImage", "CoverImage")
-                        .WithMany("Albums")
-                        .HasForeignKey("CoverImageId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CoverImage");
-                });
-
             modelBuilder.Entity("Spotify.Domain.Entities.Content.Audiobook", b =>
                 {
                     b.HasOne("Spotify.Domain.Entities.Content.AuthorContent", "AuthorContent")
@@ -1909,11 +1879,6 @@ namespace Spotify.Infrastructure.Migrations
             modelBuilder.Entity("Spotify.Domain.Entities.Content.AuthorContent", b =>
                 {
                     b.Navigation("Authors");
-                });
-
-            modelBuilder.Entity("Spotify.Domain.Entities.Content.CoverImage", b =>
-                {
-                    b.Navigation("Albums");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.Playlist", b =>
