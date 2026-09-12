@@ -5,10 +5,10 @@ namespace Spotify.Application.Interfaces
     public interface IJamendoService
     {
         Task<IReadOnlyCollection<JamendoTrackDto>> SearchTracksAsync(
-    string query,
-    int offset = 0,
-    int limit = 20,
-    CancellationToken cancellationToken = default);
+            string query,
+            int maxPerPage = 20,
+            int page = 1,
+            CancellationToken cancellationToken = default);
 
         Task<JamendoTrackDto?> GetTrackAsync(
             string trackId,
@@ -20,7 +20,8 @@ namespace Spotify.Application.Interfaces
 
         Task<IReadOnlyCollection<JamendoAlbumDto>> SearchAlbumsAsync(
             string query,
-            int limit = 20,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default);
 
         Task<JamendoAlbumTrackDto?> GetAlbumAsync(
@@ -33,17 +34,20 @@ namespace Spotify.Application.Interfaces
 
         Task<IReadOnlyCollection<JamendoAuthorDto>> SearchAuthorsAsync(
             string query,
-            int limit = 20,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default);
 
         Task<JamendoAuthorTracksDto?> GetTracksByAuthorAsync(
             string authorId,
-            int limit = 50,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default);
 
         Task<JamendoAuthorAlbumsDto?> GetAlbumsByAuthorAsync(
             string authorId,
-            int limit = 50,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default);
     }
 }

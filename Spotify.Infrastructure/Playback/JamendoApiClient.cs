@@ -20,8 +20,8 @@ public sealed class JamendoApiClient
 
     public async Task<IReadOnlyCollection<JamendoTrackDto>> SearchTracksAsync(
     string query,
-    int offset = 0,
-    int limit = 20,
+    int maxPerPage = 20,
+    int page = 1,
     CancellationToken cancellationToken = default)
     {
         EnsureConfigured();
@@ -31,15 +31,15 @@ public sealed class JamendoApiClient
                 "Search query cannot be empty.",
                 nameof(query));
 
-        if (offset < 0)
+        if (page < 1)
             throw new ArgumentOutOfRangeException(
-                nameof(offset),
-                "Offset cannot be negative.");
+                nameof(page),
+                "Page must be a positive integer.");
 
-        if (limit <= 0 || limit > 200)
+        if (maxPerPage <= 0 || maxPerPage > 200)
             throw new ArgumentOutOfRangeException(
-                nameof(limit),
-                "Limit must be between 1 and 200.");
+                nameof(maxPerPage),
+                "Max per page must be between 1 and 200.");
 
         var parameters = new Dictionary<string, string?>
         {
@@ -47,8 +47,8 @@ public sealed class JamendoApiClient
             ["format"] = "json",
             ["search"] = query,
             ["audioformat"] = _options.AudioFormat,
-            ["offset"] = offset.ToString(),
-            ["limit"] = limit.ToString()
+            ["offset"] = ((page - 1) * maxPerPage).ToString(),
+            ["limit"] = maxPerPage.ToString()
         };
 
         var requestUri = QueryHelpers.AddQueryString(
@@ -148,7 +148,8 @@ public sealed class JamendoApiClient
 
     public async Task<IReadOnlyCollection<JamendoAlbumDto>> SearchAlbumsAsync(
         string query,
-        int limit = 20,
+        int maxPerPage = 20,
+        int page = 1,
         CancellationToken cancellationToken = default)
     {
         EnsureConfigured();
@@ -158,17 +159,23 @@ public sealed class JamendoApiClient
                 "Search query cannot be empty.",
                 nameof(query));
 
-        if (limit <= 0 || limit > 200)
+        if (maxPerPage <= 0 || maxPerPage > 200)
             throw new ArgumentOutOfRangeException(
-                nameof(limit),
-                "Limit must be between 1 and 200.");
+                nameof(maxPerPage),
+                "Max per page must be between 1 and 200.");
+
+        if (page < 1)
+            throw new ArgumentOutOfRangeException(
+                nameof(page),
+                "Page must be a positive integer.");
 
         var parameters = new Dictionary<string, string?>
         {
             ["client_id"] = _options.ClientId,
             ["format"] = "json",
             ["search"] = query,
-            ["limit"] = limit.ToString()
+            ["limit"] = maxPerPage.ToString(),
+            ["offset"] = ((page - 1) * maxPerPage).ToString()
         };
 
         var requestUri = QueryHelpers.AddQueryString(
@@ -279,7 +286,8 @@ public sealed class JamendoApiClient
 
     public async Task<IReadOnlyCollection<JamendoAuthorDto>> SearchAuthorsAsync(
         string query,
-        int limit = 20,
+        int maxPerPage = 20,
+        int page = 1,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -287,13 +295,21 @@ public sealed class JamendoApiClient
             throw new ArgumentException("Search query cannot be empty.", nameof(query));
         }
 
-        ValidateLimit(limit);
+        ValidateLimit(maxPerPage);
+        if (page < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(page),
+                "Page must be a positive integer.");
+        }
+
         var results = await GetResultsAsync(
             "artists/",
             new Dictionary<string, string?>
             {
                 ["namesearch"] = query,
-                ["limit"] = limit.ToString(CultureInfo.InvariantCulture)
+                ["limit"] = maxPerPage.ToString(),
+                ["offset"] = ((page - 1) * maxPerPage).ToString()
             },
             cancellationToken);
 
@@ -302,7 +318,7 @@ public sealed class JamendoApiClient
 
     public async Task<JamendoAuthorTracksDto?> GetTracksByAuthorAsync(
         string authorId,
-        int limit = 50,
+        int maxPerPage = 20, int page = 1,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(authorId))
@@ -310,7 +326,14 @@ public sealed class JamendoApiClient
             return null;
         }
 
-        ValidateLimit(limit);
+        ValidateLimit(maxPerPage);
+        if (page < 1)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(page),
+                "Page must be a positive integer.");
+        }
+
         var results = await GetResultsAsync(
             "artists/tracks/",
             new Dictionary<string, string?>
@@ -318,7 +341,8 @@ public sealed class JamendoApiClient
                 ["id"] = authorId,
                 ["track_type"] = "single albumtrack",
                 ["audioformat"] = _options.AudioFormat,
-                ["limit"] = limit.ToString(CultureInfo.InvariantCulture)
+                ["limit"] = maxPerPage.ToString(),
+                ["offset"] = ((page - 1) * maxPerPage).ToString()
             },
             cancellationToken);
 
@@ -338,7 +362,8 @@ public sealed class JamendoApiClient
 
     public async Task<JamendoAuthorAlbumsDto?> GetAlbumsByAuthorAsync(
         string authorId,
-        int limit = 50,
+        int maxPerPage = 20,
+        int page = 1,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(authorId))
@@ -346,13 +371,19 @@ public sealed class JamendoApiClient
             return null;
         }
 
-        ValidateLimit(limit);
+        ValidateLimit(maxPerPage);
+        if(page < 1)
+            throw new ArgumentOutOfRangeException(
+                nameof(page),
+                "Page must be a positive integer.");
+
         var results = await GetResultsAsync(
             "artists/albums/",
             new Dictionary<string, string?>
             {
                 ["id"] = authorId,
-                ["limit"] = limit.ToString(CultureInfo.InvariantCulture)
+                ["limit"] = maxPerPage.ToString(),
+                ["offset"] = ((page - 11) * maxPerPage).ToString()
             },
             cancellationToken);
 

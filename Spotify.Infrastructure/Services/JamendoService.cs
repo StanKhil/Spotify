@@ -14,14 +14,14 @@ namespace Spotify.Infrastructure.Services
         }
 
         public Task<IReadOnlyCollection<JamendoTrackDto>> SearchTracksAsync(
-    string query,
-    int offset = 0,
-    int limit = 20,
-    CancellationToken cancellationToken = default)
+            string query,
+            int maxPerPage = 20,
+            int page = 1,   
+            CancellationToken cancellationToken = default)
     => _client.SearchTracksAsync(
         query,
-        offset,
-        limit,
+        maxPerPage,
+        page,
         cancellationToken);
 
         public Task<JamendoTrackDto?> GetTrackAsync(
@@ -36,9 +36,10 @@ namespace Spotify.Infrastructure.Services
 
         public Task<IReadOnlyCollection<JamendoAlbumDto>> SearchAlbumsAsync(
             string query,
-            int limit = 20,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default)
-            => _client.SearchAlbumsAsync(query, limit, cancellationToken);
+            => _client.SearchAlbumsAsync(query, maxPerPage, page, cancellationToken);
 
         public Task<JamendoAlbumTrackDto?> GetAlbumAsync(
             string albumId,
@@ -52,20 +53,23 @@ namespace Spotify.Infrastructure.Services
 
         public Task<IReadOnlyCollection<JamendoAuthorDto>> SearchAuthorsAsync(
             string query,
-            int limit = 20,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default)
-            => _client.SearchAuthorsAsync(query, limit, cancellationToken);
+            => _client.SearchAuthorsAsync(query, maxPerPage, page, cancellationToken);
 
         public Task<JamendoAuthorTracksDto?> GetTracksByAuthorAsync(
             string authorId,
-            int limit = 50,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default)
-            => _client.GetTracksByAuthorAsync(authorId, limit, cancellationToken);
+            => _client.GetTracksByAuthorAsync(authorId, maxPerPage, page, cancellationToken);
 
         public Task<JamendoAuthorAlbumsDto?> GetAlbumsByAuthorAsync(
             string authorId,
-            int limit = 50,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default)
-            => _client.GetAlbumsByAuthorAsync(authorId, limit, cancellationToken);
+            => _client.GetAlbumsByAuthorAsync(authorId, maxPerPage, page, cancellationToken);
     }
 }

@@ -14,32 +14,33 @@ namespace Spotify.Web.Controllers
             _jamendoService = jamendoService;
         }
 
-        [HttpGet("tracks/search")]
+        [HttpGet("tracks/search/{maxPerPage}/{page}")]
         public async Task<IActionResult> SearchTracks(
-    [FromQuery] string query,
-    [FromQuery] int offset = 0,
-    [FromQuery] int limit = 20,
-    CancellationToken cancellationToken = default)
+            [FromQuery] string query,
+            int maxPerPage = 20,
+            int page = 1,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
                 return BadRequest("Query is required.");
             }
 
-            if (offset < 0)
+            if (page < 1)
             {
-                return BadRequest("Offset cannot be negative.");
+                return BadRequest("Page must be a positive integer.");
             }
 
-            if (limit <= 0 || limit > 200)
+            if (maxPerPage < 1)
             {
-                return BadRequest("Limit must be between 1 and 200.");
+                return BadRequest("MaxPerPage must be a positive integer.");
             }
 
-            var tracks = await _jamendoService.SearchTracksAsync(
+
+                var tracks = await _jamendoService.SearchTracksAsync(
                 query,
-                offset,
-                limit,
+                maxPerPage,
+                page,
                 cancellationToken);
 
             return Ok(tracks);
@@ -62,15 +63,17 @@ namespace Spotify.Web.Controllers
             return Ok(track);
         }
 
-        [HttpGet("albums/search")]
+        [HttpGet("albums/search/{maxPerPage}/{page}")]
         public async Task<IActionResult> SearchAlbums(
             [FromQuery] string query,
-            [FromQuery] int limit = 20,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default)
         {
             var albums = await _jamendoService.SearchAlbumsAsync(
                 query,
-                limit,
+                maxPerPage,
+                page,
                 cancellationToken);
 
             return Ok(albums);
@@ -93,10 +96,11 @@ namespace Spotify.Web.Controllers
             return Ok(album);
         }
 
-        [HttpGet("authors/search")]
+        [HttpGet("authors/search/{maxPerPage}/{page}")]
         public async Task<IActionResult> SearchAuthors(
             [FromQuery] string query,
-            [FromQuery] int limit = 20,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -104,14 +108,15 @@ namespace Spotify.Web.Controllers
                 return BadRequest("Query is required.");
             }
 
-            if (!IsValidLimit(limit))
+            if (!IsValidLimit(maxPerPage))
             {
                 return BadRequest("Limit must be between 1 and 200.");
             }
 
             var authors = await _jamendoService.SearchAuthorsAsync(
                 query,
-                limit,
+                maxPerPage,
+                page,
                 cancellationToken);
 
             return Ok(authors);
@@ -127,39 +132,43 @@ namespace Spotify.Web.Controllers
             return author is null ? NotFound() : Ok(author);
         }
 
-        [HttpGet("authors/{authorId}/tracks")]
+        [HttpGet("authors/{authorId}/tracks/{maxPerPage}/{page}")]
         public async Task<IActionResult> GetTracksByAuthor(
             string authorId,
-            [FromQuery] int limit = 50,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default)
         {
-            if (!IsValidLimit(limit))
+            if (!IsValidLimit(maxPerPage))
             {
                 return BadRequest("Limit must be between 1 and 200.");
             }
 
             var result = await _jamendoService.GetTracksByAuthorAsync(
                 authorId,
-                limit,
+                maxPerPage,
+                page,
                 cancellationToken);
 
             return result is null ? NotFound() : Ok(result);
         }
 
-        [HttpGet("authors/{authorId}/albums")]
+        [HttpGet("authors/{authorId}/albums/{maxPerPage}/{page}")]
         public async Task<IActionResult> GetAlbumsByAuthor(
             string authorId,
-            [FromQuery] int limit = 50,
+            int maxPerPage = 20,
+            int page = 1,
             CancellationToken cancellationToken = default)
         {
-            if (!IsValidLimit(limit))
+            if (!IsValidLimit(maxPerPage))
             {
                 return BadRequest("Limit must be between 1 and 200.");
             }
 
             var result = await _jamendoService.GetAlbumsByAuthorAsync(
                 authorId,
-                limit,
+                maxPerPage,
+                page,
                 cancellationToken);
 
             return result is null ? NotFound() : Ok(result);
