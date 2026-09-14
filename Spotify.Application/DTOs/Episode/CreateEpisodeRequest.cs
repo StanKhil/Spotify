@@ -11,8 +11,9 @@ public sealed class CreateEpisodeRequest
     [MaxLength(2000)]
     public string? Description { get; init; }
 
-    [Required]
-    public Guid PodcastId { get; init; }
+    public Guid? PodcastId { get; init; }
+
+    public Guid? AudiobookId { get; init; }
 
     [Required]
     public Guid AudioItemId { get; init; }

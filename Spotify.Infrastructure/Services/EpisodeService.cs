@@ -16,14 +16,25 @@ public sealed class EpisodeService : IEpisodeService
     }
 
     public async Task<IReadOnlyCollection<EpisodeResponse>> GetEpisodesAsync(
-        Guid podcastId, CancellationToken cancellationToken = default)
+        Guid? podcastId, Guid? audiobookId, CancellationToken cancellationToken = default)
     {
-        return await _context.Episodes
-            .Where(x => x.PodcastId == podcastId && x.DeletedAt == null)
+        var query = _context.Episodes.Where(x => x.DeletedAt == null);
+
+        if (podcastId is Guid pid)
+        {
+            query = query.Where(x => x.PodcastId == pid);
+        }
+
+        if (audiobookId is Guid aid)
+        {
+            query = query.Where(x => x.AudiobookId == aid);
+        }
+
+        return await query
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new EpisodeResponse(
                 x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.PodcastId, x.AudioItemId, x.ImageItemId, x.CreatedAt))
+                x.PodcastId, x.AudiobookId, x.AudioItemId, x.ImageItemId, x.CreatedAt))
             .ToListAsync(cancellationToken);
     }
 
@@ -34,16 +45,33 @@ public sealed class EpisodeService : IEpisodeService
             .Where(x => x.Id == id && x.DeletedAt == null)
             .Select(x => new EpisodeResponse(
                 x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.PodcastId, x.AudioItemId, x.ImageItemId, x.CreatedAt))
+                x.PodcastId, x.AudiobookId, x.AudioItemId, x.ImageItemId, x.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<CreateEpisodeResult> CreateEpisodeAsync(
         CreateEpisodeRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await _context.Podcasts.AnyAsync(x => x.Id == request.PodcastId, cancellationToken))
+        if (request.PodcastId is null && request.AudiobookId is null)
+        {
+            return CreateEpisodeResult.Failure("Either PodcastId or AudiobookId must be specified.");
+        }
+
+        if (request.PodcastId is not null && request.AudiobookId is not null)
+        {
+            return CreateEpisodeResult.Failure("Only one of PodcastId or AudiobookId can be specified.");
+        }
+
+        if (request.PodcastId is Guid podcastId &&
+            !await _context.Podcasts.AnyAsync(x => x.Id == podcastId, cancellationToken))
         {
             return CreateEpisodeResult.Failure("The specified podcast was not found.");
+        }
+
+        if (request.AudiobookId is Guid audiobookId &&
+            !await _context.Audiobooks.AnyAsync(x => x.Id == audiobookId, cancellationToken))
+        {
+            return CreateEpisodeResult.Failure("The specified audiobook was not found.");
         }
 
         if (!await _context.AudioItems.AnyAsync(x => x.Id == request.AudioItemId, cancellationToken))
@@ -64,6 +92,7 @@ public sealed class EpisodeService : IEpisodeService
             Description = request.Description?.Trim(),
             DurationSeconds = 0,
             PodcastId = request.PodcastId,
+            AudiobookId = request.AudiobookId,
             AudioItemId = request.AudioItemId,
             ImageItemId = request.ImageItemId,
             CreatedAt = DateTime.UtcNow
@@ -74,7 +103,7 @@ public sealed class EpisodeService : IEpisodeService
 
         return CreateEpisodeResult.Success(new EpisodeResponse(
             episode.Id, episode.Name, episode.Description, episode.DurationSeconds,
-            episode.PodcastId, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
+            episode.PodcastId, episode.AudiobookId, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
     }
 
     public async Task<UpdateEpisodeResult> EditEpisodeAsync(
@@ -102,7 +131,7 @@ public sealed class EpisodeService : IEpisodeService
 
         return UpdateEpisodeResult.Success(new EpisodeResponse(
             episode.Id, episode.Name, episode.Description, episode.DurationSeconds,
-            episode.PodcastId, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
+            episode.PodcastId, episode.AudiobookId, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
     }
 
     public async Task<DeleteEpisodeResult> DeleteEpisodeAsync(

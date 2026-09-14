@@ -10,5 +10,6 @@ namespace Spotify.Domain.Entities.Content
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
         public ICollection<Episode> Episodes { get; set; } = [];
+        public ICollection<PodcastAuthor> Authors { get; set; } = [];
     }
 }

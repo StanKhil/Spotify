@@ -42,6 +42,54 @@ public sealed class TagService : ITagService
         return CreateTagResult.Success(new TagResponse(tag.Id));
     }
 
+    public async Task<UpdateTagResult> EditTagAsync(
+        string id,
+        UpdateTagRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var newId = request.NewId.Trim();
+
+        var tag = await _context.Tags.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (tag is null)
+        {
+            return UpdateTagResult.Failure("Tag was not found");
+        }
+
+        if (newId == id)
+        {
+            return UpdateTagResult.Success(new TagResponse(tag.Id));
+        }
+
+        if (await _context.Tags.AnyAsync(x => x.Id == newId, cancellationToken))
+        {
+            return UpdateTagResult.Failure("A tag with this name already exists");
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        var newTag = new Domain.Entities.Content.Tag { Id = newId };
+        _context.Tags.Add(newTag);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var affectedTrackTags = await _context.TrackTags
+            .Where(x => x.TagId == id)
+            .ToListAsync(cancellationToken);
+
+        foreach (var trackTag in affectedTrackTags)
+        {
+            trackTag.TagId = newId;
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _context.Tags.Remove(tag);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return UpdateTagResult.Success(new TagResponse(newTag.Id));
+    }
+
     public async Task<DeleteTagResult> DeleteTagAsync(
         string id,
         CancellationToken cancellationToken = default)

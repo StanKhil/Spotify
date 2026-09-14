@@ -105,7 +105,7 @@ public sealed class AudiobookService : IAudiobookService
     }
 
     public async Task<DeleteAudiobookResult> DeleteAudiobookAsync(
-        Guid id, CancellationToken cancellationToken = default)
+    Guid id, CancellationToken cancellationToken = default)
     {
         var audiobook = await _context.Audiobooks
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
@@ -113,6 +113,14 @@ public sealed class AudiobookService : IAudiobookService
         if (audiobook is null)
         {
             return DeleteAudiobookResult.Failure("Audiobook was not found.");
+        }
+
+        var hasEpisodes = await _context.Episodes
+            .AnyAsync(x => x.AudiobookId == id && x.DeletedAt == null, cancellationToken);
+
+        if (hasEpisodes)
+        {
+            return DeleteAudiobookResult.Failure("Cannot delete an audiobook that still has chapters.");
         }
 
         audiobook.DeletedAt = DateTime.UtcNow;

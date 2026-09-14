@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.DTOs.Auth;
 using Spotify.Application.Interfaces;
 using ApplicationAuthenticationService = Spotify.Application.Interfaces.IAuthenticationService;
@@ -17,6 +19,7 @@ public sealed class AdminAuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ProducesResponseType<RegisterResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RegisterResponse>> Register(

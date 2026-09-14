@@ -46,6 +46,27 @@ public sealed class TagController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, result.Tag);
     }
 
+    [HttpPut("{id}")]
+    public async Task<ActionResult<TagResponse>> EditTag(
+        string id,
+        [FromBody] UpdateTagRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _tagService.EditTagAsync(id, request, cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
+            return ValidationProblem(ModelState);
+        }
+
+        return Ok(result.Tag);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTag(
         string id,

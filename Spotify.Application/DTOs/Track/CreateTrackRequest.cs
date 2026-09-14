@@ -28,4 +28,6 @@ public sealed class CreateTrackRequest
     public bool IsDraft { get; init; } = true;
 
     public IReadOnlyCollection<string> TagIds { get; init; } = [];
+
+    public IReadOnlyCollection<Guid> AuthorIds { get; init; } = [];
 }

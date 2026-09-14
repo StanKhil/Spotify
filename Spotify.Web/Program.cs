@@ -14,11 +14,12 @@ using System.Text;
 using Spotify.Domain.Entities.User;
 using Spotify.Domain.Entities.Security;
 
+
 namespace Spotify
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,7 @@ namespace Spotify
             // Database
             builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalDatabase")));
             builder.Services.AddIdentity<ApplicationUser, UserRole>().AddEntityFrameworkStores<ApplicationContext>().AddDefaultTokenProviders();
+            builder.Services.AddScoped<IAdminSeederService, AdminSeederService>();
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
             builder.Services.AddScoped<IGenreService, GenreService>();
             builder.Services.AddScoped<ITagService, TagService>();
@@ -224,7 +226,13 @@ namespace Spotify
 
             app.MapControllers();
 
-            app.Run();
+            using (var scope = app.Services.CreateScope())
+            {
+                var adminSeederService = scope.ServiceProvider.GetRequiredService<IAdminSeederService>();
+                await adminSeederService.SeedInitialAdminAsync();
+            }
+
+            await app.RunAsync();
         }
     }
 }
