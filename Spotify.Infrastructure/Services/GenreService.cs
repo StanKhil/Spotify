@@ -17,10 +17,25 @@ public sealed class GenreService : IGenreService
     public async Task<IReadOnlyCollection<GenreResponse>> GetGenresAsync(
         CancellationToken cancellationToken = default)
     {
-        return await _context.Genres
+        var genres = await _context.Genres
             .OrderBy(x => x.Name)
-            .Select(x => new GenreResponse(x.Id, x.Name))
             .ToListAsync(cancellationToken);
+
+        var result = new List<GenreResponse>();
+
+        foreach (var genre in genres)
+        {
+            var tagIds = await _context.Set<Domain.Entities.Content.AudioContent>()
+                .Where(x => x.GenreId == genre.Id)
+                .OfType<Domain.Entities.Content.Track>()
+                .SelectMany(x => x.TrackTags.Select(tt => tt.TagId))
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            result.Add(new GenreResponse(genre.Id, genre.Name, tagIds));
+        }
+
+        return result;
     }
 
     public async Task<CreateGenreResult> CreateGenreAsync(
@@ -44,7 +59,7 @@ public sealed class GenreService : IGenreService
         _context.Genres.Add(genre);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return CreateGenreResult.Success(new GenreResponse(genre.Id, genre.Name));
+        return CreateGenreResult.Success(new GenreResponse(genre.Id, genre.Name, []));
     }
 
     public async Task<UpdateGenreResult> EditGenreAsync(
@@ -62,7 +77,14 @@ public sealed class GenreService : IGenreService
         genre.Name = request.Name.Trim();
         await _context.SaveChangesAsync(cancellationToken);
 
-        return UpdateGenreResult.Success(new GenreResponse(genre.Id, genre.Name));
+        var tagIds = await _context.Set<Domain.Entities.Content.AudioContent>()
+            .Where(x => x.GenreId == genre.Id)
+            .OfType<Domain.Entities.Content.Track>()
+            .SelectMany(x => x.TrackTags.Select(tt => tt.TagId))
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return UpdateGenreResult.Success(new GenreResponse(genre.Id, genre.Name, tagIds));
     }
 
     public async Task<DeleteGenreResult> DeleteGenreAsync(

@@ -23,6 +23,8 @@ public sealed class TrackService : ITrackService
         var tracks = await _context.Tracks
             .Where(x => x.DeletedAt == null)
             .Include(x => x.TrackTags)
+            .Include(x => x.Authors)
+                .ThenInclude(ac => ac.Authors)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -34,6 +36,8 @@ public sealed class TrackService : ITrackService
     {
         var track = await _context.Tracks
             .Include(x => x.TrackTags)
+            .Include(x => x.Authors)
+                .ThenInclude(ac => ac.Authors)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         return track is null ? null : MapToResponse(track);
@@ -81,6 +85,17 @@ public sealed class TrackService : ITrackService
             return CreateTrackResult.Failure($"The following tags were not found: {string.Join(", ", missingTags)}");
         }
 
+        var existingAuthorIds = await _context.Authors
+            .Where(x => request.AuthorIds.Contains(x.Id))
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        var missingAuthors = request.AuthorIds.Except(existingAuthorIds).ToList();
+        if (missingAuthors.Count > 0)
+        {
+            return CreateTrackResult.Failure($"The following authors were not found: {string.Join(", ", missingAuthors)}");
+        }
+
         var track = new Track
         {
             Id = Guid.NewGuid(),
@@ -103,6 +118,26 @@ public sealed class TrackService : ITrackService
             track.TrackTags.Add(new TrackTag { TrackId = track.Id, TagId = tagId });
         }
 
+        if (existingAuthorIds.Count > 0)
+        {
+            var authorContent = new AuthorContent
+            {
+                Id = Guid.NewGuid(),
+                Item = track
+            };
+
+            foreach (var authorId in existingAuthorIds)
+            {
+                authorContent.Authors.Add(new AuthorContentAuthor
+                {
+                    AuthorContentId = authorContent.Id,
+                    AuthorId = authorId
+                });
+            }
+
+            track.Authors.Add(authorContent);
+        }
+
         _context.Tracks.Add(track);
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -114,6 +149,8 @@ public sealed class TrackService : ITrackService
     {
         var track = await _context.Tracks
             .Include(x => x.TrackTags)
+            .Include(x => x.Authors)
+                .ThenInclude(ac => ac.Authors)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         if (track is null)
@@ -149,6 +186,17 @@ public sealed class TrackService : ITrackService
             return UpdateTrackResult.Failure($"The following tags were not found: {string.Join(", ", missingTags)}");
         }
 
+        var existingAuthorIds = await _context.Authors
+            .Where(x => request.AuthorIds.Contains(x.Id))
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        var missingAuthors = request.AuthorIds.Except(existingAuthorIds).ToList();
+        if (missingAuthors.Count > 0)
+        {
+            return UpdateTrackResult.Failure($"The following authors were not found: {string.Join(", ", missingAuthors)}");
+        }
+
         track.Name = request.Name.Trim();
         track.Description = request.Description?.Trim();
         track.AlbumId = request.AlbumId;
@@ -168,6 +216,47 @@ public sealed class TrackService : ITrackService
         foreach (var tagId in existingTagIds.Where(tagId => !currentTagIds.Contains(tagId)))
         {
             track.TrackTags.Add(new TrackTag { TrackId = track.Id, TagId = tagId });
+        }
+
+        var authorContent = track.Authors.FirstOrDefault();
+
+        if (existingAuthorIds.Count == 0)
+        {
+            if (authorContent is not null)
+            {
+                track.Authors.Remove(authorContent);
+                _context.Remove(authorContent);
+            }
+        }
+        else
+        {
+            if (authorContent is null)
+            {
+                authorContent = new AuthorContent
+                {
+                    Id = Guid.NewGuid(),
+                    Item = track
+                };
+                track.Authors.Add(authorContent);
+            }
+
+            var authorsToRemove = authorContent.Authors
+                .Where(x => !existingAuthorIds.Contains(x.AuthorId))
+                .ToList();
+            foreach (var authorToRemove in authorsToRemove)
+            {
+                authorContent.Authors.Remove(authorToRemove);
+            }
+
+            var currentAuthorIds = authorContent.Authors.Select(x => x.AuthorId).ToHashSet();
+            foreach (var authorId in existingAuthorIds.Where(authorId => !currentAuthorIds.Contains(authorId)))
+            {
+                authorContent.Authors.Add(new AuthorContentAuthor
+                {
+                    AuthorContentId = authorContent.Id,
+                    AuthorId = authorId
+                });
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -326,5 +415,6 @@ public sealed class TrackService : ITrackService
         track.Id, track.Name, track.Description, track.DurationSeconds,
         track.AlbumId ?? Guid.Empty, track.MoodId, track.GenreId, track.PlaysNumber,
         track.IsAdult, track.IsDraft, track.AudioItemId, track.ImageItemId,
-        track.TrackTags.Select(x => x.TagId).ToList(), track.CreatedAt, null);
+        track.TrackTags.Select(x => x.TagId).ToList(), track.CreatedAt, null,
+        track.Authors.SelectMany(ac => ac.Authors).Select(x => x.AuthorId).ToList());
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Spotify.Infrastructure.Persistance.Context;
 
@@ -11,9 +12,11 @@ using Spotify.Infrastructure.Persistance.Context;
 namespace Spotify.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20260914084940_AddPodcastAuthorsAndAudiobookEpisodes")]
+    partial class AddPodcastAuthorsAndAudiobookEpisodes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1233,7 +1236,6 @@ namespace Spotify.Infrastructure.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHYJhMVQ5lPj0H09UYkEhHG+ExHIow/TLO5WuDiRDSTejnAby4pV9RavmImv+8Hufw==",
                             PhoneNumberConfirmed = false,
                             SettingsId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             SubscriptionId = new Guid("44444444-4444-4444-4444-444444444444"),
@@ -1368,9 +1370,6 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsAdult")
                         .HasColumnType("bit");

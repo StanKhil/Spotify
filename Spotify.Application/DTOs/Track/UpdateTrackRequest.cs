@@ -25,4 +25,6 @@ public sealed class UpdateTrackRequest
     public bool IsDraft { get; init; }
 
     public IReadOnlyCollection<string> TagIds { get; init; } = [];
+
+    public IReadOnlyCollection<Guid> AuthorIds { get; init; } = [];
 }

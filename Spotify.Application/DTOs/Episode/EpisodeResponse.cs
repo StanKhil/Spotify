@@ -5,7 +5,8 @@ public sealed record EpisodeResponse(
     string Name,
     string? Description,
     int DurationSeconds,
-    Guid PodcastId,
+    Guid? PodcastId,
+    Guid? AudiobookId,
     Guid? AudioItemId,
     Guid? ImageItemId,
     DateTime CreatedAt);

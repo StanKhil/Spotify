@@ -42,6 +42,7 @@ namespace Spotify.Infrastructure.Persistance.Context
         public DbSet<AuthorSubscription> AuthorSubscriptions { get; set; } = null!;
         public DbSet<RevokedToken> RevokedTokens { get; set; }
         public DbSet<Author> Authors { get; set; } = null!;
+        public DbSet<PodcastAuthor> PodcastAuthors { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -59,6 +60,35 @@ namespace Spotify.Infrastructure.Persistance.Context
             builder.Entity<Subscription>().HasMany(s => s.ApplicationUsers).WithOne(ua => ua.Subscription).HasForeignKey(ua => ua.SubscriptionId);
 
             builder.ApplyConfigurationsFromAssembly(typeof(ApplicationContext).Assembly);
+
+            builder.Entity<PodcastAuthor>()
+                .HasKey(x => new { x.PodcastId, x.AuthorId });
+
+            builder.Entity<PodcastAuthor>()
+                .HasOne(x => x.Podcast)
+                .WithMany(p => p.Authors)
+                .HasForeignKey(x => x.PodcastId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PodcastAuthor>()
+                .HasOne(x => x.Author)
+                .WithMany()
+                .HasForeignKey(x => x.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Episode>()
+                .HasOne(x => x.Podcast)
+                .WithMany(p => p.Episodes)
+                .HasForeignKey(x => x.PodcastId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
+            builder.Entity<Episode>()
+                .HasOne(x => x.Audiobook)
+                .WithMany(a => a.Episodes)
+                .HasForeignKey(x => x.AudiobookId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
 
             SeedRoles(builder);
             SeedSubscriptions(builder);
@@ -185,7 +215,7 @@ namespace Spotify.Infrastructure.Persistance.Context
                     DeletedAt = null
                 });
 
-          
+
             builder.Entity<IdentityUserRole<Guid>>().HasData(
                 new IdentityUserRole<Guid>
                 {

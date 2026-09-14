@@ -11,6 +11,11 @@ public interface ITagService
         CreateTagRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<UpdateTagResult> EditTagAsync(
+        string id,
+        UpdateTagRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<DeleteTagResult> DeleteTagAsync(
         string id,
         CancellationToken cancellationToken = default);

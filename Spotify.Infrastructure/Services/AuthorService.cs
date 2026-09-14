@@ -26,23 +26,9 @@ public sealed class AuthorService : IAuthorService
     }
 
     public async Task<IReadOnlyCollection<AuthorResponse>> GetAuthorsAsync(
-        CancellationToken cancellationToken = default)
+    CancellationToken cancellationToken = default)
     {
-        var authorRole = await _context.Roles.FirstOrDefaultAsync(x => x.Name == AuthorRoleName, cancellationToken);
-
-        if (authorRole is null)
-        {
-            return [];
-        }
-
-        var authorUserIds = await _context.UserRoles
-            .Where(x => x.RoleId == authorRole.Id)
-            .Select(x => x.UserId)
-            .ToListAsync(cancellationToken);
-
-        var authors = await _context.Authors
-            .Where(u => authorUserIds.Contains(u.Id))
-            .ToListAsync(cancellationToken);
+        var authors = await _context.Authors.ToListAsync(cancellationToken);
 
         var result = new List<AuthorResponse>();
 
