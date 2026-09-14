@@ -152,9 +152,8 @@ namespace Spotify.Infrastructure.Persistance.Context
 
                     Email = "admin@example.com",
                     NormalizedEmail = "ADMIN@EXAMPLE.COM",
-
                     EmailConfirmed = true,
-
+                    PasswordHash = "AQAAAAIAAYagAAAAEHYJhMVQ5lPj0H09UYkEhHG+ExHIow/TLO5WuDiRDSTejnAby4pV9RavmImv+8Hufw==",
                     SubscriptionId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
 
                     SettingsId = Guid.Parse(

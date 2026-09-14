@@ -14,7 +14,7 @@ namespace Spotify.Domain.Entities.User
 
         public Guid CountryId { get; set; }
         public Guid CityId { get; set; }
-
+        public string? Description { get; set; }
         public DateTime Birthdate { get; set; }
         public bool IsAdult { get; set; }
         public DateTime RegisteredAt { get; set; }
