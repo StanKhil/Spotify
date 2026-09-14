@@ -63,7 +63,9 @@ public sealed class AudioController : ControllerBase
 
         return PhysicalFile(
             filePath,
-            "audio/mpeg",
+            string.IsNullOrWhiteSpace(audioItem.ContentType)
+                ? "application/octet-stream"
+                : audioItem.ContentType,
             enableRangeProcessing: true);
     }
 }

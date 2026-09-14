@@ -5,6 +5,7 @@ public interface IFileStorageService
     Task<string> SaveAsync(
         Stream content,
         string fileName,
+        Guid itemId,
         string folder,
         CancellationToken cancellationToken = default);
 

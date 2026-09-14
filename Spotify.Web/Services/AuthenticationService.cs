@@ -228,34 +228,41 @@ public sealed class AuthenticationService : IAuthenticationService
     }
 
     private async Task<LoginResult> LoginCoreAsync(
-        LoginRequest request,
-        string? requiredRole,
-        CancellationToken cancellationToken)
+    LoginRequest request,
+    string? requiredRole,
+    CancellationToken cancellationToken)
     {
-        var email = request.Email.Trim();
-        var user = await _userManager.FindByEmailAsync(email);
-
-        if (user is null || !await _userManager.CheckPasswordAsync(user, request.Password))
+        try
         {
-            return LoginResult.Failure("Invalid email or password.");
+            var email = request.Email.Trim();
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user is null || !await _userManager.CheckPasswordAsync(user, request.Password))
+            {
+                return LoginResult.Failure("Invalid email or password.");
+            }
+
+            var isDeleted = await _context.UserProfiles
+                .AnyAsync(x => x.UserId == user.Id && x.DeletedAt != null, cancellationToken);
+
+            if (isDeleted)
+            {
+                return LoginResult.Failure("Invalid email or password.");
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            if (requiredRole is not null && !roles.Contains(requiredRole))
+            {
+                return LoginResult.Failure("Access denied.");
+            }
+
+            return LoginResult.Success(_jwtTokenGenerator.Create(user, roles));
         }
-
-        var isDeleted = await _context.UserProfiles
-            .AnyAsync(x => x.UserId == user.Id && x.DeletedAt != null, cancellationToken);
-
-        if (isDeleted)
+        catch (OperationCanceledException)
         {
-            return LoginResult.Failure("Invalid email or password.");
+            return LoginResult.Failure("The request was canceled. Please try again.");
         }
-
-        var roles = await _userManager.GetRolesAsync(user);
-
-        if (requiredRole is not null && !roles.Contains(requiredRole))
-        {
-            return LoginResult.Failure("Access denied.");
-        }
-
-        return LoginResult.Success(_jwtTokenGenerator.Create(user, roles));
     }
 
     public async Task<CheckEmailResult> CheckEmailAsync(

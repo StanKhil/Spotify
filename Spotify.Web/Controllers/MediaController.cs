@@ -27,7 +27,11 @@ public sealed class MediaController : ControllerBase
         }
 
         await using var stream = file.OpenReadStream();
-        var result = await _mediaService.UploadAudioAsync(stream, file.FileName, file.ContentType, cancellationToken);
+        var result = await _mediaService.UploadAudioAsync(
+            stream,
+            file.FileName,
+            file.ContentType,
+            cancellationToken);
 
         if (!result.Succeeded)
         {
@@ -35,7 +39,7 @@ public sealed class MediaController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        return Ok(new { itemId = result.ItemId, url = result.Url });
+        return Ok(new { audioItemId = result.ItemId, storageKey = result.Url });
     }
 
     [HttpPost("image")]

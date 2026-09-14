@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Spotify.Application.DTOs.Playback;
 using Spotify.Application.Interfaces;
+using Spotify.Domain.Enumerations;
 using Spotify.Infrastructure.Persistance.Context;
+using System.Diagnostics.Eventing.Reader;
 
 namespace Spotify.Infrastructure.Playback;
 
@@ -9,22 +11,25 @@ public sealed class PlaybackService : IPlaybackService
 {
     private readonly ApplicationContext _context;
     private readonly ILocalPlaybackUrlService _localPlaybackUrlService;
+    private readonly IJamendoService _jamendoService;
     private readonly PlaybackOptions _playbackOptions;
 
     public PlaybackService(
         ApplicationContext context,
         ILocalPlaybackUrlService localPlaybackUrlService,
-        PlaybackOptions playbackOptions)
+        PlaybackOptions playbackOptions,
+        IJamendoService jamendoService)
     {
         _context = context;
         _localPlaybackUrlService = localPlaybackUrlService;
         _playbackOptions = playbackOptions;
+        _jamendoService = jamendoService;
     }
 
     public async Task<TrackPlaybackResponse?> GetTrackPlaybackAsync(
-        Guid trackId,
-        Guid userId,
-        CancellationToken cancellationToken = default)
+    Guid trackId,
+    Guid userId,
+    CancellationToken cancellationToken = default)
     {
         var track = await _context.Tracks
             .AsNoTracking()
@@ -55,17 +60,44 @@ public sealed class PlaybackService : IPlaybackService
             }
         }
 
-        if (string.IsNullOrWhiteSpace(track.AudioItem.StorageKey))
-        {
-            return null;
-        }
-
         var expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(
             _playbackOptions.LocalUrlLifetimeMinutes);
 
-        var streamUrl = _localPlaybackUrlService.CreateStreamUrl(
-            track.AudioItem.Id,
-            expiresAtUtc);
+        string? streamUrl = null;
+
+        switch (track.Provider)
+        {
+            case AudioProvider.LocalStorage:
+                {
+                    if (string.IsNullOrWhiteSpace(track.AudioItem.StorageKey))
+                    {
+                        return null;
+                    }
+
+                    streamUrl = _localPlaybackUrlService.CreateStreamUrl(
+                        track.AudioItem.Id,
+                        expiresAtUtc);
+
+                    break;
+                }
+
+            case AudioProvider.Jamendo:
+                {
+                    if (string.IsNullOrWhiteSpace(track.ExternalContentId))
+                    {
+                        return null;
+                    }
+
+                    streamUrl = await _jamendoService.GetTrackStreamUrlAsync(
+                        track.ExternalContentId,
+                        cancellationToken);
+
+                    break;
+                }
+
+            default:
+                return null;
+        }
 
         return new TrackPlaybackResponse(
             track.Id,

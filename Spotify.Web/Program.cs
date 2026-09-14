@@ -50,6 +50,7 @@ namespace Spotify
             builder.Services.AddScoped<IPluginService, PluginService>();
             builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
             builder.Services.AddScoped<IEmailService, DefaultEmailService>();
+            builder.Services.AddScoped<IAudioMetadataService, AudioMetadataService>();
             builder.Services.AddMemoryCache();
 
             var emailOptions = builder.Configuration
@@ -89,7 +90,11 @@ namespace Spotify
             builder.Services.AddScoped<IAudioUrlResolver, AudioUrlResolver>();
             
 
-            builder.Services.AddSingleton<ILocalAudioStorageService, LocalAudioStorageService>();
+            builder.Services.AddSingleton<ILocalAudioStorageService>(
+                new LocalAudioStorageService(
+                    builder.Environment.ContentRootPath,
+                    builder.Environment.WebRootPath ??
+                    Path.Combine(builder.Environment.ContentRootPath, "wwwroot")));
 
             builder.Services.AddScoped<ILocalPlaybackUrlService, SignedLocalPlaybackUrlService>();
 
@@ -205,7 +210,9 @@ namespace Spotify
             });
 
             builder.Services.AddSingleton<IFileStorageService>(
-            new LocalFileStorageService(builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot")));
+            new LocalFileStorageService(
+                builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"),
+                builder.Environment.ContentRootPath));
             builder.Services.AddScoped<IMediaService, MediaService>();
 
             var app = builder.Build();

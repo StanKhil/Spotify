@@ -10,11 +10,13 @@ public sealed class TrackService : ITrackService
 {
     private readonly ApplicationContext _context;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IAudioMetadataService _audioMetadataService;
 
-    public TrackService(ApplicationContext context, IFileStorageService fileStorageService)
+    public TrackService(ApplicationContext context, IFileStorageService fileStorageService, IAudioMetadataService audioMetadataService)
     {
         _context = context;
         _fileStorageService = fileStorageService;
+        _audioMetadataService = audioMetadataService;
     }
 
     public async Task<IReadOnlyCollection<TrackResponse>> GetTracksAsync(
@@ -51,9 +53,15 @@ public sealed class TrackService : ITrackService
             return CreateTrackResult.Failure("The specified album was not found");
         }
 
-        if (!await _context.AudioItems.AnyAsync(x => x.Id == request.AudioItemId, cancellationToken))
+        var audioItem = await _context.AudioItems
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.Id == request.AudioItemId,
+                cancellationToken);
+        if (audioItem is null)
         {
-            return CreateTrackResult.Failure("The specified audio item was not found");
+            return CreateTrackResult.Failure(
+                "The specified audio item was not found");
         }
 
         if (request.MoodId is Guid moodId &&
@@ -96,12 +104,17 @@ public sealed class TrackService : ITrackService
             return CreateTrackResult.Failure($"The following authors were not found: {string.Join(", ", missingAuthors)}");
         }
 
+        var durationSeconds =
+            await _audioMetadataService.GetDurationSecondsAsync(
+        audioItem.StorageKey!,
+        cancellationToken);
+
         var track = new Track
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
             Description = request.Description?.Trim(),
-            DurationSeconds = 0,
+            DurationSeconds = durationSeconds,
             AlbumId = request.AlbumId,
             MoodId = request.MoodId,
             GenreId = request.GenreId,

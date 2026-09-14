@@ -7,20 +7,27 @@ public interface ILocalAudioStorageService
 
 public sealed class LocalAudioStorageService : ILocalAudioStorageService
 {
-    private readonly string _rootPath;
+    private readonly string _audioRootPath;
+    private readonly string _webRootPath;
 
-    public LocalAudioStorageService(PlaybackOptions options)
+    public LocalAudioStorageService(string contentRootPath, string webRootPath)
     {
-        _rootPath = Path.GetFullPath(options.LocalStorageRoot);
+        _audioRootPath = Path.GetFullPath(Path.Combine(contentRootPath, "App_Data", "audio"));
+        _webRootPath = Path.GetFullPath(webRootPath);
     }
 
     public string? GetSafeFilePath(string storageKey)
     {
-        var trimmedKey = storageKey.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
-        var filePath = Path.GetFullPath(Path.Combine(_rootPath, trimmedKey));
-        var rootWithSeparator = _rootPath.EndsWith(Path.DirectorySeparatorChar)
-            ? _rootPath
-            : _rootPath + Path.DirectorySeparatorChar;
+        // Supports existing public uploads while new files use private App_Data/audio.
+        var isLegacyPublicAudio = storageKey.StartsWith("/uploads/audio/", StringComparison.OrdinalIgnoreCase);
+        var rootPath = isLegacyPublicAudio ? _webRootPath : _audioRootPath;
+        var trimmedKey = isLegacyPublicAudio
+            ? storageKey.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar)
+            : Path.GetFileName(storageKey);
+        var filePath = Path.GetFullPath(Path.Combine(rootPath, trimmedKey));
+        var rootWithSeparator = rootPath.EndsWith(Path.DirectorySeparatorChar)
+            ? rootPath
+            : rootPath + Path.DirectorySeparatorChar;
 
         return filePath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase)
             ? filePath
