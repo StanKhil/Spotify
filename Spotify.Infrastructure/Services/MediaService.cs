@@ -40,8 +40,6 @@ public sealed class MediaService : IMediaService
             return MediaUploadResult.Failure($"Audio file is too large. Max size is {MaxAudioSizeBytes / 1024 / 1024} MB.");
         }
 
-        // The AudioItem ID is the only ID used during the upload lifecycle.
-        // StorageKey remains the canonical way to locate the physical object.
         var audioItemId = Guid.NewGuid();
         var storageKey = await _fileStorageService.SaveAsync(
             content,

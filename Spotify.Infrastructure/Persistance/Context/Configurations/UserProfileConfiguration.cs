@@ -25,5 +25,15 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .WithMany(x => x.Users)
             .HasForeignKey(x => x.CityId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.AvatarImage)
+            .WithMany()
+            .HasForeignKey(x => x.AvatarImageId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(x => x.CoverImage)
+            .WithMany()
+            .HasForeignKey(x => x.CoverImageId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

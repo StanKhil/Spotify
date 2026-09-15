@@ -1,4 +1,5 @@
-﻿using Spotify.Domain.Entities.Location;
+﻿using Spotify.Domain.Entities.Content;
+using Spotify.Domain.Entities.Location;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -19,9 +20,12 @@ namespace Spotify.Domain.Entities.User
         public bool IsAdult { get; set; }
         public DateTime RegisteredAt { get; set; }
         public DateTime? DeletedAt { get; set; }
-
+        public Guid? AvatarImageId { get; set; }
+        public Guid? CoverImageId { get; set; }
         public ApplicationUser ApplicationUser { get; set; } = null!;
         public Country Country { get; set; } = null!;
         public City City { get; set; } = null!;
+        public ImageItem? AvatarImage { get; set; }
+        public ImageItem? CoverImage { get; set; }
     }
 }
