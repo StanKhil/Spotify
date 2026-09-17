@@ -2,7 +2,7 @@
 
 namespace Spotify.Application.DTOs.Author;
 
-public sealed class CreateAuthorRequest
+public sealed class UpdateAuthorRequest
 {
     [Required]
     [MaxLength(200)]
@@ -15,6 +15,4 @@ public sealed class CreateAuthorRequest
     public string? Bio { get; init; }
 
     public Guid? BioImageItemId { get; init; }
-
-    public Guid? ApplicationUserId { get; init; }
 }

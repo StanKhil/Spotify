@@ -72,4 +72,39 @@ public sealed class PlaylistController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("{id}/tracks")]
+    public async Task<ActionResult<IReadOnlyCollection<PlaylistTrackResponse>>> GetPlaylistTracks(
+        Guid id, CancellationToken cancellationToken)
+        => Ok(await _playlistService.GetPlaylistTracksAsync(id, cancellationToken));
+
+    [HttpPost("{id}/tracks")]
+    public async Task<ActionResult<PlaylistTrackResponse>> AddTrackToPlaylist(
+        Guid id, [FromBody] AddTrackToPlaylistRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _playlistService.AddTrackToPlaylistAsync(id, request, cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error);
+            return ValidationProblem(ModelState);
+        }
+
+        return StatusCode(StatusCodes.Status201Created, result.Track);
+    }
+
+    [HttpDelete("{id}/tracks/{trackId}")]
+    public async Task<IActionResult> RemoveTrackFromPlaylist(
+        Guid id, Guid trackId, CancellationToken cancellationToken)
+    {
+        var result = await _playlistService.RemoveTrackFromPlaylistAsync(id, trackId, cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error);
+            return ValidationProblem(ModelState);
+        }
+
+        return NoContent();
+    }
 }

@@ -86,4 +86,75 @@ public sealed class PlaylistService : IPlaylistService
 
         return DeletePlaylistResult.Success();
     }
+
+    public async Task<IReadOnlyCollection<PlaylistTrackResponse>> GetPlaylistTracksAsync(
+        Guid playlistId, CancellationToken cancellationToken = default)
+    {
+        return await _context.PlaylistTracks
+            .Where(x => x.PlaylistId == playlistId)
+            .OrderBy(x => x.Position)
+            .Select(x => new PlaylistTrackResponse(x.TrackId, x.Track.Name, x.Position, x.AddedAt))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<AddTrackToPlaylistResult> AddTrackToPlaylistAsync(
+        Guid playlistId, AddTrackToPlaylistRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!await _context.Playlists.AnyAsync(x => x.Id == playlistId, cancellationToken))
+        {
+            return AddTrackToPlaylistResult.Failure("Playlist was not found.");
+        }
+
+        var track = await _context.Tracks
+            .FirstOrDefaultAsync(x => x.Id == request.TrackId && x.DeletedAt == null, cancellationToken);
+
+        if (track is null)
+        {
+            return AddTrackToPlaylistResult.Failure("The specified track was not found.");
+        }
+
+        var alreadyExists = await _context.PlaylistTracks
+            .AnyAsync(x => x.PlaylistId == playlistId && x.TrackId == request.TrackId, cancellationToken);
+
+        if (alreadyExists)
+        {
+            return AddTrackToPlaylistResult.Failure("This track is already in the playlist.");
+        }
+
+        var maxPosition = await _context.PlaylistTracks
+            .Where(x => x.PlaylistId == playlistId)
+            .Select(x => (int?)x.Position)
+            .MaxAsync(cancellationToken) ?? -1;
+
+        var playlistTrack = new Domain.Entities.Content.PlaylistTrack
+        {
+            PlaylistId = playlistId,
+            TrackId = request.TrackId,
+            Position = maxPosition + 1,
+            AddedAt = DateTime.UtcNow
+        };
+
+        _context.PlaylistTracks.Add(playlistTrack);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return AddTrackToPlaylistResult.Success(new PlaylistTrackResponse(
+            track.Id, track.Name, playlistTrack.Position, playlistTrack.AddedAt));
+    }
+
+    public async Task<RemoveTrackFromPlaylistResult> RemoveTrackFromPlaylistAsync(
+        Guid playlistId, Guid trackId, CancellationToken cancellationToken = default)
+    {
+        var playlistTrack = await _context.PlaylistTracks
+            .FirstOrDefaultAsync(x => x.PlaylistId == playlistId && x.TrackId == trackId, cancellationToken);
+
+        if (playlistTrack is null)
+        {
+            return RemoveTrackFromPlaylistResult.Failure("This track is not in the playlist.");
+        }
+
+        _context.PlaylistTracks.Remove(playlistTrack);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return RemoveTrackFromPlaylistResult.Success();
+    }
 }

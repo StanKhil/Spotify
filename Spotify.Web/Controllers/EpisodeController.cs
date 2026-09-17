@@ -20,8 +20,8 @@ public sealed class EpisodeController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyCollection<EpisodeResponse>>> GetEpisodes(
-    [FromQuery] Guid? podcastId, [FromQuery] Guid? audiobookId, CancellationToken cancellationToken)
-    => Ok(await _episodeService.GetEpisodesAsync(podcastId, audiobookId, cancellationToken));
+    [FromQuery] Guid? podcastId, [FromQuery] Guid? audiobookId, [FromQuery] string? scope, CancellationToken cancellationToken)
+    => Ok(await _episodeService.GetEpisodesAsync(podcastId, audiobookId, scope, cancellationToken));
 
     [HttpGet("{id}")]
     public async Task<ActionResult<EpisodeResponse>> GetEpisodeById(Guid id, CancellationToken cancellationToken)

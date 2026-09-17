@@ -126,10 +126,10 @@ public sealed class AuthorActionService : IAuthorActionService
     }
 
     public async Task<SubscribedAuthorsResult> GetSubscribed(
-        int maxPerPage,
-        int page,
-        Guid userId,
-        CancellationToken cancellationToken = default)
+    int maxPerPage,
+    int page,
+    Guid userId,
+    CancellationToken cancellationToken = default)
     {
         if (maxPerPage <= 0 || page <= 0)
         {
@@ -138,30 +138,23 @@ public sealed class AuthorActionService : IAuthorActionService
         }
 
         var subscribedAuthorsQuery = _context.AuthorSubscriptions
-            .Where(a => a.ApplicationUserId == userId);
-            
-        var totalSubscribedAuthors = await subscribedAuthorsQuery.CountAsync(cancellationToken);
-        var totalPages = (int)Math.Ceiling((double)totalSubscribedAuthors / maxPerPage);
+            .Where(x => x.ApplicationUserId == userId);
 
-        var subscriedAuthors = await subscribedAuthorsQuery
-            .OrderByDescending(s => s.CreatedAt)
-            .Include(s => s.Author)
-            .ThenInclude(a => a.User)
+        var authors = await subscribedAuthorsQuery
+            .OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * maxPerPage)
             .Take(maxPerPage)
+            .Select(x => new AuthorResponse(
+                x.AuthorId,
+                x.Author.Name,
+                x.Author.MonthList,
+                x.Author.Bio,
+                x.Author.BioImageItemId,
+                x.Author.AuthoredContent.Count))
             .ToListAsync(cancellationToken);
 
-        var response = new List<AuthorResponse>();
-        foreach(var authorSub in subscriedAuthors)
-        {
-            response.Add(new AuthorResponse(authorSub.AuthorId, 
-                authorSub.Author.Name, 
-                authorSub.Author.AuthoredContent.Count));
-        }
-
         return SubscribedAuthorsResult.Success(
-            new SubscribedAuthorsResponse(
-                response));
+            new SubscribedAuthorsResponse(authors));
     }
 
     private async Task<Author?> GetAuthorAsync(

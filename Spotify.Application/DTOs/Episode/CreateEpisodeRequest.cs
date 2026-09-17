@@ -15,6 +15,8 @@ public sealed class CreateEpisodeRequest
 
     public Guid? AudiobookId { get; init; }
 
+    public int? SeqNumber { get; init; }
+
     [Required]
     public Guid AudioItemId { get; init; }
 

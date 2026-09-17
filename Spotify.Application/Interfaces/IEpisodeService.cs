@@ -4,7 +4,7 @@ namespace Spotify.Application.Interfaces;
 
 public interface IEpisodeService
 {
-    Task<IReadOnlyCollection<EpisodeResponse>> GetEpisodesAsync(Guid? podcastId, Guid? audiobookId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<EpisodeResponse>> GetEpisodesAsync(Guid? podcastId, Guid? audiobookId, string? scope, CancellationToken cancellationToken = default);
     Task<EpisodeResponse?> GetEpisodeByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<CreateEpisodeResult> CreateEpisodeAsync(CreateEpisodeRequest request, CancellationToken cancellationToken = default);
     Task<UpdateEpisodeResult> EditEpisodeAsync(Guid id, UpdateEpisodeRequest request, CancellationToken cancellationToken = default);

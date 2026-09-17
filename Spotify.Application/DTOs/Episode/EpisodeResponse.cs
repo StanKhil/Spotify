@@ -7,6 +7,7 @@ public sealed record EpisodeResponse(
     int DurationSeconds,
     Guid? PodcastId,
     Guid? AudiobookId,
+    int? SeqNumber,
     Guid? AudioItemId,
     Guid? ImageItemId,
     DateTime CreatedAt);

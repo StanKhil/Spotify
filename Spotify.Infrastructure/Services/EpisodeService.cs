@@ -16,7 +16,7 @@ public sealed class EpisodeService : IEpisodeService
     }
 
     public async Task<IReadOnlyCollection<EpisodeResponse>> GetEpisodesAsync(
-        Guid? podcastId, Guid? audiobookId, CancellationToken cancellationToken = default)
+    Guid? podcastId, Guid? audiobookId, string? scope, CancellationToken cancellationToken = default)
     {
         var query = _context.Episodes.Where(x => x.DeletedAt == null);
 
@@ -30,11 +30,21 @@ public sealed class EpisodeService : IEpisodeService
             query = query.Where(x => x.AudiobookId == aid);
         }
 
+        if (scope == "podcast")
+        {
+            query = query.Where(x => x.PodcastId != null);
+        }
+        else if (scope == "audiobook")
+        {
+            query = query.Where(x => x.AudiobookId != null);
+        }
+
         return await query
-            .OrderByDescending(x => x.CreatedAt)
+            .OrderBy(x => x.SeqNumber)
+            .ThenByDescending(x => x.CreatedAt)
             .Select(x => new EpisodeResponse(
                 x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.PodcastId, x.AudiobookId, x.AudioItemId, x.ImageItemId, x.CreatedAt))
+                x.PodcastId, x.AudiobookId, x.SeqNumber, x.AudioItemId, x.ImageItemId, x.CreatedAt))
             .ToListAsync(cancellationToken);
     }
 
@@ -45,7 +55,7 @@ public sealed class EpisodeService : IEpisodeService
             .Where(x => x.Id == id && x.DeletedAt == null)
             .Select(x => new EpisodeResponse(
                 x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.PodcastId, x.AudiobookId, x.AudioItemId, x.ImageItemId, x.CreatedAt))
+                x.PodcastId, x.AudiobookId, x.SeqNumber, x.AudioItemId, x.ImageItemId, x.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -93,6 +103,7 @@ public sealed class EpisodeService : IEpisodeService
             DurationSeconds = 0,
             PodcastId = request.PodcastId,
             AudiobookId = request.AudiobookId,
+            SeqNumber = request.SeqNumber,
             AudioItemId = request.AudioItemId,
             ImageItemId = request.ImageItemId,
             CreatedAt = DateTime.UtcNow
@@ -103,7 +114,7 @@ public sealed class EpisodeService : IEpisodeService
 
         return CreateEpisodeResult.Success(new EpisodeResponse(
             episode.Id, episode.Name, episode.Description, episode.DurationSeconds,
-            episode.PodcastId, episode.AudiobookId, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
+            episode.PodcastId, episode.AudiobookId, episode.SeqNumber, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
     }
 
     public async Task<UpdateEpisodeResult> EditEpisodeAsync(
@@ -126,12 +137,13 @@ public sealed class EpisodeService : IEpisodeService
         episode.Name = request.Name.Trim();
         episode.Description = request.Description?.Trim();
         episode.ImageItemId = request.ImageItemId;
+        episode.SeqNumber = request.SeqNumber;
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return UpdateEpisodeResult.Success(new EpisodeResponse(
             episode.Id, episode.Name, episode.Description, episode.DurationSeconds,
-            episode.PodcastId, episode.AudiobookId, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
+            episode.PodcastId, episode.AudiobookId, episode.SeqNumber, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
     }
 
     public async Task<DeleteEpisodeResult> DeleteEpisodeAsync(

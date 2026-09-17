@@ -1,131 +1,161 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Spotify.Application.DTOs.Author;
 using Spotify.Application.Interfaces;
+using Spotify.Domain.Entities.Content;
 using Spotify.Infrastructure.Persistance.Context;
-using Spotify.Domain.Entities.User;
 
 namespace Spotify.Infrastructure.Services;
 
 public sealed class AuthorService : IAuthorService
 {
-    private const string AuthorRoleName = "Author";
-
     private readonly ApplicationContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<UserRole> _roleManager;
 
-    public AuthorService(
-        ApplicationContext context,
-        UserManager<ApplicationUser> userManager,
-        RoleManager<UserRole> roleManager)
+    public AuthorService(ApplicationContext context)
     {
         _context = context;
-        _userManager = userManager;
-        _roleManager = roleManager;
     }
 
     public async Task<IReadOnlyCollection<AuthorResponse>> GetAuthorsAsync(
-    CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
-        var authors = await _context.Authors.ToListAsync(cancellationToken);
-
-        var result = new List<AuthorResponse>();
-
-        foreach (var author in authors)
-        {
-            var contentCount = await _context.AuthorContentAuthors
-                .CountAsync(x => x.AuthorId == author.Id, cancellationToken);
-
-            result.Add(new AuthorResponse(author.Id, author.Name!, contentCount));
-        }
-
-        return result;
+        return await _context.Authors
+            .OrderBy(x => x.Name)
+            .Select(x => new AuthorResponse(
+                x.Id,
+                x.Name,
+                x.MonthList,
+                x.Bio,
+                x.BioImageItemId,
+                x.AuthoredContent.Count))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<AuthorResponse?> GetAuthorByIdAsync(
-        Guid id, CancellationToken cancellationToken = default)
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var author = await _context.Authors.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        if (author is null || !await _userManager.IsInRoleAsync(author.User! , AuthorRoleName))
-        {
-            return null;
-        }
-
-        var contentCount = await _context.AuthorContentAuthors.CountAsync(x => x.AuthorId == id, cancellationToken);
-
-        return new AuthorResponse(author.Id, author.Name!, contentCount);
+        return await _context.Authors
+            .Where(x => x.Id == id)
+            .Select(x => new AuthorResponse(
+                x.Id,
+                x.Name,
+                x.MonthList,
+                x.Bio,
+                x.BioImageItemId,
+                x.AuthoredContent.Count))
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<CreateAuthorResult> CreateAuthorAsync(
-        CreateAuthorRequest request, CancellationToken cancellationToken = default)
+        CreateAuthorRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var user = await _context.ApplicationUsers
-            .FirstOrDefaultAsync(x => x.Id == request.ApplicationUserId, cancellationToken);
-
-        if (user is null)
+        if (request.BioImageItemId is Guid bioImageItemId &&
+            !await _context.ImageItems.AnyAsync(x => x.Id == bioImageItemId, cancellationToken))
         {
-            return CreateAuthorResult.Failure("The specified user was not found.");
+            return CreateAuthorResult.Failure("The specified bio image was not found.");
         }
 
-        if (!await _roleManager.RoleExistsAsync(AuthorRoleName))
+        if (request.ApplicationUserId is Guid applicationUserId)
         {
-            var createRoleResult = await _roleManager.CreateAsync(new UserRole
-            {
-                Id = Guid.NewGuid(),
-                Name = AuthorRoleName,
-                Description = "Can upload and manage own content",
-                CanCreate = true,
-                CanRead = true,
-                CanUpdate = true
-            });
+            var userExists = await _context.ApplicationUsers
+                .AnyAsync(x => x.Id == applicationUserId, cancellationToken);
 
-            if (!createRoleResult.Succeeded)
+            if (!userExists)
             {
-                return CreateAuthorResult.Failure(createRoleResult.Errors.Select(x => x.Description).ToArray());
+                return CreateAuthorResult.Failure("The specified user was not found.");
+            }
+
+            var userAlreadyLinked = await _context.Authors
+                .AnyAsync(x => x.UserId == applicationUserId, cancellationToken);
+
+            if (userAlreadyLinked)
+            {
+                return CreateAuthorResult.Failure("The specified user is already linked to an author.");
             }
         }
 
-        if (await _userManager.IsInRoleAsync(user, AuthorRoleName))
+        var author = new Author
         {
-            return CreateAuthorResult.Failure("This user is already an author.");
+            Id = Guid.NewGuid(),
+            Name = request.Name.Trim(),
+            MonthList = request.MonthList,
+            Bio = request.Bio?.Trim(),
+            BioImageItemId = request.BioImageItemId,
+            UserId = request.ApplicationUserId
+        };
+
+        _context.Authors.Add(author);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return CreateAuthorResult.Success(MapToResponse(author, 0));
+    }
+
+    public async Task<UpdateAuthorResult> UpdateAuthorAsync(
+        Guid id,
+        UpdateAuthorRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var author = await _context.Authors
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (author is null)
+        {
+            return UpdateAuthorResult.Failure("Author was not found.");
         }
 
-        var addToRoleResult = await _userManager.AddToRoleAsync(user, AuthorRoleName);
-
-        if (!addToRoleResult.Succeeded)
+        if (request.BioImageItemId is Guid bioImageItemId &&
+            !await _context.ImageItems.AnyAsync(x => x.Id == bioImageItemId, cancellationToken))
         {
-            return CreateAuthorResult.Failure(addToRoleResult.Errors.Select(x => x.Description).ToArray());
+            return UpdateAuthorResult.Failure("The specified bio image was not found.");
         }
 
-        return CreateAuthorResult.Success(new AuthorResponse(user.Id, user.UserName!, 0));
+        author.Name = request.Name.Trim();
+        author.MonthList = request.MonthList;
+        author.Bio = request.Bio?.Trim();
+        author.BioImageItemId = request.BioImageItemId;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var contentCount = await _context.AuthorContentAuthors
+            .CountAsync(x => x.AuthorId == author.Id, cancellationToken);
+
+        return UpdateAuthorResult.Success(MapToResponse(author, contentCount));
     }
 
     public async Task<DeleteAuthorResult> DeleteAuthorAsync(
-        Guid id, CancellationToken cancellationToken = default)
+        Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var user = await _context.ApplicationUsers.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var author = await _context.Authors
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        if (user is null || !await _userManager.IsInRoleAsync(user, AuthorRoleName))
+        if (author is null)
         {
             return DeleteAuthorResult.Failure("Author was not found.");
         }
 
-        var hasContent = await _context.AuthorContentAuthors.AnyAsync(x => x.AuthorId == id, cancellationToken);
+        var hasContent = await _context.AuthorContentAuthors
+            .AnyAsync(x => x.AuthorId == id, cancellationToken);
 
         if (hasContent)
         {
-            return DeleteAuthorResult.Failure("Cannot remove author status while they still have published content.");
+            return DeleteAuthorResult.Failure(
+                "Cannot delete an author who still has published content.");
         }
 
-        var removeResult = await _userManager.RemoveFromRoleAsync(user, AuthorRoleName);
-
-        if (!removeResult.Succeeded)
-        {
-            return DeleteAuthorResult.Failure(removeResult.Errors.Select(x => x.Description).ToArray());
-        }
+        _context.Authors.Remove(author);
+        await _context.SaveChangesAsync(cancellationToken);
 
         return DeleteAuthorResult.Success();
     }
+
+    private static AuthorResponse MapToResponse(Author author, int contentCount) =>
+        new(
+            author.Id,
+            author.Name,
+            author.MonthList,
+            author.Bio,
+            author.BioImageItemId,
+            contentCount);
 }

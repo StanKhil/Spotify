@@ -19,39 +19,80 @@ public sealed class AuthorController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyCollection<AuthorResponse>>> GetAuthors(CancellationToken cancellationToken)
-        => Ok(await _authorService.GetAuthorsAsync(cancellationToken));
+    public async Task<ActionResult<IReadOnlyCollection<AuthorResponse>>> GetAuthors(
+        CancellationToken cancellationToken)
+    {
+        return Ok(await _authorService.GetAuthorsAsync(cancellationToken));
+    }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AuthorResponse>> GetAuthorById(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<AuthorResponse>> GetAuthorById(
+        Guid id,
+        CancellationToken cancellationToken)
     {
         var author = await _authorService.GetAuthorByIdAsync(id, cancellationToken);
+
         return author is null ? NotFound() : Ok(author);
     }
 
     [HttpPost]
     public async Task<ActionResult<AuthorResponse>> CreateAuthor(
-        [FromBody] CreateAuthorRequest request, CancellationToken cancellationToken)
+        [FromBody] CreateAuthorRequest request,
+        CancellationToken cancellationToken)
     {
         var result = await _authorService.CreateAuthorAsync(request, cancellationToken);
 
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error);
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
             return ValidationProblem(ModelState);
         }
 
         return StatusCode(StatusCodes.Status201Created, result.Author);
     }
 
+    [HttpPut("{id}")]
+    public async Task<ActionResult<AuthorResponse>> UpdateAuthor(
+        Guid id,
+        [FromBody] UpdateAuthorRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authorService.UpdateAuthorAsync(
+            id,
+            request,
+            cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
+            return ValidationProblem(ModelState);
+        }
+
+        return Ok(result.Author);
+    }
+
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteAuthor(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteAuthor(
+        Guid id,
+        CancellationToken cancellationToken)
     {
         var result = await _authorService.DeleteAuthorAsync(id, cancellationToken);
 
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error);
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
             return ValidationProblem(ModelState);
         }
 

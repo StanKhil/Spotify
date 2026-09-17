@@ -4,4 +4,6 @@ public sealed record PodcastResponse(
     Guid Id,
     string Name,
     string Description,
-    int EpisodesCount);
+    int EpisodesCount,
+    IReadOnlyCollection<Guid> AuthorIds,
+    DateTime CreatedAt);

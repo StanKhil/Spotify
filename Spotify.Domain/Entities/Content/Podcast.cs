@@ -9,6 +9,7 @@ namespace Spotify.Domain.Entities.Content
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<Episode> Episodes { get; set; } = [];
         public ICollection<PodcastAuthor> Authors { get; set; } = [];
     }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Spotify.Infrastructure.Persistance.Context;
 
@@ -11,9 +12,11 @@ using Spotify.Infrastructure.Persistance.Context;
 namespace Spotify.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20260915213639_AddAuthorProfileFields")]
+    partial class AddAuthorProfileFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -534,9 +537,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -1375,9 +1375,6 @@ namespace Spotify.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AvatarImageId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("Birthdate")
                         .HasColumnType("datetime2");
 
@@ -1385,9 +1382,6 @@ namespace Spotify.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CountryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("CoverImageId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DeletedAt")
@@ -1404,13 +1398,9 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("UserId");
 
-                    b.HasIndex("AvatarImageId");
-
                     b.HasIndex("CityId");
 
                     b.HasIndex("CountryId");
-
-                    b.HasIndex("CoverImageId");
 
                     b.ToTable("UserProfiles");
 
@@ -1878,11 +1868,6 @@ namespace Spotify.Infrastructure.Migrations
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.UserProfile", b =>
                 {
-                    b.HasOne("Spotify.Domain.Entities.Content.ImageItem", "AvatarImage")
-                        .WithMany()
-                        .HasForeignKey("AvatarImageId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("Spotify.Domain.Entities.Location.City", "City")
                         .WithMany("Users")
                         .HasForeignKey("CityId")
@@ -1895,11 +1880,6 @@ namespace Spotify.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Spotify.Domain.Entities.Content.ImageItem", "CoverImage")
-                        .WithMany()
-                        .HasForeignKey("CoverImageId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("Spotify.Domain.Entities.User.ApplicationUser", "ApplicationUser")
                         .WithOne("Profile")
                         .HasForeignKey("Spotify.Domain.Entities.User.UserProfile", "UserId")
@@ -1908,13 +1888,9 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.Navigation("ApplicationUser");
 
-                    b.Navigation("AvatarImage");
-
                     b.Navigation("City");
 
                     b.Navigation("Country");
-
-                    b.Navigation("CoverImage");
                 });
 
             modelBuilder.Entity("Episode", b =>

@@ -5,6 +5,6 @@ public sealed record AudiobookResponse(
     string Name,
     string? Description,
     int DurationSeconds,
-    Guid AuthorContentId,
     string? GenreId,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    IReadOnlyCollection<Guid> AuthorIds);

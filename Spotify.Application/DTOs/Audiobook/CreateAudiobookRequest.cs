@@ -14,8 +14,7 @@ public sealed class CreateAudiobookRequest
     [Required]
     public Guid AudioItemId { get; init; }
 
-    [Required]
-    public Guid AuthorContentId { get; init; }
-
     public string? GenreId { get; init; }
+
+    public IReadOnlyCollection<Guid> AuthorIds { get; init; } = [];
 }

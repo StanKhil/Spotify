@@ -12,4 +12,6 @@ public sealed class UpdateEpisodeRequest
     public string? Description { get; init; }
 
     public Guid? ImageItemId { get; init; }
+
+    public int? SeqNumber { get; init; }
 }

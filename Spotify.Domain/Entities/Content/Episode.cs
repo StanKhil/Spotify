@@ -8,5 +8,5 @@ public class Episode : AudioContent
     public Guid? AudiobookId { get; set; }
     public Audiobook? Audiobook { get; set; }
 
-    public int SeqNumber { get; set; }
+    public int? SeqNumber { get; set; }
 }

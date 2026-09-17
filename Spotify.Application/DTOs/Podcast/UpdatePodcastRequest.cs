@@ -11,4 +11,6 @@ public sealed class UpdatePodcastRequest
     [Required]
     [MaxLength(2000)]
     public string Description { get; init; } = string.Empty;
+
+    public IReadOnlyCollection<Guid> AuthorIds { get; init; } = [];
 }

@@ -2,5 +2,8 @@
 
 public sealed record AuthorResponse(
     Guid Id,
-    string UserName,
+    string Name,
+    int MonthList,
+    string? Bio,
+    Guid? BioImageItemId,
     int ContentCount);
