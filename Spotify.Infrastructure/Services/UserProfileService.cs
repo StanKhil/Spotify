@@ -43,7 +43,7 @@ namespace Spotify.Infrastructure.Services
             {
                 user.UserName = request.userName;
             }
-            if(!string.IsNullOrWhiteSpace(request.description))
+            if(request.description != null)
             {
                 user.Profile.Description = request.description;
             }

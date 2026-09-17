@@ -3,6 +3,7 @@
     public sealed record MeResponse(
         Guid Id, 
         string UserName, 
+        string? Description,
         string Email,
         int FollowersCount,
         int FollowingCount,

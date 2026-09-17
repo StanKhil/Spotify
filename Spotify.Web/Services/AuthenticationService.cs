@@ -399,7 +399,7 @@ public sealed class AuthenticationService : IAuthenticationService
             return MeResult.Failure("User is not authenticated.");
         }
 
-        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
+        var user = await _context.ApplicationUsers.Include(au => au.Profile).FirstOrDefaultAsync(u => u.Id == userId.Value, cancellationToken);
 
         if (user is null)
         {
@@ -419,6 +419,7 @@ public sealed class AuthenticationService : IAuthenticationService
             new MeResponse(
                 user.Id,
                 user.UserName!,
+                user.Profile.Description,
                 user.Email!,
                 followersCount,
                 user.AuthorSubscriptions.Count,
