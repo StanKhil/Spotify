@@ -399,7 +399,13 @@ public sealed class AuthenticationService : IAuthenticationService
             return MeResult.Failure("User is not authenticated.");
         }
 
-        var user = await _context.ApplicationUsers.Include(au => au.Profile).FirstOrDefaultAsync(u => u.Id == userId.Value, cancellationToken);
+        var user = await _context
+            .ApplicationUsers
+            .Include(au => au.Profile)
+                .ThenInclude(p => p.AvatarImage)
+            .Include(au => au.Profile)
+                .ThenInclude(p => p.CoverImage)
+            .FirstOrDefaultAsync(u => u.Id == userId.Value, cancellationToken);
 
         if (user is null)
         {
@@ -423,6 +429,8 @@ public sealed class AuthenticationService : IAuthenticationService
                 user.Email!,
                 followersCount,
                 user.AuthorSubscriptions.Count,
+                user.Profile.AvatarImage?.ImageList ?? "",
+                user.Profile.CoverImage?.ImageList ?? "",
                 author));
     }
 

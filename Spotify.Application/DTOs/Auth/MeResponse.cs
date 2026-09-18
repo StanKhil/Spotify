@@ -7,6 +7,8 @@
         string Email,
         int FollowersCount,
         int FollowingCount,
+        string? AvatarImageUrl,
+        string? CoverImageUrl,  
         Spotify.Domain.Entities.Content.Author? author
     );
 
