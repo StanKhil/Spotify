@@ -11,7 +11,7 @@ public sealed class MediaService : IMediaService
     private static readonly HashSet<string> AllowedAudioExtensions = new(StringComparer.OrdinalIgnoreCase) { ".mp3", ".wav", ".m4a", ".ogg" };
     private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp" };
     private const long MaxAudioSizeBytes = 50 * 1024 * 1024; // 50 MB
-    private const long MaxImageSizeBytes = 5 * 1024 * 1024;  // 5 MB
+    private const long MaxImageSizeBytes = 50 * 1024 * 1024;  // 50 MB
 
     private readonly IFileStorageService _fileStorageService;
     private readonly ApplicationContext _context;

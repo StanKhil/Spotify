@@ -7,7 +7,7 @@ namespace Spotify.Web.Controllers;
 
 [ApiController]
 [Route("api/admin/media")]
-[Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class MediaController : ControllerBase
 {
     private readonly IMediaService _mediaService;
@@ -18,7 +18,6 @@ public sealed class MediaController : ControllerBase
     }
 
     [HttpPost("audio")]
-    [RequestSizeLimit(50 * 1024 * 1024)]
     public async Task<IActionResult> UploadAudio(IFormFile file, CancellationToken cancellationToken)
     {
         if (file.Length == 0)
@@ -43,7 +42,6 @@ public sealed class MediaController : ControllerBase
     }
 
     [HttpPost("image")]
-    [RequestSizeLimit(5 * 1024 * 1024)]
     public async Task<IActionResult> UploadImage(IFormFile file, CancellationToken cancellationToken)
     {
         if (file.Length == 0)
