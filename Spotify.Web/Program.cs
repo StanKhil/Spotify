@@ -53,6 +53,7 @@ namespace Spotify
             builder.Services.AddScoped<IEmailService, DefaultEmailService>();
             builder.Services.AddScoped<IAudioMetadataService, AudioMetadataService>();
             builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+            builder.Services.AddScoped<IStorageService, StorageService>();
             builder.Services.AddMemoryCache();
 
             var emailOptions = builder.Configuration

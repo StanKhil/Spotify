@@ -435,8 +435,8 @@ public sealed class AuthenticationService : IAuthenticationService
                 user.Email!,
                 followersCount,
                 user.AuthorSubscriptions.Count,
-                user.Profile.AvatarImage?.ImageList ?? "",
-                user.Profile.CoverImage?.ImageList ?? "",
+                user.Profile.AvatarImageId,
+                user.Profile.CoverImageId,
                 author));
     }
 

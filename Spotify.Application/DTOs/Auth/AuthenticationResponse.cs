@@ -6,5 +6,5 @@ public sealed record AuthenticationResponse(
     Guid UserId,
     string UserName,
     string? Description,
-    string? AvatarImageUrl,
-    string? CoverImageUrl);
+    Guid? AvatarImageId,
+    Guid? CoverImageId);

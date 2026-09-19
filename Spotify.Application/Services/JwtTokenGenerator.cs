@@ -50,8 +50,8 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             user.Id,
             user.UserName ?? string.Empty,
             user.Profile.Description ?? string.Empty,
-            user.Profile.AvatarImage?.ImageList ?? string.Empty,
-            user.Profile.CoverImage?.ImageList ?? string.Empty);
+            user.Profile.AvatarImageId,
+            user.Profile.CoverImageId);
     }
 
     public string GetUserIdFromToken(string token)
