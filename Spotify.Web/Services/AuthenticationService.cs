@@ -235,7 +235,13 @@ public sealed class AuthenticationService : IAuthenticationService
         try
         {
             var email = request.Email.Trim();
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = await _context
+                        .ApplicationUsers
+                        .Include(u => u.Profile)
+                        .ThenInclude(p => p.AvatarImage)
+                        .Include(u => u.Profile)
+                        .ThenInclude(p => p.CoverImage)
+                        .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
             if (user is null || !await _userManager.CheckPasswordAsync(user, request.Password))
             {

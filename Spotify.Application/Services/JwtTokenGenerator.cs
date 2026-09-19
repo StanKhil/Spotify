@@ -48,7 +48,10 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             new JwtSecurityTokenHandler().WriteToken(token),
             expiresAtUtc,
             user.Id,
-            user.UserName ?? string.Empty);
+            user.UserName ?? string.Empty,
+            user.Profile.Description ?? string.Empty,
+            user.Profile.AvatarImage?.ImageList ?? string.Empty,
+            user.Profile.CoverImage?.ImageList ?? string.Empty);
     }
 
     public string GetUserIdFromToken(string token)
