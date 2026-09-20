@@ -93,14 +93,14 @@ namespace Spotify.Infrastructure.Services
 
         public async Task<AlbumActionResult?> UnlikeAsync(string albumId, Guid userId, CancellationToken cancellationToken = default)
         {
-            var album = GetOrCreateAlbumAsync(albumId, cancellationToken).Result;
-            
+            var album = await GetOrCreateAlbumAsync(albumId, cancellationToken);
+
             if(album is null)
             {
                 return AlbumActionResult.Failure("Album not found.");
             }
 
-            var authorContent = album.Authors.FirstOrDefault();
+            var authorContent = album.AuthorContent;
 
             if (authorContent is null)
                 return AlbumActionResult.Failure("Author content not found for the album.");
@@ -147,7 +147,8 @@ namespace Spotify.Infrastructure.Services
         CancellationToken cancellationToken)
         {
             return await _context.Albums
-                .Include(x => x.Authors)
+                .Include(x => x.AuthorContent)
+                    .ThenInclude(ac => ac.Authors)
                 .FirstOrDefaultAsync(
                     x => x.Id == albumId &&
                          x.DeletedAt == null &&

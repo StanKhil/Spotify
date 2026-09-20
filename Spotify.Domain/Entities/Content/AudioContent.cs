@@ -34,5 +34,5 @@ public abstract class AudioContent
     [ForeignKey(nameof(GenreId))]
     public Genre? Genre { get; set; }
 
-    public ICollection<AuthorContent> Authors { get; set; } = new List<AuthorContent>();
+    public AuthorContent? AuthorContent { get; set; }
 }

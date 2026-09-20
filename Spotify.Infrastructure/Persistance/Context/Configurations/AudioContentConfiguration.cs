@@ -45,10 +45,10 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
                 .HasForeignKey(x => x.GenreId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.HasMany(x => x.Authors)
+            builder.HasOne(x => x.AuthorContent)
                 .WithOne(x => x.Item)
-                .HasForeignKey(x => x.ItemId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .HasForeignKey<AuthorContent>(x => x.ItemId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasIndex(x => new { x.Provider, x.ExternalContentId })
                 .IsUnique();

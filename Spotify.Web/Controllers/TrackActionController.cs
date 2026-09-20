@@ -88,13 +88,13 @@ public sealed class TrackActionController : ControllerBase
     }
 
     [HttpGet("liked/{maxPerPage}/{page}/{userId:guid}")]
-    [ProducesResponseType(typeof(IReadOnlyCollection<TrackResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(LikedTracksResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<IReadOnlyCollection<TrackResponse>>> GetLikedTracks(
+    public async Task<LikedTracksResult> GetLikedTracks(
         int maxPerPage, int page, Guid userId, CancellationToken cancellationToken)
     {
-        var tracks = await _trackActionService.GetLikedTracksAsync(maxPerPage, page, userId, cancellationToken);
-        return Ok(tracks);
+        var result = await _trackActionService.GetLikedTracksAsync(maxPerPage, page, userId, cancellationToken);
+        return result;
     }
 
 }

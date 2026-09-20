@@ -36,7 +36,7 @@ public sealed class TrackActionService : ITrackActionService
         if (track is null)
             return null;
 
-        var authorContent = track.Authors.FirstOrDefault();
+        var authorContent = track.AuthorContent;
 
         if (authorContent is null)
             return null;
@@ -80,7 +80,7 @@ public sealed class TrackActionService : ITrackActionService
         if (track is null)
             return null;
 
-        var authorContent = track.Authors.FirstOrDefault();
+        var authorContent = track.AuthorContent;
 
         if (authorContent is null)
             return null;
@@ -96,7 +96,8 @@ public sealed class TrackActionService : ITrackActionService
             {
                 Id = Guid.NewGuid(),
                 ApplicationUserId = userId,
-                AuthorContentId = authorContent.Id
+                AuthorContentId = authorContent.Id,
+                LikedAt = DateTime.UtcNow
             });
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -120,7 +121,7 @@ public sealed class TrackActionService : ITrackActionService
         if (track is null)
             return null;
 
-        var authorContent = track.Authors.FirstOrDefault();
+        var authorContent = track.AuthorContent;
 
         if (authorContent is null)
             return null;
@@ -145,74 +146,40 @@ public sealed class TrackActionService : ITrackActionService
             false);
     }
 
-    public async Task<GetLikedTracksResult> GetLikedTracksAsync(
-    int maxPerPage,
-    int page,
-    Guid userId,
-    CancellationToken cancellationToken = default)
+    public async Task<LikedTracksResult> GetLikedTracksAsync(int maxPerPage, int page, Guid userId, CancellationToken cancellationToken = default)
     {
         if (maxPerPage <= 0 || page <= 0)
         {
-            return GetLikedTracksResult.Failure(
-                "Invalid pagination parameters.");
+            return LikedTracksResult.Failure("Invalid pagination parameters.");
         }
 
-        var likedTracksQuery = _context.Likes
+        var rawData = await _context.Likes
             .Where(l => l.ApplicationUserId == userId)
-            .Select(l => l.AuthorContent.Item)
-            .OfType<Track>()
-            .Where(t =>
-                t.DeletedAt == null &&
-                !t.IsDraft);
-
-        var totalLikedTracks = await likedTracksQuery
-            .CountAsync(cancellationToken);
-
-        var totalPages = (int)Math.Ceiling(
-            (double)totalLikedTracks / maxPerPage);
-
-        var tracks = await likedTracksQuery
-            .Include(t => t.AudioItem)
-            .Include(t => t.TrackTags)
-            .OrderByDescending(t => t.CreatedAt)
+            .Where(l => l.AuthorContent.Item is Track)
+            .Where(l => l.AuthorContent.Item.DeletedAt == null)
+            .OrderByDescending(l => l.LikedAt)
             .Skip((page - 1) * maxPerPage)
             .Take(maxPerPage)
+            .Select(l => new
+            {
+                Id = l.AuthorContent.Item.Id,
+                Track = l.AuthorContent.Item as Track,
+                AuthorNames = l.AuthorContent.Authors.Select(a => a.Author.Name),
+                AlbumName = (l.AuthorContent.Item as Track).Album.Name,
+                LikedAt = l.LikedAt
+            })
             .ToListAsync(cancellationToken);
 
-        var trackResponses = new List<TrackResponse>();
+        var result = rawData.Select(x => new LikedTrackResponse(
+            x.Id,
+            x.Track?.Name ?? string.Empty,
+            x.AuthorNames.Any() ? string.Join(", ", x.AuthorNames) : "Unknown Author",
+            x.AlbumName ?? "Unknown Album",
+            x.LikedAt.ToString("dd.MM.yyyy"),
+            x.Track?.DurationSeconds ?? 0
+        )).ToList();
 
-        foreach (var track in tracks)
-        {
-            var audioUrl = await _audioUrlResolver.ResolveAsync(
-            track,
-            cancellationToken);
-
-            trackResponses.Add(new TrackResponse(
-                track.Id,
-                track.Name,
-                track.Description,
-                track.DurationSeconds,
-                track.AlbumId,
-                track.MoodId,
-                track.GenreId,
-                track.PlaysNumber,
-                track.IsAdult,
-                track.IsDraft,
-                track.AudioItemId,
-                track.ImageItemId,
-                track.TrackTags
-                    .Select(x => x.TagId)
-                    .ToList(),
-                track.CreatedAt,
-                audioUrl
-            ));
-        }
-
-        return GetLikedTracksResult.Success(
-            new TrackResponseCollection(
-                trackResponses,
-                totalLikedTracks,
-                totalPages));
+        return LikedTracksResult.Success(result);
     }
 
     private async Task<Track?> GetOrCreateTrackAsync(
@@ -241,7 +208,8 @@ public sealed class TrackActionService : ITrackActionService
         CancellationToken cancellationToken)
     {
         return await _context.Tracks
-            .Include(x => x.Authors)
+            .Include(x => x.AuthorContent)
+                .ThenInclude(ac => ac.Authors)
             .FirstOrDefaultAsync(
                 x => x.Id == trackId &&
                      x.DeletedAt == null &&

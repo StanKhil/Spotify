@@ -71,7 +71,7 @@ namespace Spotify.Infrastructure.Services
         {
             var existingTrack = await _context.Tracks
                 .Include(x => x.AudioItem)
-                .Include(x => x.Authors)
+                .Include(x => x.AuthorContent)
                 .FirstOrDefaultAsync(
                     x => x.Provider == AudioProvider.Jamendo &&
                          x.ExternalContentId == jamendoTrackId &&
@@ -133,7 +133,7 @@ namespace Spotify.Infrastructure.Services
                 Item = track
             };
 
-            track.Authors.Add(authorContent);
+            track.AuthorContent = authorContent;
 
             _context.Tracks.Add(track);
 

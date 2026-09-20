@@ -25,7 +25,7 @@ public sealed class TrackService : ITrackService
         var tracks = await _context.Tracks
             .Where(x => x.DeletedAt == null)
             .Include(x => x.TrackTags)
-            .Include(x => x.Authors)
+            .Include(x => x.AuthorContent)
                 .ThenInclude(ac => ac.Authors)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -38,7 +38,7 @@ public sealed class TrackService : ITrackService
     {
         var track = await _context.Tracks
             .Include(x => x.TrackTags)
-            .Include(x => x.Authors)
+            .Include(x => x.AuthorContent)
                 .ThenInclude(ac => ac.Authors)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
@@ -148,7 +148,7 @@ public sealed class TrackService : ITrackService
                 });
             }
 
-            track.Authors.Add(authorContent);
+            track.AuthorContent = authorContent;
         }
 
         _context.Tracks.Add(track);
@@ -162,7 +162,7 @@ public sealed class TrackService : ITrackService
     {
         var track = await _context.Tracks
             .Include(x => x.TrackTags)
-            .Include(x => x.Authors)
+            .Include(x => x.AuthorContent)
                 .ThenInclude(ac => ac.Authors)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
@@ -231,14 +231,14 @@ public sealed class TrackService : ITrackService
             track.TrackTags.Add(new TrackTag { TrackId = track.Id, TagId = tagId });
         }
 
-        var authorContent = track.Authors.FirstOrDefault();
+        var authorContent = track.AuthorContent;
 
         if (existingAuthorIds.Count == 0)
         {
             if (authorContent is not null)
             {
-                track.Authors.Remove(authorContent);
                 _context.Remove(authorContent);
+                track.AuthorContent = null;
             }
         }
         else
@@ -250,7 +250,7 @@ public sealed class TrackService : ITrackService
                     Id = Guid.NewGuid(),
                     Item = track
                 };
-                track.Authors.Add(authorContent);
+                track.AuthorContent = authorContent;
             }
 
             var authorsToRemove = authorContent.Authors
@@ -429,5 +429,5 @@ public sealed class TrackService : ITrackService
         track.AlbumId ?? Guid.Empty, track.MoodId, track.GenreId, track.PlaysNumber,
         track.IsAdult, track.IsDraft, track.AudioItemId, track.ImageItemId,
         track.TrackTags.Select(x => x.TagId).ToList(), track.CreatedAt, null,
-        track.Authors.SelectMany(ac => ac.Authors).Select(x => x.AuthorId).ToList());
+        track.AuthorContent?.Authors.Select(x => x.AuthorId).ToList() ?? []);
 }
