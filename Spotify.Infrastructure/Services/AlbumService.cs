@@ -28,6 +28,25 @@ public sealed class AlbumService : IAlbumService
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<AlbumResponse>> SearchAlbumsAsync(
+        string query,
+        CancellationToken cancellationToken = default)
+    {
+        var pattern = $"%{query.Trim()}%";
+
+        return await _context.Albums
+            .Where(x => x.DeletedAt == null &&
+                        !x.IsDraft &&
+                        x.Provider != Domain.Enumerations.AudioProvider.Jamendo &&
+                        (EF.Functions.Like(x.Name, pattern) ||
+                         (x.Description != null && EF.Functions.Like(x.Description, pattern))))
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new AlbumResponse(
+                x.Id, x.Name, x.Description, x.DurationSeconds,
+                x.ImageItemId ?? Guid.Empty, x.IsDraft, x.GenreId, x.CreatedAt))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<AlbumResponse?> GetAlbumByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)

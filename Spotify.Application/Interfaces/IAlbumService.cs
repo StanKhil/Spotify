@@ -7,6 +7,10 @@ public interface IAlbumService
     Task<IReadOnlyCollection<AlbumResponse>> GetAlbumsAsync(
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<AlbumResponse>> SearchAlbumsAsync(
+        string query,
+        CancellationToken cancellationToken = default);
+
     Task<AlbumResponse?> GetAlbumByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);

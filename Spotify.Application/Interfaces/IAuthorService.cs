@@ -7,6 +7,10 @@ public interface IAuthorService
     Task<IReadOnlyCollection<AuthorResponse>> GetAuthorsAsync(
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<AuthorResponse>> SearchAuthorsAsync(
+        string query,
+        CancellationToken cancellationToken = default);
+
     Task<AuthorResponse?> GetAuthorByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);

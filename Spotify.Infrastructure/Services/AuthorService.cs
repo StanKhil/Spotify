@@ -30,6 +30,27 @@ public sealed class AuthorService : IAuthorService
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<AuthorResponse>> SearchAuthorsAsync(
+        string query,
+        CancellationToken cancellationToken = default)
+    {
+        var pattern = $"%{query.Trim()}%";
+
+        return await _context.Authors
+            .Where(x => x.ExternalAuthorId == null &&
+                        (EF.Functions.Like(x.Name, pattern) ||
+                         (x.Bio != null && EF.Functions.Like(x.Bio, pattern))))
+            .OrderBy(x => x.Name)
+            .Select(x => new AuthorResponse(
+                x.Id,
+                x.Name,
+                x.MonthList,
+                x.Bio,
+                x.BioImageItemId,
+                x.AuthoredContent.Count))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<AuthorResponse?> GetAuthorByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)

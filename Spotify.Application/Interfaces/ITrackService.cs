@@ -5,6 +5,7 @@ namespace Spotify.Application.Interfaces;
 public interface ITrackService
 {
     Task<IReadOnlyCollection<TrackResponse>> GetTracksAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<TrackResponse>> SearchTracksAsync(string query, CancellationToken cancellationToken = default);
     Task<TrackResponse?> GetTrackByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<CreateTrackResult> CreateTrackAsync(CreateTrackRequest request, CancellationToken cancellationToken = default);
     Task<UpdateTrackResult> EditTrackAsync(Guid id, UpdateTrackRequest request, CancellationToken cancellationToken = default);

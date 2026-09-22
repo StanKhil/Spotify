@@ -33,6 +33,27 @@ public sealed class TrackService : ITrackService
         return tracks.Select(MapToResponse).ToList();
     }
 
+    public async Task<IReadOnlyCollection<TrackResponse>> SearchTracksAsync(
+        string query,
+        CancellationToken cancellationToken = default)
+    {
+        var pattern = $"%{query.Trim()}%";
+
+        var tracks = await _context.Tracks
+            .Where(x => x.DeletedAt == null &&
+                        !x.IsDraft &&
+                        x.Provider != Domain.Enumerations.AudioProvider.Jamendo &&
+                        (EF.Functions.Like(x.Name, pattern) ||
+                         (x.Description != null && EF.Functions.Like(x.Description, pattern))))
+            .Include(x => x.TrackTags)
+            .Include(x => x.AuthorContent)
+                .ThenInclude(x => x.Authors)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return tracks.Select(MapToResponse).ToList();
+    }
+
     public async Task<TrackResponse?> GetTrackByIdAsync(
         Guid id, CancellationToken cancellationToken = default)
     {
