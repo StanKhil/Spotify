@@ -96,6 +96,22 @@ namespace Spotify.Infrastructure.Services
                     jamendoTrack.AlbumId,
                     cancellationToken);
             }
+            
+
+            Author? author = null;
+
+            if (!string.IsNullOrWhiteSpace(jamendoTrack.ArtistId))
+            {
+                author = await GetOrCreateJamendoAuthorAsync(
+                    jamendoTrack.ArtistId,
+                    cancellationToken);
+            }
+
+            var imageItem = new ImageItem
+            {
+                Id = Guid.NewGuid(),
+                ImageList = jamendoTrack.ImageUrl
+            };
 
             var audioItem = new AudioItem
             {
@@ -111,7 +127,6 @@ namespace Spotify.Infrastructure.Services
             var track = new Track
             {
                 Id = Guid.NewGuid(),
-
                 Name = jamendoTrack.Name,
                 DurationSeconds = jamendoTrack.DurationSeconds,
 
@@ -120,6 +135,7 @@ namespace Spotify.Infrastructure.Services
 
                 AlbumId = album?.Id,
 
+                ImageItem = imageItem,
                 AudioItem = audioItem,
 
                 IsDraft = false,
@@ -132,6 +148,18 @@ namespace Spotify.Infrastructure.Services
                 Id = Guid.NewGuid(),
                 Item = track
             };
+
+            if (author is not null)
+            {
+                authorContent.Authors.Add(
+                    new AuthorContentAuthor
+                    {
+                        AuthorContentId = authorContent.Id,
+                        AuthorId = author.Id,
+                        Author = author,
+                        AuthorContent = authorContent
+                    });
+            }
 
             track.AuthorContent = authorContent;
 

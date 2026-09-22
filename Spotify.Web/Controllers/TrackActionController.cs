@@ -97,4 +97,15 @@ public sealed class TrackActionController : ControllerBase
         return result;
     }
 
+    [HttpGet("listening-history/{userId:guid}")]
+    [ProducesResponseType(typeof(ListeningHistoryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ListeningHistoryResult> GetListeningHistory(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _trackActionService.GetListeningHistoryAsync(userId, cancellationToken);
+        return result;
+    }
+
 }
