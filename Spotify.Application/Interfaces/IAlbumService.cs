@@ -1,4 +1,5 @@
 ﻿using Spotify.Application.DTOs.Album;
+using Spotify.Application.DTOs.Dashboard;
 
 namespace Spotify.Application.Interfaces;
 
@@ -6,6 +7,7 @@ public interface IAlbumService
 {
     Task<IReadOnlyCollection<AlbumResponse>> GetAlbumsAsync(
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<LibraryTrackSummary>> GetAlbumTracksAsync(Guid albumId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<AlbumResponse>> SearchAlbumsAsync(
         string query,

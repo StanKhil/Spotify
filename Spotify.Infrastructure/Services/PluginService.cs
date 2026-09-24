@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Spotify.Application.DTOs.Plugin;
 using Spotify.Application.Interfaces;
+using Spotify.Domain.Entities.Content;
 using Spotify.Infrastructure.Persistance.Context;
 
 namespace Spotify.Infrastructure.Services;
@@ -21,6 +22,23 @@ public sealed class PluginService : IPluginService
             .OrderBy(x => x.Name)
             .Select(x => new PluginResponse(x.Id, x.Name, x.IsEnabled, x.SettingsJson))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<PluginResponse> CreatePluginAsync(
+        CreatePluginRequest request, CancellationToken cancellationToken = default)
+    {
+        var plugin = new Plugin
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name.Trim(),
+            IsEnabled = request.IsEnabled,
+            SettingsJson = request.SettingsJson
+        };
+
+        _context.Plugins.Add(plugin);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new PluginResponse(plugin.Id, plugin.Name, plugin.IsEnabled, plugin.SettingsJson);
     }
 
     public async Task<PluginResponse?> TogglePluginAsync(
@@ -45,5 +63,17 @@ public sealed class PluginService : IPluginService
         await _context.SaveChangesAsync(cancellationToken);
 
         return new PluginResponse(plugin.Id, plugin.Name, plugin.IsEnabled, plugin.SettingsJson);
+    }
+
+    public async Task<bool> DeletePluginAsync(
+        Guid id, CancellationToken cancellationToken = default)
+    {
+        var plugin = await _context.Plugins.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (plugin is null) return false;
+
+        _context.Plugins.Remove(plugin);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
     }
 }

@@ -26,4 +26,11 @@ public sealed class SystemSettingsController : ControllerBase
     public async Task<ActionResult<SystemSettingsResponse>> UpdateSystemSettings(
         [FromBody] UpdateSystemSettingsRequest request, CancellationToken cancellationToken)
         => Ok(await _settingsService.UpdateSystemSettingsAsync(request, cancellationToken));
+
+    [HttpDelete("{key}")]
+    public async Task<IActionResult> DeleteSystemSetting(string key, CancellationToken cancellationToken)
+    {
+        var deleted = await _settingsService.DeleteSystemSettingAsync(key, cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
 }

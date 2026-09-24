@@ -9,4 +9,5 @@ public sealed record CustomerResponse(
     DateTime Birthdate,
     bool IsAdult,
     DateTime RegisteredAt,
-    DateTime? DeletedAt);
+    DateTime? DeletedAt,
+    string Role);

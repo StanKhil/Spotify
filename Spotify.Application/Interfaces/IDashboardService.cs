@@ -5,4 +5,5 @@ namespace Spotify.Application.Interfaces;
 public interface IDashboardService
 {
     Task<DashboardStatsResponse> GetDashboardStatsAsync(CancellationToken cancellationToken = default);
+    Task<LibraryOverviewResponse> GetLibraryOverviewAsync(CancellationToken cancellationToken = default);
 }

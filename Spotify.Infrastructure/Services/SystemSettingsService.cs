@@ -43,4 +43,20 @@ public sealed class SystemSettingsService : ISystemSettingsService
 
         return await GetSystemSettingsAsync(cancellationToken);
     }
+
+    public async Task<bool> DeleteSystemSettingAsync(
+        string key, CancellationToken cancellationToken = default)
+    {
+        var existing = await _context.SystemSettings.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
+
+        if (existing is null)
+        {
+            return false;
+        }
+
+        _context.SystemSettings.Remove(existing);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
 }

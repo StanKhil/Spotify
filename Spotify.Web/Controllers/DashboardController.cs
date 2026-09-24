@@ -21,4 +21,8 @@ public sealed class DashboardController : ControllerBase
     [HttpGet("stats")]
     public async Task<ActionResult<DashboardStatsResponse>> GetDashboardStats(CancellationToken cancellationToken)
         => Ok(await _dashboardService.GetDashboardStatsAsync(cancellationToken));
+
+    [HttpGet("overview")]
+    public async Task<ActionResult<LibraryOverviewResponse>> GetLibraryOverview(CancellationToken cancellationToken)
+        => Ok(await _dashboardService.GetLibraryOverviewAsync(cancellationToken));
 }

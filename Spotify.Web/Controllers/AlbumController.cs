@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Spotify.Application.DTOs.Album;
+using Spotify.Application.DTOs.Dashboard;
 using Spotify.Application.Interfaces;
 
 namespace Spotify.Web.Controllers;
@@ -33,6 +34,15 @@ public sealed class AlbumController : ControllerBase
     {
         var album = await _albumService.GetAlbumByIdAsync(id, cancellationToken);
         return album is null ? NotFound() : Ok(album);
+    }
+
+    [HttpGet("{id}/tracks")]
+    public async Task<ActionResult<IReadOnlyCollection<LibraryTrackSummary>>> GetAlbumTracks(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var tracks = await _albumService.GetAlbumTracksAsync(id, cancellationToken);
+        return Ok(tracks);
     }
 
     [HttpPost]

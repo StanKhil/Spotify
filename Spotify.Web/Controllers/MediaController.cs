@@ -38,7 +38,7 @@ public sealed class MediaController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        return Ok(new { audioItemId = result.ItemId, storageKey = result.Url });
+        return Ok(new { itemId = result.ItemId, storageKey = result.Url });
     }
 
     [HttpPost("image")]

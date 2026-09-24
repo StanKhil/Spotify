@@ -29,6 +29,21 @@ public sealed class CustomerController : ControllerBase
         return customer is null ? NotFound() : Ok(customer);
     }
 
+    [HttpPost]
+    public async Task<ActionResult<CustomerResponse>> CreateCustomer(
+        [FromBody] CreateCustomerRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _customerService.CreateCustomerAsync(request, cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error);
+            return ValidationProblem(ModelState);
+        }
+
+        return StatusCode(StatusCodes.Status201Created, result.Customer);
+    }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<CustomerResponse>> UpdateCustomer(
         Guid id, [FromBody] UpdateCustomerRequest request, CancellationToken cancellationToken)

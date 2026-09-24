@@ -8,6 +8,8 @@ namespace Spotify.Infrastructure.Services;
 public sealed class DashboardService : IDashboardService
 {
     private const string AuthorRoleName = "Author";
+    private const int RecentItemsCount = 12;
+    private const int TopItemsCount = 10;
 
     private readonly ApplicationContext _context;
 
@@ -39,5 +41,88 @@ public sealed class DashboardService : IDashboardService
         return new DashboardStatsResponse(
             totalTracks, totalAlbums, totalPodcasts, totalAudiobooks,
             totalPlaylists, totalCustomers, totalAuthors, totalPlays, newCustomers);
+    }
+
+    public async Task<LibraryOverviewResponse> GetLibraryOverviewAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var recentTracks = await _context.Tracks
+            .Where(x => x.DeletedAt == null)
+            .Include(x => x.ImageItem)
+            .Include(x => x.Album)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(RecentItemsCount)
+            .Select(x => new LibraryTrackSummary(
+                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.DurationSeconds, x.PlaysNumber,
+                x.AlbumId, x.Album != null ? x.Album.Name : null))
+            .ToListAsync(cancellationToken);
+
+        var recentAlbums = await _context.Albums
+            .Where(x => x.DeletedAt == null)
+            .Include(x => x.ImageItem)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(RecentItemsCount)
+            .Select(x => new LibraryAlbumSummary(
+                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.Tracks.Count(t => t.DeletedAt == null)))
+            .ToListAsync(cancellationToken);
+
+        var topTracks = await _context.Tracks
+            .Where(x => x.DeletedAt == null)
+            .Include(x => x.ImageItem)
+            .Include(x => x.Album)
+            .OrderByDescending(x => x.PlaysNumber)
+            .Take(TopItemsCount)
+            .Select(x => new LibraryTrackSummary(
+                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.DurationSeconds, x.PlaysNumber,
+                x.AlbumId, x.Album != null ? x.Album.Name : null))
+            .ToListAsync(cancellationToken);
+
+        var topAlbums = await _context.Albums
+            .Where(x => x.DeletedAt == null)
+            .Include(x => x.ImageItem)
+            .Include(x => x.Tracks)
+            .Select(x => new
+            {
+                Album = x,
+                TotalPlays = x.Tracks.Where(t => t.DeletedAt == null).Sum(t => (long?)t.PlaysNumber) ?? 0
+            })
+            .OrderByDescending(x => x.TotalPlays)
+            .Take(TopItemsCount)
+            .Select(x => new LibraryAlbumSummary(
+                x.Album.Id, x.Album.Name,
+                x.Album.ImageItem != null ? x.Album.ImageItem.ImageList : null,
+                x.Album.Tracks.Count(t => t.DeletedAt == null)))
+            .ToListAsync(cancellationToken);
+
+        var topGenres = await _context.Genres
+            .Select(g => new
+            {
+                Genre = g,
+                TrackCount = _context.Tracks.Count(t => t.DeletedAt == null && t.GenreId == g.Id)
+            })
+            .OrderByDescending(x => x.TrackCount)
+            .Take(TopItemsCount)
+            .Select(x => new LibraryGenreSummary(x.Genre.Id, x.Genre.Name, x.TrackCount))
+            .ToListAsync(cancellationToken);
+
+        return new LibraryOverviewResponse(recentTracks, recentAlbums, topTracks, topAlbums, topGenres);
+    }
+
+    public async Task<IReadOnlyCollection<LibraryTrackSummary>> GetAlbumTracksAsync(
+        Guid albumId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Tracks
+            .Where(x => x.DeletedAt == null && x.AlbumId == albumId)
+            .Include(x => x.ImageItem)
+            .Include(x => x.Album)
+            .OrderBy(x => x.Name)
+            .Select(x => new LibraryTrackSummary(
+                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.DurationSeconds, x.PlaysNumber,
+                x.AlbumId, x.Album != null ? x.Album.Name : null))
+            .ToListAsync(cancellationToken);
     }
 }

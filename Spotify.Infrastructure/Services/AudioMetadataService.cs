@@ -2,6 +2,8 @@
 using Spotify.Application.Interfaces;
 using TagLib;
 
+namespace Spotify.Infrastructure.Services;
+
 public sealed class AudioMetadataService : IAudioMetadataService
 {
     private readonly IWebHostEnvironment _environment;
@@ -15,12 +17,15 @@ public sealed class AudioMetadataService : IAudioMetadataService
         string storageKey,
         CancellationToken cancellationToken = default)
     {
-        var relativePath = storageKey.TrimStart('/')
+        var audioRootPath = Path.Combine(
+            _environment.ContentRootPath,
+            "App_Data",
+            "audio");
+
+        var fileName = storageKey.TrimStart('/')
             .Replace('/', Path.DirectorySeparatorChar);
 
-        var filePath = Path.Combine(
-            _environment.WebRootPath,
-            relativePath);
+        var filePath = Path.Combine(audioRootPath, fileName);
 
         if (!System.IO.File.Exists(filePath))
         {

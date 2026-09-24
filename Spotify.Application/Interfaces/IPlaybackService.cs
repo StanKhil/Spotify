@@ -8,4 +8,10 @@ public interface IPlaybackService
         Guid trackId,
         Guid userId,
         CancellationToken cancellationToken = default);
+
+    Task<TrackPlaybackResponse?> GetTrackPlaybackForAdminAsync(
+        Guid trackId,
+        bool asUser,
+        Guid? userId,
+        CancellationToken cancellationToken = default);
 }

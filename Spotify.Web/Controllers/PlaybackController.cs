@@ -44,11 +44,33 @@ public sealed class PlaybackController : ControllerBase
             user.Id,
             cancellationToken);
 
-        if (playback is null)
+        return playback is null ? NotFound() : Ok(playback);
+    }
+
+    [HttpGet("tracks/{trackId:guid}/admin")]
+    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [ProducesResponseType(typeof(TrackPlaybackResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPlaybackForAdmin(
+        Guid trackId,
+        [FromQuery] bool asUser,
+        CancellationToken cancellationToken)
+    {
+        Guid? userId = null;
+
+        if (asUser)
         {
-            return NotFound();
+            var user = await _userManager.GetUserAsync(User);
+            userId = user?.Id;
         }
 
-        return Ok(playback);
+        var playback = await _playbackService.GetTrackPlaybackForAdminAsync(
+            trackId,
+            asUser,
+            userId,
+            cancellationToken);
+
+        return playback is null ? NotFound() : Ok(playback);
     }
 }

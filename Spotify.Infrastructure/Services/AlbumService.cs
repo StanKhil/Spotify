@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Spotify.Application.DTOs.Album;
+using Spotify.Application.DTOs.Dashboard;
 using Spotify.Application.Interfaces;
 using Spotify.Infrastructure.Persistance.Context;
 
@@ -57,6 +58,22 @@ public sealed class AlbumService : IAlbumService
                 x.Id, x.Name, x.Description, x.DurationSeconds,
                 x.ImageItemId ?? Guid.Empty, x.IsDraft, x.GenreId, x.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<LibraryTrackSummary>> GetAlbumTracksAsync(
+        Guid albumId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Tracks
+            .Where(x => x.DeletedAt == null && x.AlbumId == albumId)
+            .Include(x => x.ImageItem)
+            .Include(x => x.Album)
+            .OrderBy(x => x.Name)
+            .Select(x => new LibraryTrackSummary(
+                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.DurationSeconds, x.PlaysNumber,
+                x.AlbumId, x.Album != null ? x.Album.Name : null))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<CreateAlbumResult> CreateAlbumAsync(

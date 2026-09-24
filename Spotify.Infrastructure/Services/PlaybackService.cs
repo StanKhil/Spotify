@@ -3,7 +3,6 @@ using Spotify.Application.DTOs.Playback;
 using Spotify.Application.Interfaces;
 using Spotify.Domain.Enumerations;
 using Spotify.Infrastructure.Persistance.Context;
-using System.Diagnostics.Eventing.Reader;
 
 namespace Spotify.Infrastructure.Playback;
 
@@ -27,9 +26,9 @@ public sealed class PlaybackService : IPlaybackService
     }
 
     public async Task<TrackPlaybackResponse?> GetTrackPlaybackAsync(
-    Guid trackId,
-    Guid userId,
-    CancellationToken cancellationToken = default)
+        Guid trackId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
     {
         var track = await _context.Tracks
             .AsNoTracking()
@@ -45,21 +44,63 @@ public sealed class PlaybackService : IPlaybackService
             return null;
         }
 
-        if (track.IsForAdult)
+        if (track.IsForAdult && !await IsUserAdultAsync(userId, cancellationToken))
         {
-            var userIsAdult = await _context.UserProfiles
-                .AnyAsync(
-                    x => x.UserId == userId &&
-                         x.IsAdult &&
-                         x.DeletedAt == null,
-                    cancellationToken);
-
-            if (!userIsAdult)
-            {
-                return null;
-            }
+            return null;
         }
 
+        return await BuildPlaybackResponseAsync(track, cancellationToken);
+    }
+
+    public async Task<TrackPlaybackResponse?> GetTrackPlaybackForAdminAsync(
+        Guid trackId,
+        bool asUser,
+        Guid? userId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Tracks
+            .AsNoTracking()
+            .Include(x => x.AudioItem)
+            .Where(x => x.Id == trackId && x.DeletedAt == null);
+
+        if (asUser)
+        {
+            query = query.Where(x => !x.IsDraft);
+        }
+
+        var track = await query.FirstOrDefaultAsync(cancellationToken);
+
+        if (track?.AudioItem is null)
+        {
+            return null;
+        }
+
+        if (asUser && track.IsForAdult && !await IsUserAdultAsync(userId, cancellationToken))
+        {
+            return null;
+        }
+
+        return await BuildPlaybackResponseAsync(track, cancellationToken);
+    }
+
+    private async Task<bool> IsUserAdultAsync(Guid? userId, CancellationToken cancellationToken)
+    {
+        if (userId is null)
+        {
+            return false;
+        }
+
+        return await _context.UserProfiles.AnyAsync(
+            x => x.UserId == userId &&
+                 x.IsAdult &&
+                 x.DeletedAt == null,
+            cancellationToken);
+    }
+
+    private async Task<TrackPlaybackResponse?> BuildPlaybackResponseAsync(
+        Domain.Entities.Content.Track track,
+        CancellationToken cancellationToken)
+    {
         var expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(
             _playbackOptions.LocalUrlLifetimeMinutes);
 
@@ -69,7 +110,7 @@ public sealed class PlaybackService : IPlaybackService
         {
             case AudioProvider.LocalStorage:
                 {
-                    if (string.IsNullOrWhiteSpace(track.AudioItem.StorageKey))
+                    if (string.IsNullOrWhiteSpace(track.AudioItem!.StorageKey))
                     {
                         return null;
                     }
