@@ -8,7 +8,7 @@ namespace Spotify.Web.Controllers;
 
 [ApiController]
 [Route("api/admin/playlists")]
-[Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class PlaylistController : ControllerBase
 {
     private readonly IPlaylistService _playlistService;

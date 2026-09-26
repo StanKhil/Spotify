@@ -5,5 +5,5 @@ namespace Spotify.Application.DTOs.Playlist;
 public sealed class AddTrackToPlaylistRequest
 {
     [Required]
-    public Guid TrackId { get; init; }
+    public string TrackId { get; init; }
 }

@@ -2,16 +2,23 @@
 using Spotify.Application.DTOs.Playlist;
 using Spotify.Application.Interfaces;
 using Spotify.Infrastructure.Persistance.Context;
+using Spotify.Domain.Entities.Content;
 
 namespace Spotify.Infrastructure.Services;
 
 public sealed class PlaylistService : IPlaylistService
 {
     private readonly ApplicationContext _context;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IFromJamendoToLocalService _fromJamendoToLocalService;
 
-    public PlaylistService(ApplicationContext context)
+    public PlaylistService(ApplicationContext context,
+        IFromJamendoToLocalService fromJamendoToLocalService,
+        ICurrentUserService currentUserService)
     {
         _context = context;
+        _fromJamendoToLocalService = fromJamendoToLocalService;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IReadOnlyCollection<PlaylistResponse>> GetPlaylistsAsync(
@@ -63,6 +70,13 @@ public sealed class PlaylistService : IPlaylistService
             return UpdatePlaylistResult.Failure("Playlist was not found.");
         }
 
+        var currentUserId = _currentUserService.UserId;
+
+        if(currentUserId != playlist.ApplicationUserId)
+        {
+            return UpdatePlaylistResult.Failure("You cannot edit someone else's playlist.");
+        }
+
         playlist.Name = request.Name.Trim();
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -79,6 +93,13 @@ public sealed class PlaylistService : IPlaylistService
         if (playlist is null)
         {
             return DeletePlaylistResult.Failure("Playlist was not found.");
+        }
+
+        var currentUserId = _currentUserService.UserId;
+
+        if (currentUserId != playlist.ApplicationUserId)
+        {
+            return DeletePlaylistResult.Failure("You cannot delete someone else's playlist.");
         }
 
         _context.Playlists.Remove(playlist);
@@ -100,13 +121,20 @@ public sealed class PlaylistService : IPlaylistService
     public async Task<AddTrackToPlaylistResult> AddTrackToPlaylistAsync(
         Guid playlistId, AddTrackToPlaylistRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await _context.Playlists.AnyAsync(x => x.Id == playlistId, cancellationToken))
+        var playlist = await _context.Playlists.FirstOrDefaultAsync(x => x.Id == playlistId, cancellationToken);
+        if (playlist is null)
         {
             return AddTrackToPlaylistResult.Failure("Playlist was not found.");
         }
 
-        var track = await _context.Tracks
-            .FirstOrDefaultAsync(x => x.Id == request.TrackId && x.DeletedAt == null, cancellationToken);
+        var currentUserId = _currentUserService.UserId;
+
+        if (currentUserId != playlist.ApplicationUserId)
+        {
+            return AddTrackToPlaylistResult.Failure("You cannot edit someone else's playlist.");
+        }
+
+        var track = await GetOrCreateTrackAsync(request.TrackId, cancellationToken);
 
         if (track is null)
         {
@@ -114,7 +142,7 @@ public sealed class PlaylistService : IPlaylistService
         }
 
         var alreadyExists = await _context.PlaylistTracks
-            .AnyAsync(x => x.PlaylistId == playlistId && x.TrackId == request.TrackId, cancellationToken);
+            .AnyAsync(x => x.PlaylistId == playlistId && x.TrackId == track.Id, cancellationToken);
 
         if (alreadyExists)
         {
@@ -126,10 +154,10 @@ public sealed class PlaylistService : IPlaylistService
             .Select(x => (int?)x.Position)
             .MaxAsync(cancellationToken) ?? -1;
 
-        var playlistTrack = new Domain.Entities.Content.PlaylistTrack
+        var playlistTrack = new PlaylistTrack
         {
             PlaylistId = playlistId,
-            TrackId = request.TrackId,
+            TrackId = track.Id,
             Position = maxPosition + 1,
             AddedAt = DateTime.UtcNow
         };
@@ -144,6 +172,19 @@ public sealed class PlaylistService : IPlaylistService
     public async Task<RemoveTrackFromPlaylistResult> RemoveTrackFromPlaylistAsync(
         Guid playlistId, Guid trackId, CancellationToken cancellationToken = default)
     {
+        var playlist = await _context.Playlists.FirstOrDefaultAsync(x => x.Id == playlistId, cancellationToken);
+        if (playlist is null)
+        {
+            return RemoveTrackFromPlaylistResult.Failure("Playlist was not found.");
+        }
+
+        var currentUserId = _currentUserService.UserId;
+
+        if (currentUserId != playlist.ApplicationUserId)
+        {
+            return RemoveTrackFromPlaylistResult.Failure("You cannot edit someone else's playlist.");
+        }
+
         var playlistTrack = await _context.PlaylistTracks
             .FirstOrDefaultAsync(x => x.PlaylistId == playlistId && x.TrackId == trackId, cancellationToken);
 
@@ -156,5 +197,40 @@ public sealed class PlaylistService : IPlaylistService
         await _context.SaveChangesAsync(cancellationToken);
 
         return RemoveTrackFromPlaylistResult.Success();
+    }
+
+    private async Task<Track?> GetOrCreateTrackAsync(
+    string trackId,
+    CancellationToken cancellationToken)
+    {
+        if (Guid.TryParse(trackId, out var localTrackId))
+        {
+            return await GetLocalTrackAsync(
+                localTrackId,
+                cancellationToken);
+        }
+
+        if (_fromJamendoToLocalService.IsJamendoId(trackId))
+        {
+            return await _fromJamendoToLocalService.GetOrCreateJamendoTrackAsync(
+                trackId,
+                cancellationToken);
+        }
+
+        return null;
+    }
+
+    private async Task<Track?> GetLocalTrackAsync(
+        Guid trackId,
+        CancellationToken cancellationToken)
+    {
+        return await _context.Tracks
+            .Include(x => x.AuthorContent)
+                .ThenInclude(ac => ac.Authors)
+            .FirstOrDefaultAsync(
+                x => x.Id == trackId &&
+                     x.DeletedAt == null &&
+                     !x.IsDraft,
+                cancellationToken);
     }
 }
