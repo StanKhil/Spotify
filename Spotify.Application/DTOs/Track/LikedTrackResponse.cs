@@ -11,6 +11,9 @@ namespace Spotify.Application.DTOs.Track
         string Author,
         string Album,
         string LikedAt,
-        int DurationSeconds);
+        int DurationSeconds,
+        string? ImageUrl,
+        string? AudioUrl
+        );
 
 }

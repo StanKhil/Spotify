@@ -157,33 +157,53 @@ public sealed class TrackActionService : ITrackActionService
             return LikedTracksResult.Failure("Invalid pagination parameters.");
         }
 
-        var rawData = await _context.Likes
+        var likes = await _context.Likes
             .Where(l => l.ApplicationUserId == userId)
             .Where(l => l.AuthorContent.Item is Track)
             .Where(l => l.AuthorContent.Item.DeletedAt == null)
             .OrderByDescending(l => l.LikedAt)
             .Skip((page - 1) * maxPerPage)
             .Take(maxPerPage)
-            .Select(l => new
-            {
-                Id = l.AuthorContent.Item.Id,
-                Track = l.AuthorContent.Item as Track,
-                AuthorNames = l.AuthorContent.Authors.Select(a => a.Author.Name),
-                AlbumName = (l.AuthorContent.Item as Track).Album.Name,
-                LikedAt = l.LikedAt,
-                ExternalId = l.AuthorContent.Item.ExternalContentId
-            })
+            .Include(l => l.AuthorContent)
+                .ThenInclude(ac => ac.Item)
+                    .ThenInclude(item => (item as Track)!.AudioItem)
+            .Include(l => l.AuthorContent)
+                .ThenInclude(ac => ac.Item)
+                    .ThenInclude(item => (item as Track)!.ImageItem)
+            .Include(l => l.AuthorContent)
+                .ThenInclude(ac => ac.Item)
+                    .ThenInclude(item => (item as Track)!.Album)
+            .Include(l => l.AuthorContent)
+                .ThenInclude(ac => ac.Authors)
+                    .ThenInclude(aca => aca.Author)
             .ToListAsync(cancellationToken);
 
-        var result = rawData.Select(x => new LikedTrackResponse(
-            x.Id,
-            x.ExternalId,
-            x.Track?.Name ?? string.Empty,
-            x.AuthorNames.Any() ? string.Join(", ", x.AuthorNames) : "Unknown Author",
-            x.AlbumName ?? "Unknown Album",
-            x.LikedAt.ToString("dd.MM.yyyy"),
-            x.Track?.DurationSeconds ?? 0
-        )).ToList();
+        var result = new List<LikedTrackResponse>();
+
+        foreach (var like in likes)
+        {
+            if (like.AuthorContent.Item is not Track track)
+                continue;
+
+            var audioUrl = await _audioUrlResolver.ResolveAsync(track, cancellationToken);
+            //var imageUrl = track.ImageItemId is Guid imageItemId
+            //    ? $"/api/storage/images/{imageItemId}"
+            //    : null;
+            var authorNames = like.AuthorContent.Authors
+                .Select(x => x.Author.Name)
+                .Where(x => !string.IsNullOrWhiteSpace(x));
+
+            result.Add(new LikedTrackResponse(
+                track.Id,
+                track.ExternalContentId,
+                track.Name,
+                authorNames.Any() ? string.Join(", ", authorNames) : "Unknown Author",
+                track.Album?.Name ?? "Unknown Album",
+                like.LikedAt.ToString("dd.MM.yyyy"),
+                track.DurationSeconds,
+                track.ImageItem?.ImageList,
+                audioUrl));
+        }
 
         return LikedTracksResult.Success(result);
     }
