@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Spotify.Application.Interfaces;
+using Spotify.Application.DTOs.Jamendo;
 using Spotify.Domain.Entities.Content;
 using Spotify.Domain.Enumerations;
 using Spotify.Infrastructure.Persistance.Context;
@@ -71,7 +72,11 @@ namespace Spotify.Infrastructure.Services
         {
             var existingTrack = await _context.Tracks
                 .Include(x => x.AudioItem)
+                .Include(x => x.ImageItem)
+                .Include(x => x.Album)
                 .Include(x => x.AuthorContent)
+                    .ThenInclude(x => x.Authors)
+                        .ThenInclude(x => x.Author)
                 .FirstOrDefaultAsync(
                     x => x.Provider == AudioProvider.Jamendo &&
                          x.ExternalContentId == jamendoTrackId &&
@@ -79,7 +84,13 @@ namespace Spotify.Infrastructure.Services
                     cancellationToken);
 
             if (existingTrack is not null)
+            {
+                await HydrateMissingJamendoDetailsAsync(
+                    existingTrack,
+                    cancellationToken);
+
                 return existingTrack;
+            }
 
             var jamendoTrack = await _jamendoService.GetTrackAsync(
                 jamendoTrackId,
@@ -168,6 +179,93 @@ namespace Spotify.Infrastructure.Services
             await _context.SaveChangesAsync(cancellationToken);
 
             return track;
+        }
+
+        private async Task HydrateMissingJamendoDetailsAsync(
+            Track track,
+            CancellationToken cancellationToken)
+        {
+            var needsAuthor = track.AuthorContent is null ||
+                              track.AuthorContent.Authors.Count == 0;
+            var needsAlbum = track.Album is null;
+            var needsImage = track.ImageItem is null;
+
+            if (!needsAuthor && !needsAlbum && !needsImage ||
+                string.IsNullOrWhiteSpace(track.ExternalContentId))
+            {
+                return;
+            }
+
+            var jamendoTrack = await _jamendoService.GetTrackAsync(
+                track.ExternalContentId,
+                cancellationToken);
+
+            if (jamendoTrack is null)
+            {
+                return;
+            }
+
+            var changed = false;
+
+            if (needsAlbum && !string.IsNullOrWhiteSpace(jamendoTrack.AlbumId))
+            {
+                var album = await GetOrCreateJamendoAlbumAsync(
+                    jamendoTrack.AlbumId,
+                    cancellationToken);
+
+                if (album is not null)
+                {
+                    track.AlbumId = album.Id;
+                    track.Album = album;
+                    changed = true;
+                }
+            }
+
+            if (needsImage && !string.IsNullOrWhiteSpace(jamendoTrack.ImageUrl))
+            {
+                track.ImageItem = new ImageItem
+                {
+                    Id = Guid.NewGuid(),
+                    ImageList = jamendoTrack.ImageUrl
+                };
+                changed = true;
+            }
+
+            if (needsAuthor && !string.IsNullOrWhiteSpace(jamendoTrack.ArtistId))
+            {
+                var author = await GetOrCreateJamendoAuthorAsync(
+                    jamendoTrack.ArtistId,
+                    cancellationToken);
+
+                if (author is not null)
+                {
+                    if (track.AuthorContent is null)
+                    {
+                        track.AuthorContent = new AuthorContent
+                        {
+                            Id = Guid.NewGuid(),
+                            Item = track
+                        };
+                    }
+
+                    if (!track.AuthorContent.Authors.Any(x => x.AuthorId == author.Id))
+                    {
+                        track.AuthorContent.Authors.Add(new AuthorContentAuthor
+                        {
+                            AuthorContentId = track.AuthorContent.Id,
+                            AuthorId = author.Id,
+                            Author = author,
+                            AuthorContent = track.AuthorContent
+                        });
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed)
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
         }
 
         public async Task<Author?> GetOrCreateJamendoAuthorAsync(

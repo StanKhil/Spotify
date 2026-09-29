@@ -119,13 +119,23 @@ public sealed class TrackActionController : ControllerBase
     }
 
     [HttpGet("listening-history/{userId:guid}")]
-    [ProducesResponseType(typeof(ListeningHistoryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ListeningHistoryResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ListeningHistoryResult> GetListeningHistory(
         Guid userId,
         CancellationToken cancellationToken)
     {
         var result = await _trackActionService.GetListeningHistoryAsync(userId, cancellationToken);
+        return result;
+    }
+
+    [HttpGet("track-page/{trackId}")]
+    [ProducesResponseType(typeof(TrackPageResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<TrackPageResult> GetTrackPage(string trackId, CancellationToken cancellation)
+    {
+        var result = await _trackActionService.GetTrackPage(trackId, cancellation);
         return result;
     }
 

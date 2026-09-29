@@ -383,7 +383,7 @@ public sealed class JamendoApiClient
             {
                 ["id"] = authorId,
                 ["limit"] = maxPerPage.ToString(),
-                ["offset"] = ((page - 11) * maxPerPage).ToString()
+                ["offset"] = ((page - 1) * maxPerPage).ToString()
             },
             cancellationToken);
 

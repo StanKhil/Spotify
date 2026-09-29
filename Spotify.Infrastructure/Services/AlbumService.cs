@@ -24,8 +24,8 @@ public sealed class AlbumService : IAlbumService
             .Where(x => x.DeletedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new AlbumResponse(
-                x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.ImageItemId ?? Guid.Empty, x.IsDraft, x.GenreId, x.CreatedAt))
+                x.Id.ToString(), x.Name, x.Description, x.DurationSeconds,
+                x.ImageItemId ?? Guid.Empty, x.IsDraft, x.GenreId, x.CreatedAt.Date, x.ImageItem!.ImageList))
             .ToListAsync(cancellationToken);
     }
 
@@ -43,8 +43,8 @@ public sealed class AlbumService : IAlbumService
                          (x.Description != null && EF.Functions.Like(x.Description, pattern))))
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new AlbumResponse(
-                x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.ImageItemId ?? Guid.Empty, x.IsDraft, x.GenreId, x.CreatedAt))
+                x.Id.ToString(), x.Name, x.Description, x.DurationSeconds,
+                x.ImageItemId ?? Guid.Empty, x.IsDraft, x.GenreId, x.CreatedAt, x.ImageItem!.ImageList))
             .ToListAsync(cancellationToken);
     }
 
@@ -55,8 +55,8 @@ public sealed class AlbumService : IAlbumService
         return await _context.Albums
             .Where(x => x.Id == id && x.DeletedAt == null)
             .Select(x => new AlbumResponse(
-                x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.ImageItemId ?? Guid.Empty, x.IsDraft, x.GenreId, x.CreatedAt))
+                x.Id.ToString(), x.Name, x.Description, x.DurationSeconds,
+                x.ImageItemId ?? Guid.Empty, x.IsDraft, x.GenreId, x.CreatedAt, x.ImageItem!.ImageList))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -113,8 +113,8 @@ public sealed class AlbumService : IAlbumService
         await _context.SaveChangesAsync(cancellationToken);
 
         return CreateAlbumResult.Success(new AlbumResponse(
-            album.Id, album.Name, album.Description, album.DurationSeconds,
-            album.ImageItemId ?? Guid.Empty, album.IsDraft, album.GenreId, album.CreatedAt));
+            album.Id.ToString(), album.Name, album.Description, album.DurationSeconds,
+            album.ImageItemId ?? Guid.Empty, album.IsDraft, album.GenreId, album.CreatedAt, album.ImageItem!.ImageList));
     }
 
     public async Task<UpdateAlbumResult> EditAlbumAsync(
@@ -150,8 +150,8 @@ public sealed class AlbumService : IAlbumService
         await _context.SaveChangesAsync(cancellationToken);
 
         return UpdateAlbumResult.Success(new AlbumResponse(
-            album.Id, album.Name, album.Description, album.DurationSeconds,
-            album.ImageItemId ?? Guid.Empty, album.IsDraft, album.GenreId, album.CreatedAt));
+            album.Id.ToString(), album.Name, album.Description, album.DurationSeconds,
+            album.ImageItemId ?? Guid.Empty, album.IsDraft, album.GenreId, album.CreatedAt, album.ImageItem!.ImageList));
     }
 
     public async Task<DeleteAlbumResult> DeleteAlbumAsync(

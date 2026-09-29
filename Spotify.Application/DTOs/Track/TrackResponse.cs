@@ -1,12 +1,12 @@
 ﻿namespace Spotify.Application.DTOs.Track;
 
 public sealed record TrackResponse(
-    Guid Id,
+    string Id,
     string Name,
     string? Description,
     int DurationSeconds,
-    Guid? AlbumId,
-    Guid? MoodId,
+    string? AlbumId,
+    string? MoodId,
     string? GenreId,
     long PlaysNumber,
     bool IsAdult,
@@ -16,4 +16,4 @@ public sealed record TrackResponse(
     IReadOnlyCollection<string> TagIds,
     DateTime CreatedAt,
     string? AudioUrl,
-    IReadOnlyCollection<Guid>? AuthorIds = null);
+    IReadOnlyCollection<string>? AuthorIds = null);

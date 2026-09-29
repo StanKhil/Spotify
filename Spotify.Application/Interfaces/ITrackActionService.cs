@@ -36,5 +36,9 @@ namespace Spotify.Application.Interfaces
         Task<ListeningHistoryResult> GetListeningHistoryAsync(
             Guid userId,
             CancellationToken cancellationToken = default);
+
+        Task<TrackPageResult> GetTrackPage(
+            string trackId,
+            CancellationToken cancellationToken = default);
     }
 }

@@ -1,11 +1,12 @@
 ﻿namespace Spotify.Application.DTOs.Album;
 
 public sealed record AlbumResponse(
-    Guid Id,
+    string Id,
     string Name,
     string? Description,
     int DurationSeconds,
     Guid? CoverImageId,
     bool IsDraft,
     string? GenreId,
-    DateTime CreatedAt);
+    DateTime? CreatedAt,
+    string? ImageUrl);
