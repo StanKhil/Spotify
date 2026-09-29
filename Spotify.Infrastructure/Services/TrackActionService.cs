@@ -219,8 +219,8 @@ public sealed class TrackActionService : ITrackActionService
                 track.Album?.Name ?? "Unknown Album",
                 like.LikedAt.ToString("dd.MM.yyyy"),
                 track.DurationSeconds,
-                track.ImageItem?.ImageList,
-                audioUrl,
+                ImageUrl: track.ImageItem?.ImageList,
+                AudioUrl: audioUrl,
                 like.Order));
         }
 
