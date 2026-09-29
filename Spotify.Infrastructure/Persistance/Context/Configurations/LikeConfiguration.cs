@@ -10,6 +10,11 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
         {
             builder.HasKey(x => x.Id);
 
+            builder.Property(x => x.Order)
+                .IsRequired();
+
+            builder.HasIndex(x => new { x.ApplicationUserId, x.Order });
+
             builder.HasOne(x => x.AuthorContent)
                 .WithMany()
                 .HasForeignKey(x => x.AuthorContentId)

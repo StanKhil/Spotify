@@ -27,6 +27,12 @@ namespace Spotify.Application.Interfaces
             Guid userId, 
             CancellationToken cancellationToken = default);
 
+        Task<ChangeLikedTracksOrderResult> ChangeOrderAsync(
+            Guid userId,
+            int oldOrder,
+            int newOrder,
+            CancellationToken cancellationToken = default);
+
         Task<ListeningHistoryResult> GetListeningHistoryAsync(
             Guid userId,
             CancellationToken cancellationToken = default);

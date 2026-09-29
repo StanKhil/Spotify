@@ -97,6 +97,27 @@ public sealed class TrackActionController : ControllerBase
         return result;
     }
 
+    [HttpPatch("liked/order")]
+    [ProducesResponseType(typeof(ChangeLikedTracksOrderResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ChangeLikedTracksOrderResult), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ChangeLikedTracksOrderResult>> ChangeLikedTracksOrder(
+        [FromBody] ChangeLikedTracksOrderRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user is null)
+            return Unauthorized();
+
+        var result = await _trackActionService.ChangeOrderAsync(
+            user.Id,
+            request.OldOrder,
+            request.NewOrder,
+            cancellationToken);
+
+        return result.Succeeded ? Ok(result) : BadRequest(result);
+    }
+
     [HttpGet("listening-history/{userId:guid}")]
     [ProducesResponseType(typeof(ListeningHistoryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

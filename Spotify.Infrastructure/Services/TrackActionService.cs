@@ -93,12 +93,15 @@ public sealed class TrackActionService : ITrackActionService
 
         if (!alreadyLiked)
         {
+            var lastOrder = await GetLastTrackOrderAsync(userId, cancellationToken);
+
             _context.Likes.Add(new Like
             {
                 Id = Guid.NewGuid(),
                 ApplicationUserId = userId,
                 AuthorContentId = authorContent.Id,
-                LikedAt = DateTime.UtcNow
+                LikedAt = DateTime.UtcNow,
+                Order = lastOrder + 1
             });
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -135,7 +138,17 @@ public sealed class TrackActionService : ITrackActionService
 
         if (like is not null)
         {
+            var removedOrder = like.Order;
             _context.Likes.Remove(like);
+
+            var followingTrackLikes = await GetTrackLikesQuery(userId)
+                .Where(x => x.Id != like.Id && x.Order > removedOrder)
+                .ToListAsync(cancellationToken);
+
+            foreach (var followingLike in followingTrackLikes)
+            {
+                followingLike.Order--;
+            }
 
             await _context.SaveChangesAsync(
                 cancellationToken);
@@ -161,7 +174,8 @@ public sealed class TrackActionService : ITrackActionService
             .Where(l => l.ApplicationUserId == userId)
             .Where(l => l.AuthorContent.Item is Track)
             .Where(l => l.AuthorContent.Item.DeletedAt == null)
-            .OrderByDescending(l => l.LikedAt)
+            .OrderBy(l => l.Order)
+            .ThenByDescending(l => l.LikedAt)
             .Skip((page - 1) * maxPerPage)
             .Take(maxPerPage)
             .Include(l => l.AuthorContent)
@@ -202,10 +216,70 @@ public sealed class TrackActionService : ITrackActionService
                 like.LikedAt.ToString("dd.MM.yyyy"),
                 track.DurationSeconds,
                 track.ImageItem?.ImageList,
-                audioUrl));
+                audioUrl,
+                like.Order));
         }
 
         return LikedTracksResult.Success(result);
+    }
+
+    public async Task<ChangeLikedTracksOrderResult> ChangeOrderAsync(
+        Guid userId,
+        int oldOrder,
+        int newOrder,
+        CancellationToken cancellationToken = default)
+    {
+        if (oldOrder <= 0 || newOrder <= 0)
+        {
+            return ChangeLikedTracksOrderResult.Failure(
+                "OldOrder and NewOrder must be positive integers.");
+        }
+
+        if (oldOrder == newOrder)
+        {
+            return ChangeLikedTracksOrderResult.Success(oldOrder, newOrder);
+        }
+
+        await using var transaction = await _context.Database
+            .BeginTransactionAsync(cancellationToken);
+
+        var trackLikes = GetTrackLikesQuery(userId);
+        var tracksCount = await trackLikes.CountAsync(cancellationToken);
+
+        if (newOrder > tracksCount)
+        {
+            return ChangeLikedTracksOrderResult.Failure(
+                "NewOrder is outside the liked tracks list.");
+        }
+
+        var movedLike = await trackLikes
+            .FirstOrDefaultAsync(x => x.Order == oldOrder, cancellationToken);
+
+        if (movedLike is null)
+        {
+            return ChangeLikedTracksOrderResult.Failure(
+                "The liked track at OldOrder was not found.");
+        }
+
+        var affectedLikes = oldOrder < newOrder
+            ? await trackLikes
+                .Where(x => x.Order > oldOrder && x.Order <= newOrder)
+                .ToListAsync(cancellationToken)
+            : await trackLikes
+                .Where(x => x.Order >= newOrder && x.Order < oldOrder)
+                .ToListAsync(cancellationToken);
+
+        foreach (var affectedLike in affectedLikes)
+        {
+            affectedLike.Order += oldOrder < newOrder ? -1 : 1;
+        }
+
+        movedLike.Order = newOrder;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return ChangeLikedTracksOrderResult.Success(oldOrder, newOrder);
     }
 
     public async Task<ListeningHistoryResult> GetListeningHistoryAsync(
@@ -328,5 +402,18 @@ public sealed class TrackActionService : ITrackActionService
                 x => x.ApplicationUserId == userId &&
                      x.AuthorContentId == authorContentId,
                 cancellationToken);
+    }
+
+    private IQueryable<Like> GetTrackLikesQuery(Guid userId) => _context.Likes
+        .Where(x => x.ApplicationUserId == userId)
+        .Where(x => x.AuthorContent.Item is Track);
+
+    private async Task<int> GetLastTrackOrderAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        return await GetTrackLikesQuery(userId)
+            .Select(x => (int?)x.Order)
+            .MaxAsync(cancellationToken) ?? 0;
     }
 }

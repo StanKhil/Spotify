@@ -13,7 +13,8 @@ namespace Spotify.Application.DTOs.Track
         string LikedAt,
         int DurationSeconds,
         string? ImageUrl,
-        string? AudioUrl
+        string? AudioUrl,
+        int Order
         );
 
 }

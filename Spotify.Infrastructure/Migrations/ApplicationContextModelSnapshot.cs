@@ -1299,9 +1299,14 @@ namespace Spotify.Infrastructure.Migrations
                     b.Property<DateTime>("LikedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("ApplicationUserId", "Order");
 
                     b.HasIndex("AuthorContentId");
 
