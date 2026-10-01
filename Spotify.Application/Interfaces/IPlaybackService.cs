@@ -14,4 +14,6 @@ public interface IPlaybackService
         bool asUser,
         Guid? userId,
         CancellationToken cancellationToken = default);
+
+    Task<bool> RegisterPlayAsync(Guid trackId, CancellationToken cancellationToken = default);
 }

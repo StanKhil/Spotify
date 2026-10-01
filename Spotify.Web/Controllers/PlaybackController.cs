@@ -73,4 +73,11 @@ public sealed class PlaybackController : ControllerBase
 
         return playback is null ? NotFound() : Ok(playback);
     }
+
+    [HttpPost("tracks/{trackId:guid}/plays")]
+    public async Task<IActionResult> RegisterPlay(Guid trackId, CancellationToken cancellationToken)
+    {
+        var registered = await _playbackService.RegisterPlayAsync(trackId, cancellationToken);
+        return registered ? NoContent() : NotFound();
+    }
 }

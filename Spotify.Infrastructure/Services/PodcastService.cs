@@ -19,6 +19,7 @@ public sealed class PodcastService : IPodcastService
     {
         var podcasts = await _context.Podcasts
             .Include(x => x.Authors)
+            .Include(x => x.Episodes.Where(e => e.DeletedAt == null))
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
 
@@ -30,6 +31,7 @@ public sealed class PodcastService : IPodcastService
     {
         var podcast = await _context.Podcasts
             .Include(x => x.Authors)
+            .Include(x => x.Episodes.Where(e => e.DeletedAt == null))
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         return podcast is null ? null : MapToResponse(podcast);
@@ -53,7 +55,8 @@ public sealed class PodcastService : IPodcastService
         {
             Id = Guid.NewGuid(),
             Name = request.Name.Trim(),
-            Description = request.Description.Trim()
+            Description = request.Description.Trim(),
+            CreatedAt = DateTime.UtcNow
         };
 
         foreach (var authorId in existingAuthorIds)
@@ -115,12 +118,13 @@ public sealed class PodcastService : IPodcastService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        var episodesCount = await _context.Episodes.CountAsync(x => x.PodcastId == id, cancellationToken);
+        var episodesCount = await _context.Episodes
+            .CountAsync(x => x.PodcastId == id && x.DeletedAt == null, cancellationToken);
 
         return UpdatePodcastResult.Success(new PodcastResponse(
-    podcast.Id, podcast.Name, podcast.Description, episodesCount,
-    podcast.Authors.Select(x => x.AuthorId).ToList(),
-    podcast.CreatedAt));
+            podcast.Id, podcast.Name, podcast.Description, episodesCount,
+            podcast.Authors.Select(x => x.AuthorId).ToList(),
+            podcast.CreatedAt));
     }
 
     public async Task<DeletePodcastResult> DeletePodcastAsync(
@@ -133,7 +137,8 @@ public sealed class PodcastService : IPodcastService
             return DeletePodcastResult.Failure("Podcast was not found.");
         }
 
-        var hasEpisodes = await _context.Episodes.AnyAsync(x => x.PodcastId == id, cancellationToken);
+        var hasEpisodes = await _context.Episodes
+            .AnyAsync(x => x.PodcastId == id && x.DeletedAt == null, cancellationToken);
 
         if (hasEpisodes)
         {
@@ -147,8 +152,8 @@ public sealed class PodcastService : IPodcastService
     }
 
     private static PodcastResponse MapToResponse(Domain.Entities.Content.Podcast podcast) => new(
-    podcast.Id, podcast.Name, podcast.Description,
-    podcast.Episodes.Count,
-    podcast.Authors.Select(x => x.AuthorId).ToList(),
-    podcast.CreatedAt);
+        podcast.Id, podcast.Name, podcast.Description,
+        podcast.Episodes.Count,
+        podcast.Authors.Select(x => x.AuthorId).ToList(),
+        podcast.CreatedAt);
 }

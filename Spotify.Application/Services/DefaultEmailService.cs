@@ -1,5 +1,7 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using Microsoft.Extensions.Logging;
+using MimeKit;
 using Spotify.Application.Interfaces;
 using Spotify.Domain.Entities.Security;
 
@@ -8,10 +10,12 @@ namespace Spotify.Infrastructure.Services;
 public sealed class DefaultEmailService : IEmailService
 {
     private readonly EmailOptions _options;
+    private readonly ILogger<DefaultEmailService> _logger;
 
-    public DefaultEmailService(EmailOptions options)
+    public DefaultEmailService(EmailOptions options, ILogger<DefaultEmailService> logger)
     {
         _options = options;
+        _logger = logger;
     }
 
     public async Task SendAsync(
@@ -26,21 +30,38 @@ public sealed class DefaultEmailService : IEmailService
             throw new InvalidOperationException("Email SMTP settings are not configured.");
         }
 
-        using var message = new MailMessage
-        {
-            From = new MailAddress(_options.FromAddress, _options.FromName),
-            Subject = subject,
-            Body = htmlBody,
-            IsBodyHtml = true
-        };
-        message.To.Add(emailAddress);
+        var userName = _options.UserName?.Trim() ?? string.Empty;
+        var password = (_options.Password ?? string.Empty).Replace(" ", string.Empty);
 
-        using var client = new SmtpClient(_options.Host, _options.Port)
+        if (userName.Length == 0 || password.Length == 0)
         {
-            EnableSsl = _options.EnableSsl,
-            Credentials = new NetworkCredential(_options.UserName, _options.Password)
-        };
+            _logger.LogWarning(
+                "SMTP credentials are empty (UserName length: {UserLen}, Password length: {PassLen}). Check appsettings.Development.json, user-secrets and environment variables.",
+                userName.Length, password.Length);
+        }
 
-        await client.SendMailAsync(message).WaitAsync(cancellationToken);
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
+        message.To.Add(MailboxAddress.Parse(emailAddress));
+        message.Subject = subject;
+        message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
+
+        var socketOptions = _options.Port == 465
+            ? SecureSocketOptions.SslOnConnect
+            : _options.EnableSsl
+                ? SecureSocketOptions.StartTls
+                : SecureSocketOptions.Auto;
+
+        using var client = new SmtpClient();
+
+        await client.ConnectAsync(_options.Host, _options.Port, socketOptions, cancellationToken);
+
+        if (userName.Length > 0)
+        {
+            await client.AuthenticateAsync(userName, password, cancellationToken);
+        }
+
+        await client.SendAsync(message, cancellationToken);
+        await client.DisconnectAsync(true, cancellationToken);
     }
 }

@@ -62,4 +62,27 @@ public sealed class AdminAuthController : ControllerBase
 
         return Ok(result.Authentication);
     }
+
+    [HttpPost("change-password")]
+    [Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authenticationService.ChangePasswordAsync(request, cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
+            return ValidationProblem(ModelState);
+        }
+
+        return NoContent();
+    }
 }

@@ -46,6 +46,10 @@ public interface IAuthenticationService
         NewPasswordRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<ChangePasswordResult> ChangePasswordAsync(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<LicenseResult> SendActivationLicenseAsync(
         LicenseDto request,
         CancellationToken cancellationToken = default);

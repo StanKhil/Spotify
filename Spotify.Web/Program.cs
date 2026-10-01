@@ -47,7 +47,7 @@ namespace Spotify
             builder.Services.AddScoped<ITrackService, TrackService>();
             builder.Services.AddScoped<ITrackActionService, TrackActionService>();
             builder.Services.AddScoped<ISearchService, SearchService>();
-            builder.Services.AddScoped<IAuthorActionService,AuthorActionService>();
+            builder.Services.AddScoped<IAuthorActionService, AuthorActionService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<IPluginService, PluginService>();
             builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
@@ -92,7 +92,7 @@ namespace Spotify
             builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             builder.Services.AddScoped<IPlaybackService, PlaybackService>();
             builder.Services.AddScoped<IAudioUrlResolver, AudioUrlResolver>();
-            
+
 
             builder.Services.AddSingleton<ILocalAudioStorageService>(
                 new LocalAudioStorageService(
@@ -241,6 +241,7 @@ namespace Spotify
             {
                 var adminSeederService = scope.ServiceProvider.GetRequiredService<IAdminSeederService>();
                 await adminSeederService.SeedInitialAdminAsync();
+                await adminSeederService.SeedCountriesAsync();
             }
 
             await app.RunAsync();

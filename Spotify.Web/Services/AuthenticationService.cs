@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Spotify.Application.DTOs.Auth;
 using Spotify.Application.DTOs.ForgotPassword;
 using Spotify.Application.DTOs.License;
@@ -30,8 +31,8 @@ public sealed class AuthenticationService : IAuthenticationService
     private readonly JwtTokenGenerator _jwtTokenGenerator;
     private readonly IEmailService _emailService;
     private readonly IMemoryCache _cache;
-
     private readonly ICurrentUserService _currentUserService;
+    private readonly ILogger<AuthenticationService> _logger;
 
     public AuthenticationService(
         ApplicationContext context,
@@ -40,7 +41,8 @@ public sealed class AuthenticationService : IAuthenticationService
         JwtTokenGenerator jwtTokenGenerator,
         IEmailService emailService,
         IMemoryCache cache,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        ILogger<AuthenticationService> logger)
     {
         _context = context;
         _userManager = userManager;
@@ -49,6 +51,7 @@ public sealed class AuthenticationService : IAuthenticationService
         _emailService = emailService;
         _cache = cache;
         _currentUserService = currentUserService;
+        _logger = logger;
     }
 
     public async Task<RegisterResult> RegisterAsync(
@@ -301,8 +304,9 @@ public sealed class AuthenticationService : IAuthenticationService
                 $"<p>Your password reset code is <strong>{code}</strong>.</p><p>It expires in 10 minutes.</p>",
                 cancellationToken);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
             _cache.Remove(cacheKey);
             return CheckEmailResult.Failure("Unable to send the password reset email. Please try again later.");
         }
@@ -357,6 +361,42 @@ public sealed class AuthenticationService : IAuthenticationService
 
         _cache.Remove(GetPasswordResetCacheKey(userEmail));
         return NewPasswordResult.Success();
+    }
+
+    public async Task<ChangePasswordResult> ChangePasswordAsync(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUserService.UserId;
+
+        if (userId is null)
+        {
+            return ChangePasswordResult.Failure("User is not authenticated.");
+        }
+
+        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
+
+        if (user is null)
+        {
+            return ChangePasswordResult.Failure("User not found.");
+        }
+
+        if (string.Equals(request.CurrentPassword, request.NewPassword, StringComparison.Ordinal))
+        {
+            return ChangePasswordResult.Failure("The new password must be different from the current one.");
+        }
+
+        var changeResult = await _userManager.ChangePasswordAsync(
+            user,
+            request.CurrentPassword,
+            request.NewPassword);
+
+        if (!changeResult.Succeeded)
+        {
+            return ChangePasswordResult.Failure(changeResult.Errors.Select(x => x.Description).ToArray());
+        }
+
+        return ChangePasswordResult.Success();
     }
 
     public async Task<LicenseResult> SendActivationLicenseAsync(
@@ -421,7 +461,7 @@ public sealed class AuthenticationService : IAuthenticationService
         var roles = await _userManager.GetRolesAsync(user);
         Author? author = null;
         int followersCount = 0;
-        if(user.Author != null)
+        if (user.Author != null)
         {
             author = user.Author;
             followersCount = author.Followers.Count;

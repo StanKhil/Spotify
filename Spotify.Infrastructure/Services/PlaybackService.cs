@@ -148,4 +148,20 @@ public sealed class PlaybackService : IPlaybackService
             expiresAtUtc,
             false);
     }
+    public async Task<bool> RegisterPlayAsync(
+    Guid trackId, CancellationToken cancellationToken = default)
+    {
+        var track = await _context.Tracks
+            .FirstOrDefaultAsync(x => x.Id == trackId && x.DeletedAt == null, cancellationToken);
+
+        if (track is null)
+        {
+            return false;
+        }
+
+        track.PlaysNumber++;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
 }
