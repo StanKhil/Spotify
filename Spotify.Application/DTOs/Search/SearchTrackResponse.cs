@@ -10,4 +10,4 @@ public sealed record SearchTrackResponse(
     string? AlbumName,
     string? ArtistName,
     string? ImageUrl,
-    string? PlaybackUrl);
+    string? AudioUrl);

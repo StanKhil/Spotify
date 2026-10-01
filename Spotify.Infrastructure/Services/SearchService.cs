@@ -9,7 +9,6 @@ namespace Spotify.Infrastructure.Services;
 
 public sealed class SearchService : ISearchService
 {
-    // Jamendo limits a single query to 200 items and does not provide total-count metadata.
     private const int JamendoCandidateLimit = 200;
 
     private readonly ITrackService _trackService;
