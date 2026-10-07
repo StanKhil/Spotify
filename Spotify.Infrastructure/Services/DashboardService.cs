@@ -18,6 +18,18 @@ public sealed class DashboardService : IDashboardService
         _context = context;
     }
 
+    private static string? ResolveImageUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+            return null;
+        if (imageUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            imageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        {
+            return imageUrl;
+        }
+        return Path.ChangeExtension(imageUrl, null);
+    }
+
     public async Task<DashboardStatsResponse> GetDashboardStatsAsync(
         CancellationToken cancellationToken = default)
     {
@@ -53,7 +65,7 @@ public sealed class DashboardService : IDashboardService
             .OrderByDescending(x => x.CreatedAt)
             .Take(RecentItemsCount)
             .Select(x => new LibraryTrackSummary(
-                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.Id, x.Name, x.ImageItem != null ? ResolveImageUrl(x.ImageItem.ImageList) : null,
                 x.DurationSeconds, x.PlaysNumber,
                 x.AlbumId, x.Album != null ? x.Album.Name : null))
             .ToListAsync(cancellationToken);
@@ -64,7 +76,7 @@ public sealed class DashboardService : IDashboardService
             .OrderByDescending(x => x.CreatedAt)
             .Take(RecentItemsCount)
             .Select(x => new LibraryAlbumSummary(
-                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.Id, x.Name, x.ImageItem != null ? ResolveImageUrl(x.ImageItem.ImageList) : null,
                 x.Tracks.Count(t => t.DeletedAt == null)))
             .ToListAsync(cancellationToken);
 
@@ -75,7 +87,7 @@ public sealed class DashboardService : IDashboardService
             .OrderByDescending(x => x.PlaysNumber)
             .Take(TopItemsCount)
             .Select(x => new LibraryTrackSummary(
-                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.Id, x.Name, x.ImageItem != null ? ResolveImageUrl(x.ImageItem.ImageList) : null,
                 x.DurationSeconds, x.PlaysNumber,
                 x.AlbumId, x.Album != null ? x.Album.Name : null))
             .ToListAsync(cancellationToken);
@@ -93,7 +105,7 @@ public sealed class DashboardService : IDashboardService
             .Take(TopItemsCount)
             .Select(x => new LibraryAlbumSummary(
                 x.Album.Id, x.Album.Name,
-                x.Album.ImageItem != null ? x.Album.ImageItem.ImageList : null,
+                x.Album.ImageItem != null ? ResolveImageUrl(x.Album.ImageItem.ImageList) : null,
                 x.Album.Tracks.Count(t => t.DeletedAt == null)))
             .ToListAsync(cancellationToken);
 
@@ -120,7 +132,7 @@ public sealed class DashboardService : IDashboardService
             .Include(x => x.Album)
             .OrderBy(x => x.Name)
             .Select(x => new LibraryTrackSummary(
-                x.Id, x.Name, x.ImageItem != null ? x.ImageItem.ImageList : null,
+                x.Id, x.Name, x.ImageItem != null ? ResolveImageUrl(x.ImageItem.ImageList) : null,
                 x.DurationSeconds, x.PlaysNumber,
                 x.AlbumId, x.Album != null ? x.Album.Name : null))
             .ToListAsync(cancellationToken);

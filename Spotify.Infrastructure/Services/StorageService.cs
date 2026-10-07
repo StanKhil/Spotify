@@ -8,7 +8,7 @@ namespace Spotify.Infrastructure.Services;
 
 public sealed class StorageService : IStorageService
 {
-    private const string ImagesRelativeDirectory = "/uploads/images/";
+    private const string ImagesRelativeDirectory = "/images/";
 
     private readonly ApplicationContext _context;
     private readonly string _imagesDirectoryPath;
@@ -19,7 +19,7 @@ public sealed class StorageService : IStorageService
 
         var webRootPath = environment.WebRootPath
             ?? Path.Combine(environment.ContentRootPath, "wwwroot");
-        _imagesDirectoryPath = Path.Combine(webRootPath, "uploads", "images");
+        _imagesDirectoryPath = Path.Combine(webRootPath, "images");
     }
 
     public async Task<StoredImage?> GetImageAsync(
