@@ -118,6 +118,6 @@ public sealed class SearchService : ISearchService
 
     private static string? GetImageUrl(Guid? imageItemId) =>
         imageItemId is Guid id && id != Guid.Empty
-            ? $"/api/storage/images/{id}"
+            ? $"/images/{id}"
             : null;
 }
