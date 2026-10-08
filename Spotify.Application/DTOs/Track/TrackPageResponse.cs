@@ -14,7 +14,7 @@ namespace Spotify.Application.DTOs.Track
         string AlbumName,
         string? ImageUrl,
         string? AudioUrl,
-        long PlaysNumber,
+        long Listeners,
         DateTime CreatedAt,
         IReadOnlyCollection<TrackResponse> Recomendation,
         IReadOnlyCollection<TrackResponse> PopularTracksByAuthor,
