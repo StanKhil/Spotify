@@ -11,4 +11,8 @@ public sealed class JamendoOptions
     public string AudioFormat { get; init; } = "mp32";
 
     public int DefaultSearchLimit { get; init; } = 20;
+
+    public int EmptyResponseRetryCount { get; init; } = 2;
+
+    public int EmptyResponseRetryDelayMilliseconds { get; init; } = 250;
 }

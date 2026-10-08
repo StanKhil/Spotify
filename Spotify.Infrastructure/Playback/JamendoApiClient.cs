@@ -55,27 +55,7 @@ public sealed class JamendoApiClient
             "tracks/",
             parameters);
 
-        using var response = await _httpClient.GetAsync(
-            requestUri,
-            cancellationToken);
-
-        response.EnsureSuccessStatusCode();
-
-        await using var stream =
-            await response.Content.ReadAsStreamAsync(cancellationToken);
-
-        using var document =
-            await JsonDocument.ParseAsync(
-                stream,
-                cancellationToken: cancellationToken);
-
-        if (!document.RootElement.TryGetProperty(
-                "results",
-                out var results) ||
-            results.ValueKind != JsonValueKind.Array)
-        {
-            return [];
-        }
+        var results = await GetResultsAsync(requestUri, cancellationToken);
 
         var tracks = new List<JamendoTrackDto>();
 
@@ -109,25 +89,9 @@ public sealed class JamendoApiClient
             "tracks/",
             parameters);
 
-        using var response = await _httpClient.GetAsync(
-            requestUri,
-            cancellationToken);
+        var results = await GetResultsAsync(requestUri, cancellationToken);
 
-        response.EnsureSuccessStatusCode();
-
-        await using var stream =
-            await response.Content.ReadAsStreamAsync(cancellationToken);
-
-        using var document =
-            await JsonDocument.ParseAsync(
-                stream,
-                cancellationToken: cancellationToken);
-
-        if (!document.RootElement.TryGetProperty(
-                "results",
-                out var results) ||
-            results.ValueKind != JsonValueKind.Array ||
-            results.GetArrayLength() == 0)
+        if (results.GetArrayLength() == 0)
         {
             return null;
         }
@@ -182,27 +146,7 @@ public sealed class JamendoApiClient
             "albums/",
             parameters);
 
-        using var response = await _httpClient.GetAsync(
-            requestUri,
-            cancellationToken);
-
-        response.EnsureSuccessStatusCode();
-
-        await using var stream =
-            await response.Content.ReadAsStreamAsync(cancellationToken);
-
-        using var document =
-            await JsonDocument.ParseAsync(
-                stream,
-                cancellationToken: cancellationToken);
-
-        if (!document.RootElement.TryGetProperty(
-                "results",
-                out var results) ||
-            results.ValueKind != JsonValueKind.Array)
-        {
-            return [];
-        }
+        var results = await GetResultsAsync(requestUri, cancellationToken);
 
         var albums = new List<JamendoAlbumDto>();
 
@@ -236,26 +180,9 @@ public sealed class JamendoApiClient
             "albums/tracks",
             parameters);
 
-        using var response = await _httpClient.GetAsync(
-            requestUri,
-            cancellationToken);
+        var results = await GetResultsAsync(requestUri, cancellationToken);
 
-        response.EnsureSuccessStatusCode();
-
-        await using var stream =
-            await response.Content.ReadAsStreamAsync(
-                cancellationToken);
-
-        using var document =
-            await JsonDocument.ParseAsync(
-                stream,
-                cancellationToken: cancellationToken);
-
-        if (!document.RootElement.TryGetProperty(
-                "results",
-                out var results) ||
-            results.ValueKind != JsonValueKind.Array ||
-            results.GetArrayLength() == 0)
+        if (results.GetArrayLength() == 0)
         {
             return null;
         }
@@ -576,24 +503,49 @@ public sealed class JamendoApiClient
         CancellationToken cancellationToken)
     {
         EnsureConfigured();
-        parameters["client_id"] = _options.ClientId;
-        parameters["format"] = "json";
 
-        var requestUri = QueryHelpers.AddQueryString(endpoint, parameters);
-        using var response = await _httpClient.GetAsync(requestUri, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        if (!document.RootElement.TryGetProperty("results", out var results) ||
-            results.ValueKind != JsonValueKind.Array)
+        var requestParameters = new Dictionary<string, string?>(parameters)
         {
-            using var emptyResults = JsonDocument.Parse("[]");
-            return emptyResults.RootElement.Clone();
+            ["client_id"] = _options.ClientId,
+            ["format"] = "json"
+        };
+
+        var requestUri = QueryHelpers.AddQueryString(endpoint, requestParameters);
+        return await GetResultsAsync(requestUri, cancellationToken);
+    }
+
+    private async Task<JsonElement> GetResultsAsync(
+        string requestUri,
+        CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+
+        var retries = Math.Max(0, _options.EmptyResponseRetryCount);
+        var delayMilliseconds = Math.Max(0, _options.EmptyResponseRetryDelayMilliseconds);
+
+        for (var attempt = 0; attempt <= retries; attempt++)
+        {
+            using var response = await _httpClient.GetAsync(requestUri, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+            if (document.RootElement.TryGetProperty("results", out var results) &&
+                results.ValueKind == JsonValueKind.Array &&
+                results.GetArrayLength() > 0)
+            {
+                return results.Clone();
+            }
+
+            if (attempt < retries && delayMilliseconds > 0)
+            {
+                await Task.Delay(delayMilliseconds, cancellationToken);
+            }
         }
 
-        return results.Clone();
+        using var emptyResults = JsonDocument.Parse("[]");
+        return emptyResults.RootElement.Clone();
     }
 
     private static void ValidateLimit(int limit)
