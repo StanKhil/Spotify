@@ -110,23 +110,23 @@ public sealed class AuthenticationService : IAuthenticationService
 
         var isAuthor = checkAuthorLicense && request.IsAuthor;
 
-        if (isAuthor)
-        {
-            var license = await _context.Licenses
-            .FirstOrDefaultAsync(x => x.UserEmail == email, cancellationToken);
-            if (license == null)
-            {
-                return RegisterResult.Failure("No license found for the provided email.");
-            }
-            else if (license.UserEmail != email)
-            {
-                return RegisterResult.Failure("The provided email does not match the license email.");
-            }
-            else if (license.UserName != userName)
-            {
-                return RegisterResult.Failure("The provided user name does not match the license user name.");
-            }
-        }
+        //if (isAuthor)
+        //{
+        //    var license = await _context.Licenses
+        //    .FirstOrDefaultAsync(x => x.UserEmail == email, cancellationToken);
+        //    if (license == null)
+        //    {
+        //        return RegisterResult.Failure("No license found for the provided email.");
+        //    }
+        //    else if (license.UserEmail != email)
+        //    {
+        //        return RegisterResult.Failure("The provided email does not match the license email.");
+        //    }
+        //    else if (license.UserName != userName)
+        //    {
+        //        return RegisterResult.Failure("The provided user name does not match the license user name.");
+        //    }
+        //}
 
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);

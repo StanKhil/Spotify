@@ -32,7 +32,8 @@ public sealed class LocalFileStorageService : IFileStorageService
             return safeFileName;
         }
 
-        var folderPath = Path.Combine(_webRootPath, folder);
+        //var folderPath = Path.Combine(_webRootPath, folder);
+        var folderPath = Path.Combine(_webRootPath, "uploads", folder);
 
         Directory.CreateDirectory(folderPath);
 
@@ -43,29 +44,44 @@ public sealed class LocalFileStorageService : IFileStorageService
             await content.CopyToAsync(fileStream, cancellationToken);
         }
 
-        return $"/{folder}/{safeFileName}";
+        //return $"/{folder}/{safeFileName}";
+        return $"/uploads/{folder}/{safeFileName}";
     }
 
     public Task DeleteAsync(string relativeUrl, CancellationToken cancellationToken = default)
     {
-        var isPublicPath = relativeUrl.StartsWith("/", StringComparison.OrdinalIgnoreCase);
-
-        var fullFsPath = isPublicPath
-            ? Path.Combine(_webRootPath, relativeUrl.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar))
+        var isLegacyPublicAudio = relativeUrl.StartsWith("/uploads/audio/", StringComparison.OrdinalIgnoreCase);
+        var fullFsPath = isLegacyPublicAudio
+            ? Path.Combine(_webRootPath, relativeUrl.TrimStart('/'))
             : Path.Combine(_audioRootPath, Path.GetFileName(relativeUrl));
-
-        Console.WriteLine($"[DeleteAsync] relativeUrl='{relativeUrl}', resolvedPath='{fullFsPath}', exists={File.Exists(fullFsPath)}");
 
         if (File.Exists(fullFsPath))
         {
             File.Delete(fullFsPath);
-            Console.WriteLine($"[DeleteAsync] File deleted: {fullFsPath}");
-        }
-        else
-        {
-            Console.WriteLine($"[DeleteAsync] File NOT found for deletion: {fullFsPath}");
         }
 
         return Task.CompletedTask;
     }
+    //public Task DeleteAsync(string relativeUrl, CancellationToken cancellationToken = default)
+    //{
+    //    var isPublicPath = relativeUrl.StartsWith("/", StringComparison.OrdinalIgnoreCase);
+    //
+    //    var fullFsPath = isPublicPath
+    //        ? Path.Combine(_webRootPath, relativeUrl.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar))
+    //        : Path.Combine(_audioRootPath, Path.GetFileName(relativeUrl));
+    //
+    //    Console.WriteLine($"[DeleteAsync] relativeUrl='{relativeUrl}', resolvedPath='{fullFsPath}', exists={File.Exists(fullFsPath)}");
+    //
+    //    if (File.Exists(fullFsPath))
+    //    {
+    //        File.Delete(fullFsPath);
+    //        Console.WriteLine($"[DeleteAsync] File deleted: {fullFsPath}");
+    //    }
+    //    else
+    //    {
+    //        Console.WriteLine($"[DeleteAsync] File NOT found for deletion: {fullFsPath}");
+    //    }
+    //
+    //    return Task.CompletedTask;
+    //}
 }

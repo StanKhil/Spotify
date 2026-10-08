@@ -8,7 +8,7 @@ namespace Spotify.Application.DTOs.Track
         Guid Id,
         string? ExternalId,
         string Name,
-        string Author,
+        string ArtistName,
         string Album,
         string LikedAt,
         int DurationSeconds,
