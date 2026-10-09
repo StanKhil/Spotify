@@ -50,6 +50,11 @@ public sealed class GenreService : IGenreService
             return CreateGenreResult.Failure("A genre with this id already exists");
         }
 
+        if (await _context.Genres.AnyAsync(x => x.Name == name, cancellationToken))
+        {
+            return CreateGenreResult.Failure("A genre with this name already exists");
+        }
+
         var genre = new Domain.Entities.Content.Genre
         {
             Id = id,
@@ -74,7 +79,15 @@ public sealed class GenreService : IGenreService
             return UpdateGenreResult.Failure("Genre was not found");
         }
 
-        genre.Name = request.Name.Trim();
+        var name = request.Name.Trim();
+
+        if (await _context.Genres.AnyAsync(x => x.Id != id && x.Name == name, cancellationToken))
+        {
+            return UpdateGenreResult.Failure("A genre with this name already exists");
+        }
+
+        genre.Name = name;
+
         await _context.SaveChangesAsync(cancellationToken);
 
         var tagIds = await _context.Set<Domain.Entities.Content.AudioContent>()

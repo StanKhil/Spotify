@@ -63,7 +63,19 @@ public sealed class TrackService : ITrackService
                 .ThenInclude(ac => ac.Authors)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
-        return track is null ? null : MapToResponse(track);
+        if (track is null)
+        {
+            return null;
+        }
+
+        var imageUrl = track.ImageItemId is Guid imageItemId
+            ? await _context.ImageItems
+                .Where(x => x.Id == imageItemId)
+                .Select(x => x.ImageList)
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
+
+        return MapToResponse(track) with { ImageUrl = imageUrl };
     }
 
     public async Task<CreateTrackResult> CreateTrackAsync(
@@ -72,6 +84,15 @@ public sealed class TrackService : ITrackService
         if (!await _context.Albums.AnyAsync(x => x.Id == request.AlbumId, cancellationToken))
         {
             return CreateTrackResult.Failure("The specified album was not found");
+        }
+
+        var trackName = request.Name.Trim();
+
+        if (await _context.Tracks.AnyAsync(
+                x => x.DeletedAt == null && x.AlbumId == request.AlbumId && x.Name == trackName,
+                cancellationToken))
+        {
+            return CreateTrackResult.Failure("A track with this name already exists in this album");
         }
 
         var audioItem = await _context.AudioItems
@@ -133,7 +154,7 @@ public sealed class TrackService : ITrackService
         var track = new Track
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Name = trackName,
             Description = request.Description?.Trim(),
             DurationSeconds = durationSeconds,
             AlbumId = request.AlbumId,
@@ -197,6 +218,15 @@ public sealed class TrackService : ITrackService
             return UpdateTrackResult.Failure("The specified album was not found");
         }
 
+        var trackName = request.Name.Trim();
+
+        if (await _context.Tracks.AnyAsync(
+                x => x.DeletedAt == null && x.Id != id && x.AlbumId == request.AlbumId && x.Name == trackName,
+                cancellationToken))
+        {
+            return UpdateTrackResult.Failure("A track with this name already exists in this album");
+        }
+
         if (request.MoodId is Guid moodId &&
             !await _context.Moods.AnyAsync(x => x.Id == moodId, cancellationToken))
         {
@@ -231,7 +261,7 @@ public sealed class TrackService : ITrackService
             return UpdateTrackResult.Failure($"The following authors were not found: {string.Join(", ", missingAuthors)}");
         }
 
-        track.Name = request.Name.Trim();
+        track.Name = trackName;
         track.Description = request.Description?.Trim();
         track.AlbumId = request.AlbumId;
         track.MoodId = request.MoodId;

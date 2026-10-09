@@ -40,6 +40,13 @@ public sealed class PodcastService : IPodcastService
     public async Task<CreatePodcastResult> CreatePodcastAsync(
         CreatePodcastRequest request, CancellationToken cancellationToken = default)
     {
+        var podcastName = request.Name.Trim();
+
+        if (await _context.Podcasts.AnyAsync(x => x.Name == podcastName, cancellationToken))
+        {
+            return CreatePodcastResult.Failure("A podcast with this name already exists");
+        }
+
         var existingAuthorIds = await _context.Authors
             .Where(x => request.AuthorIds.Contains(x.Id))
             .Select(x => x.Id)
@@ -54,7 +61,7 @@ public sealed class PodcastService : IPodcastService
         var podcast = new Domain.Entities.Content.Podcast
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Name = podcastName,
             Description = request.Description.Trim(),
             CreatedAt = DateTime.UtcNow
         };
@@ -86,6 +93,13 @@ public sealed class PodcastService : IPodcastService
             return UpdatePodcastResult.Failure("Podcast was not found.");
         }
 
+        var podcastName = request.Name.Trim();
+
+        if (await _context.Podcasts.AnyAsync(x => x.Id != id && x.Name == podcastName, cancellationToken))
+        {
+            return UpdatePodcastResult.Failure("A podcast with this name already exists");
+        }
+
         var existingAuthorIds = await _context.Authors
             .Where(x => request.AuthorIds.Contains(x.Id))
             .Select(x => x.Id)
@@ -97,7 +111,7 @@ public sealed class PodcastService : IPodcastService
             return UpdatePodcastResult.Failure($"The following authors were not found: {string.Join(", ", missingAuthors)}");
         }
 
-        podcast.Name = request.Name.Trim();
+        podcast.Name = podcastName;
         podcast.Description = request.Description.Trim();
 
         var authorsToRemove = podcast.Authors.Where(x => !existingAuthorIds.Contains(x.AuthorId)).ToList();

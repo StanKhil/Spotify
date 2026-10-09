@@ -89,7 +89,7 @@ public sealed class CustomerService : ICustomerService
             return CreateCustomerResult.Failure("Role must be either 'Admin' or 'Self-Registered'.");
         }
 
-        var existingUser = await _userManager.FindByEmailAsync(request.Email);
+        var existingUser = await _userManager.FindByEmailAsync(request.Email.Trim());
         if (existingUser is not null)
         {
             return CreateCustomerResult.Failure("A user with this email already exists.");
@@ -179,7 +179,22 @@ public sealed class CustomerService : ICustomerService
             return UpdateCustomerResult.Failure("The specified city was not found in the given country.");
         }
 
-        user.UserName = request.UserName.Trim();
+        var newUserName = request.UserName.Trim();
+
+        if (!string.Equals(user.UserName, newUserName, StringComparison.Ordinal))
+        {
+            var existingByName = await _userManager.FindByNameAsync(newUserName);
+            if (existingByName is not null && existingByName.Id != id)
+            {
+                return UpdateCustomerResult.Failure("This user name is already taken.");
+            }
+
+            var nameResult = await _userManager.SetUserNameAsync(user, newUserName);
+            if (!nameResult.Succeeded)
+            {
+                return UpdateCustomerResult.Failure(nameResult.Errors.Select(e => e.Description).ToArray());
+            }
+        }
         profile.CountryId = request.CountryId;
         profile.CityId = request.CityId;
         profile.Birthdate = request.Birthdate.ToDateTime(TimeOnly.MinValue);

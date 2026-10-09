@@ -16,7 +16,7 @@ public sealed class EpisodeService : IEpisodeService
     }
 
     public async Task<IReadOnlyCollection<EpisodeResponse>> GetEpisodesAsync(
-    Guid? podcastId, Guid? audiobookId, string? scope, CancellationToken cancellationToken = default)
+        Guid? podcastId, Guid? audiobookId, string? scope, CancellationToken cancellationToken = default)
     {
         var query = _context.Episodes.Where(x => x.DeletedAt == null);
 
@@ -84,6 +84,24 @@ public sealed class EpisodeService : IEpisodeService
             return CreateEpisodeResult.Failure("The specified audiobook was not found.");
         }
 
+        var episodeName = request.Name.Trim();
+
+        var siblings = _context.Episodes.Where(x =>
+            x.DeletedAt == null &&
+            x.PodcastId == request.PodcastId &&
+            x.AudiobookId == request.AudiobookId);
+
+        if (await siblings.AnyAsync(x => x.Name == episodeName, cancellationToken))
+        {
+            return CreateEpisodeResult.Failure("An episode with this name already exists in this podcast or audiobook");
+        }
+
+        if (request.SeqNumber is int seqNumber &&
+            await siblings.AnyAsync(x => x.SeqNumber == seqNumber, cancellationToken))
+        {
+            return CreateEpisodeResult.Failure("An episode with this number already exists in this podcast or audiobook");
+        }
+
         if (!await _context.AudioItems.AnyAsync(x => x.Id == request.AudioItemId, cancellationToken))
         {
             return CreateEpisodeResult.Failure("The specified audio item was not found.");
@@ -98,7 +116,7 @@ public sealed class EpisodeService : IEpisodeService
         var episode = new Episode
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Name = episodeName,
             Description = request.Description?.Trim(),
             DurationSeconds = 0,
             PodcastId = request.PodcastId,
@@ -134,7 +152,26 @@ public sealed class EpisodeService : IEpisodeService
             return UpdateEpisodeResult.Failure("The specified image item was not found.");
         }
 
-        episode.Name = request.Name.Trim();
+        var episodeName = request.Name.Trim();
+
+        var siblings = _context.Episodes.Where(x =>
+            x.DeletedAt == null &&
+            x.Id != id &&
+            x.PodcastId == episode.PodcastId &&
+            x.AudiobookId == episode.AudiobookId);
+
+        if (await siblings.AnyAsync(x => x.Name == episodeName, cancellationToken))
+        {
+            return UpdateEpisodeResult.Failure("An episode with this name already exists in this podcast or audiobook");
+        }
+
+        if (request.SeqNumber is int seqNumber &&
+            await siblings.AnyAsync(x => x.SeqNumber == seqNumber, cancellationToken))
+        {
+            return UpdateEpisodeResult.Failure("An episode with this number already exists in this podcast or audiobook");
+        }
+
+        episode.Name = episodeName;
         episode.Description = request.Description?.Trim();
         episode.ImageItemId = request.ImageItemId;
         episode.SeqNumber = request.SeqNumber;

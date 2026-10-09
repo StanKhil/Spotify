@@ -77,6 +77,13 @@ public sealed class AuthorService : IAuthorService
             return CreateAuthorResult.Failure("The specified bio image was not found.");
         }
 
+        var authorName = request.Name.Trim();
+
+        if (await _context.Authors.AnyAsync(x => x.Name == authorName, cancellationToken))
+        {
+            return CreateAuthorResult.Failure("An author with this name already exists.");
+        }
+
         if (request.ApplicationUserId is Guid applicationUserId)
         {
             var userExists = await _context.ApplicationUsers
@@ -99,7 +106,7 @@ public sealed class AuthorService : IAuthorService
         var author = new Author
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Name = authorName,
             MonthList = request.MonthList,
             Bio = request.Bio?.Trim(),
             BioImageItemId = request.BioImageItemId,
@@ -131,7 +138,14 @@ public sealed class AuthorService : IAuthorService
             return UpdateAuthorResult.Failure("The specified bio image was not found.");
         }
 
-        author.Name = request.Name.Trim();
+        var authorName = request.Name.Trim();
+
+        if (await _context.Authors.AnyAsync(x => x.Id != id && x.Name == authorName, cancellationToken))
+        {
+            return UpdateAuthorResult.Failure("An author with this name already exists.");
+        }
+
+        author.Name = authorName;
         author.MonthList = request.MonthList;
         author.Bio = request.Bio?.Trim();
         author.BioImageItemId = request.BioImageItemId;

@@ -47,10 +47,19 @@ public sealed class PlaylistService : IPlaylistService
             return CreatePlaylistResult.Failure("The specified user was not found.");
         }
 
+        var playlistName = request.Name.Trim();
+
+        if (await _context.Playlists.AnyAsync(
+                x => x.ApplicationUserId == request.ApplicationUserId && x.Name == playlistName,
+                cancellationToken))
+        {
+            return CreatePlaylistResult.Failure("This user already has a playlist with this name.");
+        }
+
         var playlist = new Domain.Entities.Content.Playlist
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Name = playlistName,
             ApplicationUserId = request.ApplicationUserId
         };
 
@@ -77,7 +86,16 @@ public sealed class PlaylistService : IPlaylistService
             return UpdatePlaylistResult.Failure("You cannot edit someone else's playlist.");
         }
 
-        playlist.Name = request.Name.Trim();
+        var playlistName = request.Name.Trim();
+
+        if (await _context.Playlists.AnyAsync(
+                x => x.Id != id && x.ApplicationUserId == playlist.ApplicationUserId && x.Name == playlistName,
+                cancellationToken))
+        {
+            return UpdatePlaylistResult.Failure("This user already has a playlist with this name.");
+        }
+
+        playlist.Name = playlistName;
         await _context.SaveChangesAsync(cancellationToken);
 
         var tracksCount = await _context.PlaylistTracks.CountAsync(x => x.PlaylistId == id, cancellationToken);

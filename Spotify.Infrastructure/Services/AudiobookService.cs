@@ -53,6 +53,13 @@ public sealed class AudiobookService : IAudiobookService
             return CreateAudiobookResult.Failure("The specified genre was not found.");
         }
 
+        var audiobookName = request.Name.Trim();
+
+        if (await _context.Audiobooks.AnyAsync(x => x.DeletedAt == null && x.Name == audiobookName, cancellationToken))
+        {
+            return CreateAudiobookResult.Failure("An audiobook with this name already exists");
+        }
+
         var existingAuthorIds = await _context.Authors
             .Where(x => request.AuthorIds.Contains(x.Id))
             .Select(x => x.Id)
@@ -67,7 +74,7 @@ public sealed class AudiobookService : IAudiobookService
         var audiobook = new Audiobook
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Name = audiobookName,
             Description = request.Description?.Trim(),
             DurationSeconds = 0,
             AudioItemId = request.AudioItemId,
@@ -119,6 +126,13 @@ public sealed class AudiobookService : IAudiobookService
             return UpdateAudiobookResult.Failure("The specified genre was not found.");
         }
 
+        var audiobookName = request.Name.Trim();
+
+        if (await _context.Audiobooks.AnyAsync(x => x.DeletedAt == null && x.Id != id && x.Name == audiobookName, cancellationToken))
+        {
+            return UpdateAudiobookResult.Failure("An audiobook with this name already exists");
+        }
+
         var existingAuthorIds = await _context.Authors
             .Where(x => request.AuthorIds.Contains(x.Id))
             .Select(x => x.Id)
@@ -130,7 +144,7 @@ public sealed class AudiobookService : IAudiobookService
             return UpdateAudiobookResult.Failure($"The following authors were not found: {string.Join(", ", missingAuthors)}");
         }
 
-        audiobook.Name = request.Name.Trim();
+        audiobook.Name = audiobookName;
         audiobook.Description = request.Description?.Trim();
         audiobook.GenreId = request.GenreId;
 

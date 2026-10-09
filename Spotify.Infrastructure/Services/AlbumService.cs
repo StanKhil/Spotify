@@ -96,10 +96,19 @@ public sealed class AlbumService : IAlbumService
             return CreateAlbumResult.Failure("The specified genre was not found");
         }
 
+        var albumName = request.Name.Trim();
+
+        if (await _context.Albums.AnyAsync(
+                x => x.DeletedAt == null && x.Name == albumName,
+                cancellationToken))
+        {
+            return CreateAlbumResult.Failure("An album with this name already exists");
+        }
+
         var album = new Domain.Entities.Content.Album
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Name = albumName,
             Description = request.Description?.Trim(),
             DurationSeconds = 0,
             ImageItemId = request.CoverImageId,
@@ -112,9 +121,11 @@ public sealed class AlbumService : IAlbumService
         _context.Albums.Add(album);
         await _context.SaveChangesAsync(cancellationToken);
 
+        var imageUrl = await GetImageUrlAsync(album.ImageItemId, cancellationToken);
+
         return CreateAlbumResult.Success(new AlbumResponse(
             album.Id.ToString(), album.Name, album.Description, album.DurationSeconds,
-            album.ImageItemId ?? Guid.Empty, album.IsDraft, album.GenreId, album.CreatedAt, album.ImageItem!.ImageList));
+            album.ImageItemId ?? Guid.Empty, album.IsDraft, album.GenreId, album.CreatedAt, imageUrl));
     }
 
     public async Task<UpdateAlbumResult> EditAlbumAsync(
@@ -141,7 +152,16 @@ public sealed class AlbumService : IAlbumService
             return UpdateAlbumResult.Failure("The specified genre was not found");
         }
 
-        album.Name = request.Name.Trim();
+        var albumName = request.Name.Trim();
+
+        if (await _context.Albums.AnyAsync(
+                x => x.DeletedAt == null && x.Id != id && x.Name == albumName,
+                cancellationToken))
+        {
+            return UpdateAlbumResult.Failure("An album with this name already exists");
+        }
+
+        album.Name = albumName;
         album.Description = request.Description?.Trim();
         album.ImageItemId = request.CoverImageId;
         album.GenreId = request.GenreId;
@@ -149,9 +169,11 @@ public sealed class AlbumService : IAlbumService
 
         await _context.SaveChangesAsync(cancellationToken);
 
+        var imageUrl = await GetImageUrlAsync(album.ImageItemId, cancellationToken);
+
         return UpdateAlbumResult.Success(new AlbumResponse(
             album.Id.ToString(), album.Name, album.Description, album.DurationSeconds,
-            album.ImageItemId ?? Guid.Empty, album.IsDraft, album.GenreId, album.CreatedAt, album.ImageItem!.ImageList));
+            album.ImageItemId ?? Guid.Empty, album.IsDraft, album.GenreId, album.CreatedAt, imageUrl));
     }
 
     public async Task<DeleteAlbumResult> DeleteAlbumAsync(
@@ -175,6 +197,21 @@ public sealed class AlbumService : IAlbumService
         await _context.SaveChangesAsync(cancellationToken);
 
         return DeleteAlbumResult.Success();
+    }
+
+    private async Task<string?> GetImageUrlAsync(
+        Guid? imageItemId,
+        CancellationToken cancellationToken)
+    {
+        if (imageItemId is not Guid id)
+        {
+            return null;
+        }
+
+        return await _context.ImageItems
+            .Where(x => x.Id == id)
+            .Select(x => x.ImageList)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     private async Task<bool> IsImageItemInUseAsync(

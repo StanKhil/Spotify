@@ -16,4 +16,5 @@ public sealed record TrackResponse(
     IReadOnlyCollection<string> TagIds,
     DateTime CreatedAt,
     string? AudioUrl,
-    IReadOnlyCollection<string>? AuthorIds = null);
+    IReadOnlyCollection<string>? AuthorIds = null,
+    string? ImageUrl = null);

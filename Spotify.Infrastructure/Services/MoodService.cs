@@ -27,6 +27,13 @@ public sealed class MoodService : IMoodService
         CreateMoodRequest request,
         CancellationToken cancellationToken = default)
     {
+        var moodName = request.Name.Trim();
+
+        if (await _context.Moods.AnyAsync(x => x.Name == moodName, cancellationToken))
+        {
+            return CreateMoodResult.Failure("A mood with this name already exists");
+        }
+
         if (request.MoodImageId is Guid imageId &&
             !await _context.ImageItems.AnyAsync(x => x.Id == imageId, cancellationToken))
         {
@@ -36,7 +43,7 @@ public sealed class MoodService : IMoodService
         var mood = new Domain.Entities.Content.Mood
         {
             Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
+            Name = moodName,
             MoodImageId = request.MoodImageId
         };
 
@@ -64,7 +71,14 @@ public sealed class MoodService : IMoodService
             return UpdateMoodResult.Failure("The specified mood image was not found");
         }
 
-        mood.Name = request.Name.Trim();
+        var moodName = request.Name.Trim();
+
+        if (await _context.Moods.AnyAsync(x => x.Id != id && x.Name == moodName, cancellationToken))
+        {
+            return UpdateMoodResult.Failure("A mood with this name already exists");
+        }
+
+        mood.Name = moodName;
         mood.MoodImageId = request.MoodImageId;
 
         await _context.SaveChangesAsync(cancellationToken);
