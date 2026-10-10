@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Spotify.Application.DTOs.Author;
 using Spotify.Application.DTOs.Track;
 using Spotify.Application.Interfaces;
 using Spotify.Domain.Entities.User;
@@ -90,5 +91,20 @@ public sealed class AuthorActionController : ControllerBase
             return NotFound();
 
         return Ok(result);
+    }
+
+    [HttpGet("authorPage/{maxPerPage:int}/{page:int}/{authorId}")]
+    [ProducesResponseType(typeof(AuthorPageResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<AuthorPageResult> GetAuthorPage(
+        int maxPerPage,
+        int page,
+        string authorId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authorActionService.GetAuthorPageAsync(
+            maxPerPage, page, authorId, cancellationToken);
+
+        return result;
     }
 }

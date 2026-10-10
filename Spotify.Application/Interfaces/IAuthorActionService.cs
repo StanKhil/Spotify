@@ -1,4 +1,5 @@
-﻿using Spotify.Application.DTOs.Author;
+﻿using MailKit;
+using Spotify.Application.DTOs.Author;
 
 namespace Spotify.Application.Interfaces
 {
@@ -18,6 +19,12 @@ namespace Spotify.Application.Interfaces
             int maxPerPage,
             int page,
             Guid userId,
+            CancellationToken cancellationToken = default);
+
+        Task<AuthorPageResult> GetAuthorPageAsync(
+            int maxPerPage,
+            int page,
+            string authorId,
             CancellationToken cancellationToken = default);
     }
 }
