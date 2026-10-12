@@ -7,6 +7,8 @@ public class Playlist
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = null!;
+    public Guid? CoverImageId { get; set; }
+    public ImageItem? CoverImage { get; set; } = null!;
     public Guid ApplicationUserId { get; set; }
 
     [ForeignKey(nameof(ApplicationUserId))]

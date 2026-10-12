@@ -7,4 +7,6 @@ public sealed class UpdatePlaylistRequest
     [Required]
     [MaxLength(150)]
     public string Name { get; init; } = string.Empty;
+
+    public Guid? CoverImageId { get; init; }
 }

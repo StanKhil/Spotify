@@ -25,8 +25,15 @@ public sealed class PlaylistService : IPlaylistService
         CancellationToken cancellationToken = default)
     {
         return await _context.Playlists
+            .AsNoTracking()
             .OrderBy(x => x.Name)
-            .Select(x => new PlaylistResponse(x.Id, x.Name, x.ApplicationUserId, x.PlaylistTracks.Count))
+            .Select(x => new PlaylistResponse(
+                x.Id,
+                x.Name,
+                x.ApplicationUserId,
+                x.PlaylistTracks.Count,
+                x.CoverImageId,
+                GetImageUrl(x.CoverImageId, x.CoverImage != null ? x.CoverImage.ImageList : null)))
             .ToListAsync(cancellationToken);
     }
 
@@ -34,8 +41,15 @@ public sealed class PlaylistService : IPlaylistService
         Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Playlists
+            .AsNoTracking()
             .Where(x => x.Id == id)
-            .Select(x => new PlaylistResponse(x.Id, x.Name, x.ApplicationUserId, x.PlaylistTracks.Count))
+            .Select(x => new PlaylistResponse(
+                x.Id,
+                x.Name,
+                x.ApplicationUserId,
+                x.PlaylistTracks.Count,
+                x.CoverImageId,
+                GetImageUrl(x.CoverImageId, x.CoverImage != null ? x.CoverImage.ImageList : null)))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -56,23 +70,45 @@ public sealed class PlaylistService : IPlaylistService
             return CreatePlaylistResult.Failure("This user already has a playlist with this name.");
         }
 
-        var playlist = new Domain.Entities.Content.Playlist
+        if (request.CoverImageId.HasValue && request.CoverImageId.Value != Guid.Empty)
+        {
+            var imageExists = await _context.ImageItems
+                .AnyAsync(x => x.Id == request.CoverImageId.Value, cancellationToken);
+
+            if (!imageExists)
+            {
+                return CreatePlaylistResult.Failure("The specified cover image was not found.");
+            }
+        }
+
+        var playlist = new Playlist
         {
             Id = Guid.NewGuid(),
             Name = playlistName,
-            ApplicationUserId = request.ApplicationUserId
+            ApplicationUserId = request.ApplicationUserId,
+            CoverImageId = request.CoverImageId
         };
 
         _context.Playlists.Add(playlist);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return CreatePlaylistResult.Success(new PlaylistResponse(playlist.Id, playlist.Name, playlist.ApplicationUserId, 0));
+        var imageUrl = GetImageUrl(playlist.CoverImageId, null);
+
+        return CreatePlaylistResult.Success(new PlaylistResponse(
+            playlist.Id,
+            playlist.Name,
+            playlist.ApplicationUserId,
+            0,
+            playlist.CoverImageId,
+            imageUrl));
     }
 
     public async Task<UpdatePlaylistResult> EditPlaylistAsync(
         Guid id, UpdatePlaylistRequest request, CancellationToken cancellationToken = default)
     {
-        var playlist = await _context.Playlists.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var playlist = await _context.Playlists
+            .Include(x => x.CoverImage)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (playlist is null)
         {
@@ -81,7 +117,7 @@ public sealed class PlaylistService : IPlaylistService
 
         var currentUserId = _currentUserService.UserId;
 
-        if(currentUserId != playlist.ApplicationUserId)
+        if (currentUserId != playlist.ApplicationUserId)
         {
             return UpdatePlaylistResult.Failure("You cannot edit someone else's playlist.");
         }
@@ -95,12 +131,33 @@ public sealed class PlaylistService : IPlaylistService
             return UpdatePlaylistResult.Failure("This user already has a playlist with this name.");
         }
 
+
+        if (request.CoverImageId.HasValue && request.CoverImageId.Value != Guid.Empty)
+        {
+            var imageExists = await _context.ImageItems
+                .AnyAsync(x => x.Id == request.CoverImageId.Value, cancellationToken);
+
+            if (!imageExists)
+            {
+                return UpdatePlaylistResult.Failure("The specified cover image was not found.");
+            }
+        }
+
         playlist.Name = playlistName;
+        playlist.CoverImageId = request.CoverImageId;
+
         await _context.SaveChangesAsync(cancellationToken);
 
         var tracksCount = await _context.PlaylistTracks.CountAsync(x => x.PlaylistId == id, cancellationToken);
+        var imageUrl = GetImageUrl(playlist.CoverImageId, playlist.CoverImage?.ImageList);
 
-        return UpdatePlaylistResult.Success(new PlaylistResponse(playlist.Id, playlist.Name, playlist.ApplicationUserId, tracksCount));
+        return UpdatePlaylistResult.Success(new PlaylistResponse(
+            playlist.Id,
+            playlist.Name,
+            playlist.ApplicationUserId,
+            tracksCount,
+            playlist.CoverImageId,
+            imageUrl));
     }
 
     public async Task<DeletePlaylistResult> DeletePlaylistAsync(
@@ -250,5 +307,17 @@ public sealed class PlaylistService : IPlaylistService
                      x.DeletedAt == null &&
                      !x.IsDraft,
                 cancellationToken);
+    }
+
+    private static string? GetImageUrl(Guid? coverImageId, string? imageList)
+    {
+        if (!string.IsNullOrWhiteSpace(imageList))
+        {
+            return imageList;
+        }
+
+        return coverImageId.HasValue && coverImageId.Value != Guid.Empty
+            ? $"/images/{coverImageId.Value}"
+            : null;
     }
 }

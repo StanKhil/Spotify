@@ -10,4 +10,6 @@ public sealed class CreatePlaylistRequest
 
     [Required]
     public Guid ApplicationUserId { get; init; }
+
+    public Guid? CoverImageId { get; init; }
 }

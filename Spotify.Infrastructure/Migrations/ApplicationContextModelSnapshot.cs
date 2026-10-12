@@ -473,6 +473,9 @@ namespace Spotify.Infrastructure.Migrations
                     b.Property<Guid>("ApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CoverImageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -481,6 +484,8 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("CoverImageId");
 
                     b.ToTable("Playlists");
                 });
@@ -1772,7 +1777,14 @@ namespace Spotify.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Spotify.Domain.Entities.Content.ImageItem", "CoverImage")
+                        .WithMany()
+                        .HasForeignKey("CoverImageId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.Navigation("ApplicationUser");
+
+                    b.Navigation("CoverImage");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.PlaylistTrack", b =>

@@ -4,4 +4,6 @@ public sealed record PlaylistResponse(
     Guid Id,
     string Name,
     Guid ApplicationUserId,
-    int TracksCount);
+    int TracksCount,
+    Guid? CoverImageId,
+    string? ImageUrl);
