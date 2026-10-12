@@ -22,9 +22,15 @@ namespace Spotify.Application.Interfaces
             CancellationToken cancellationToken = default);
 
         Task<AuthorPageResult> GetAuthorPageAsync(
-            int maxPerPage,
-            int page,
             string authorId,
+            int tracksMaxPerPage,
+            int tracksPage,
+            int albumsMaxPerPage,
+            int albumsPage,
+            int interestsMaxPerPage,
+            int interestsPage,
+            int artistsMaxPerPage,
+            int artistsPage,
             CancellationToken cancellationToken = default);
     }
 }

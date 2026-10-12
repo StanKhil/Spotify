@@ -133,10 +133,25 @@ public sealed class TrackActionController : ControllerBase
     [ProducesResponseType(typeof(TrackPageResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<TrackPageResult> GetTrackPage(string trackId, CancellationToken cancellation)
+    public async Task<TrackPageResult> GetTrackPage(
+        string trackId,
+        [FromQuery] int recommendationsMaxPerPage = 5,
+        [FromQuery] int recommendationsPage = 1,
+        [FromQuery] int popularMaxPerPage = 5,
+        [FromQuery] int popularPage = 1,
+        [FromQuery] int albumsMaxPerPage = 5,
+        [FromQuery] int albumsPage = 1,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _trackActionService.GetTrackPage(trackId, cancellation);
-        return result;
+        return await _trackActionService.GetTrackPageAsync(
+            trackId,
+            recommendationsMaxPerPage,
+            recommendationsPage,
+            popularMaxPerPage,
+            popularPage,
+            albumsMaxPerPage,
+            albumsPage,
+            cancellationToken);
     }
 
 }

@@ -1,23 +1,24 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Spotify.Application.DTOs.Album;
+using Spotify.Application.DTOs.Search;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Spotify.Application.DTOs.Track
 {
-    public sealed record TrackPageResponse(
+    public record TrackPageResponse(
         string Name,
         string? Description,
-        IReadOnlyCollection<string> AuthorsNames,
-        IReadOnlyCollection<string> AuthorsIds,
+        List<string> AuthorsNames,
+        List<string> AuthorsIds,
         string AlbumName,
         string? ImageUrl,
         string? AudioUrl,
         long Listeners,
         DateTime CreatedAt,
-        IReadOnlyCollection<TrackResponse> Recomendation,
-        IReadOnlyCollection<TrackResponse> PopularTracksByAuthor,
-        IReadOnlyCollection<AlbumResponse> AlbumsByAuthor
-        );
+        SearchPage<TrackResponse> Recomendation,
+        SearchPage<TrackResponse> PopularTracksByAuthor,
+        SearchPage<AlbumResponse> AlbumsByAuthor
+    );
 }

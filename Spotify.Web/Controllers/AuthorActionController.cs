@@ -93,18 +93,31 @@ public sealed class AuthorActionController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("authorPage/{maxPerPage:int}/{page:int}/{authorId}")]
+    [HttpGet("authorPage/{authorId}")]
     [ProducesResponseType(typeof(AuthorPageResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<AuthorPageResult> GetAuthorPage(
-        int maxPerPage,
-        int page,
         string authorId,
-        CancellationToken cancellationToken)
+        [FromQuery] int tracksMaxPerPage = 10,
+        [FromQuery] int tracksPage = 1,
+        [FromQuery] int albumsMaxPerPage = 10,
+        [FromQuery] int albumsPage = 1,
+        [FromQuery] int interestsMaxPerPage = 10,
+        [FromQuery] int interestsPage = 1,
+        [FromQuery] int artistsMaxPerPage = 5,
+        [FromQuery] int artistsPage = 1,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _authorActionService.GetAuthorPageAsync(
-            maxPerPage, page, authorId, cancellationToken);
-
-        return result;
+        return await _authorActionService.GetAuthorPageAsync(
+            authorId,
+            tracksMaxPerPage,
+            tracksPage,
+            albumsMaxPerPage,
+            albumsPage,
+            interestsMaxPerPage,
+            interestsPage,
+            artistsMaxPerPage,
+            artistsPage,
+            cancellationToken);
     }
 }

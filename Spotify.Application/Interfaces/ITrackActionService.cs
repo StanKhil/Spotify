@@ -37,8 +37,14 @@ namespace Spotify.Application.Interfaces
             Guid userId,
             CancellationToken cancellationToken = default);
 
-        Task<TrackPageResult> GetTrackPage(
+        Task<TrackPageResult> GetTrackPageAsync(
             string trackId,
+            int recommendationsMaxPerPage,
+            int recommendationsPage,
+            int popularMaxPerPage,
+            int popularPage,
+            int albumsMaxPerPage,
+            int albumsPage,
             CancellationToken cancellationToken = default);
     }
 }

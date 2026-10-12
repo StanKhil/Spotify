@@ -12,8 +12,7 @@ namespace Spotify.Infrastructure.Services;
 public sealed class AuthorActionService : IAuthorActionService
 {
     private readonly ApplicationContext _context;
-    private const int RecommendedTracksLimit = 10;
-    private const int RecommendedAuthorsLimit = 5;
+    private const int JamendoCandidateLimit = 200;
     private readonly IFromJamendoToLocalService _fromJamendoToLocalService;
     private readonly IJamendoService _jamendoService;
 
@@ -191,14 +190,23 @@ public sealed class AuthorActionService : IAuthorActionService
     }
 
     public async Task<AuthorPageResult> GetAuthorPageAsync(
-        int maxPerPage,
-        int page,
         string authorId,
+        int tracksMaxPerPage,
+        int tracksPage,
+        int albumsMaxPerPage,
+        int albumsPage,
+        int interestsMaxPerPage,
+        int interestsPage,
+        int artistsMaxPerPage,
+        int artistsPage,
         CancellationToken cancellationToken = default)
     {
-        if (page < 1 || maxPerPage < 1)
+        if (tracksPage < 1 || tracksMaxPerPage < 1 ||
+            albumsPage < 1 || albumsMaxPerPage < 1 ||
+            interestsPage < 1 || interestsMaxPerPage < 1 ||
+            artistsPage < 1 || artistsMaxPerPage < 1)
         {
-            return AuthorPageResult.Failure("Page and MaxPerPage must be greater than 0.");
+            return AuthorPageResult.Failure("All Page and MaxPerPage values must be greater than 0.");
         }
 
         if (string.IsNullOrWhiteSpace(authorId))
@@ -226,52 +234,23 @@ public sealed class AuthorActionService : IAuthorActionService
         }
 
         var internalAuthorId = author.Id;
-        var tracksQuery = _context.Tracks
-            .AsNoTracking()
-            .Where(t => t.DeletedAt == null &&
-                        t.AuthorContent != null &&
-                        t.AuthorContent.Authors.Any(aca => aca.AuthorId == internalAuthorId));
-
-        var totalTracks = await tracksQuery.CountAsync(cancellationToken);
 
         List<SearchTrackResponse> tracksItems;
+        int totalTracks;
         int totalTrackPages;
 
-        if (totalTracks > 0)
-        {
-            totalTrackPages = (int)Math.Ceiling((double)totalTracks / maxPerPage);
-
-            tracksItems = await tracksQuery
-                .OrderByDescending(t => t.CreatedAt)
-                .Skip((page - 1) * maxPerPage)
-                .Take(maxPerPage)
-                .Select(t => new SearchTrackResponse(
-                    t.Id.ToString(),
-                    t.Name,
-                    t.Description,
-                    t.DurationSeconds,
-                    t.Provider.ToString(),
-                    t.AlbumId != null ? t.AlbumId.ToString() : null,
-                    t.Album != null ? t.Album.Name : null,
-                    author.Name,
-                    GetImageUrl(t.ImageItemId),
-                    GetAudioUrl(t.Id)
-                ))
-                .ToListAsync(cancellationToken);
-        }
-        else if (!string.IsNullOrEmpty(author.ExternalAuthorId))
+        if (!string.IsNullOrEmpty(author.ExternalAuthorId))
         {
             var jamendoTracksDto = await _jamendoService.GetTracksByAuthorAsync(
-                author.ExternalAuthorId, maxPerPage, page, cancellationToken);
+                author.ExternalAuthorId, JamendoCandidateLimit, 1, cancellationToken);
 
             var rawTracks = jamendoTracksDto?.Tracks ?? [];
-            var totalJamendoTracks = rawTracks.Count;
+            totalTracks = rawTracks.Count;
+            totalTrackPages = (int)Math.Ceiling((double)totalTracks / tracksMaxPerPage);
 
-            totalTracks = totalJamendoTracks;
-            totalTrackPages = (int)Math.Ceiling((double)totalJamendoTracks / maxPerPage);
             tracksItems = rawTracks
-                .Skip((page - 1) * maxPerPage)
-                .Take(maxPerPage)
+                .Skip((tracksPage - 1) * tracksMaxPerPage)
+                .Take(tracksMaxPerPage)
                 .Select(t => new SearchTrackResponse(
                     t.Id,
                     t.Name,
@@ -287,57 +266,53 @@ public sealed class AuthorActionService : IAuthorActionService
         }
         else
         {
-            tracksItems = [];
-            totalTrackPages = 0;
-        }
+            var tracksQuery = _context.Tracks
+                .AsNoTracking()
+                .Where(t => t.DeletedAt == null &&
+                            t.AuthorContent != null &&
+                            t.AuthorContent.Authors.Any(aca => aca.AuthorId == internalAuthorId));
 
-        var tracksPage = new SearchPage<SearchTrackResponse>(tracksItems, totalTracks, page, totalTrackPages);
+            totalTracks = await tracksQuery.CountAsync(cancellationToken);
+            totalTrackPages = (int)Math.Ceiling((double)totalTracks / tracksMaxPerPage);
 
-        var albumsQuery = _context.Albums
-            .AsNoTracking()
-            .Where(a => a.DeletedAt == null &&
-                        a.AuthorContent != null &&
-                        a.AuthorContent.Authors.Any(aca => aca.AuthorId == internalAuthorId));
-
-        var totalAlbums = await albumsQuery.CountAsync(cancellationToken);
-
-        List<SearchAlbumResponse> albumsItems;
-        int totalAlbumPages;
-
-        if (totalAlbums > 0)
-        {
-            totalAlbumPages = (int)Math.Ceiling((double)totalAlbums / maxPerPage);
-
-            albumsItems = await albumsQuery
-                .OrderByDescending(a => a.CreatedAt)
-                .Skip((page - 1) * maxPerPage)
-                .Take(maxPerPage)
-                .Select(a => new SearchAlbumResponse(
-                    a.Id.ToString(),
-                    a.Name,
-                    a.Description,
-                    a.DurationSeconds,
-                    a.Provider.ToString(),
+            tracksItems = await tracksQuery
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((tracksPage - 1) * tracksMaxPerPage)
+                .Take(tracksMaxPerPage)
+                .Select(t => new SearchTrackResponse(
+                    t.Id.ToString(),
+                    t.Name,
+                    t.Description,
+                    t.DurationSeconds,
+                    t.Provider.ToString(),
+                    t.AlbumId != null ? t.AlbumId.ToString() : null,
+                    t.Album != null ? t.Album.Name : null,
                     author.Name,
-                    GetImageUrl(a.ImageItemId),
-                    a.Tracks.Count(t => t.DeletedAt == null),
-                    a.CreatedAt
+                    GetImageUrl(t.ImageItemId),
+                    GetAudioUrl(t.Id)
                 ))
                 .ToListAsync(cancellationToken);
         }
-        else if (!string.IsNullOrEmpty(author.ExternalAuthorId))
+
+        var tracksPageResult = new SearchPage<SearchTrackResponse>(
+            tracksItems, totalTracks, tracksPage, totalTrackPages);
+
+        List<SearchAlbumResponse> albumsItems;
+        int totalAlbums;
+        int totalAlbumPages;
+
+        if (!string.IsNullOrEmpty(author.ExternalAuthorId))
         {
             var jamendoAlbumsDto = await _jamendoService.GetAlbumsByAuthorAsync(
-                author.ExternalAuthorId, maxPerPage, page, cancellationToken);
+                author.ExternalAuthorId, JamendoCandidateLimit, 1, cancellationToken);
 
             var rawAlbums = jamendoAlbumsDto?.Albums ?? [];
-            var totalJamendoAlbums = rawAlbums.Count;
+            totalAlbums = rawAlbums.Count;
+            totalAlbumPages = (int)Math.Ceiling((double)totalAlbums / albumsMaxPerPage);
 
-            totalAlbums = totalJamendoAlbums;
-            totalAlbumPages = (int)Math.Ceiling((double)totalJamendoAlbums / maxPerPage);
             albumsItems = rawAlbums
-                .Skip((page - 1) * maxPerPage)
-                .Take(maxPerPage)
+                .Skip((albumsPage - 1) * albumsMaxPerPage)
+                .Take(albumsMaxPerPage)
                 .Select(a => new SearchAlbumResponse(
                     a.Id,
                     a.Name,
@@ -353,17 +328,47 @@ public sealed class AuthorActionService : IAuthorActionService
         }
         else
         {
-            albumsItems = [];
-            totalAlbumPages = 0;
+            var albumsQuery = _context.Albums
+                .AsNoTracking()
+                .Where(a => a.DeletedAt == null &&
+                            a.AuthorContent != null &&
+                            a.AuthorContent.Authors.Any(aca => aca.AuthorId == internalAuthorId));
+
+            totalAlbums = await albumsQuery.CountAsync(cancellationToken);
+            totalAlbumPages = (int)Math.Ceiling((double)totalAlbums / albumsMaxPerPage);
+
+            albumsItems = await albumsQuery
+                .OrderByDescending(a => a.CreatedAt)
+                .Skip((albumsPage - 1) * albumsMaxPerPage)
+                .Take(albumsMaxPerPage)
+                .Select(a => new SearchAlbumResponse(
+                    a.Id.ToString(),
+                    a.Name,
+                    a.Description,
+                    a.DurationSeconds,
+                    a.Provider.ToString(),
+                    author.Name,
+                    GetImageUrl(a.ImageItemId),
+                    a.Tracks.Count(t => t.DeletedAt == null),
+                    a.CreatedAt
+                ))
+                .ToListAsync(cancellationToken);
         }
 
-        var albumsPage = new SearchPage<SearchAlbumResponse>(albumsItems, totalAlbums, page, totalAlbumPages);
+        var albumsPageResult = new SearchPage<SearchAlbumResponse>(
+            albumsItems, totalAlbums, albumsPage, totalAlbumPages);
 
-        var interests = await _context.Tracks
+        var interestsQuery = _context.Tracks
             .AsNoTracking()
-            .Where(t => t.DeletedAt == null)
+            .Where(t => t.DeletedAt == null);
+
+        var totalInterests = await interestsQuery.CountAsync(cancellationToken);
+        var totalInterestPages = (int)Math.Ceiling((double)totalInterests / interestsMaxPerPage);
+
+        var interestsItems = await interestsQuery
             .OrderBy(t => EF.Functions.Random())
-            .Take(RecommendedTracksLimit)
+            .Skip((interestsPage - 1) * interestsMaxPerPage)
+            .Take(interestsMaxPerPage)
             .Select(t => new SearchTrackResponse(
                 t.Id.ToString(),
                 t.Name,
@@ -379,11 +384,21 @@ public sealed class AuthorActionService : IAuthorActionService
                 GetAudioUrl(t.Id)
             ))
             .ToListAsync(cancellationToken);
-        var artists = await _context.Authors
+
+        var interestsPageResult = new SearchPage<SearchTrackResponse>(
+            interestsItems, totalInterests, interestsPage, totalInterestPages);
+
+        var artistsQuery = _context.Authors
             .AsNoTracking()
-            .Where(a => a.Id != internalAuthorId)
+            .Where(a => a.Id != internalAuthorId);
+
+        var totalArtists = await artistsQuery.CountAsync(cancellationToken);
+        var totalArtistPages = (int)Math.Ceiling((double)totalArtists / artistsMaxPerPage);
+
+        var artistsItems = await artistsQuery
             .OrderBy(a => EF.Functions.Random())
-            .Take(RecommendedAuthorsLimit)
+            .Skip((artistsPage - 1) * artistsMaxPerPage)
+            .Take(artistsMaxPerPage)
             .Select(a => new SearchAuthorResponse(
                 a.Id.ToString(),
                 a.Name,
@@ -395,15 +410,18 @@ public sealed class AuthorActionService : IAuthorActionService
             ))
             .ToListAsync(cancellationToken);
 
+        var artistsPageResult = new SearchPage<SearchAuthorResponse>(
+            artistsItems, totalArtists, artistsPage, totalArtistPages);
+
         var authorPageResponse = new AuthorPageResponse(
             author.Id,
             author.Name,
             author.Bio,
             GetImageUrl(author.BioImageItemId),
-            tracksPage,
-            albumsPage,
-            interests,
-            artists
+            tracksPageResult,
+            albumsPageResult,
+            interestsPageResult,
+            artistsPageResult
         );
 
         return AuthorPageResult.Success(authorPageResponse);

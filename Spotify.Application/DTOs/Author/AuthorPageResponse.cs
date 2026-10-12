@@ -7,9 +7,9 @@ namespace Spotify.Application.DTOs.Author
         string Name,
         string? Description,
         string? AvatarImage,
-        SearchPage<SearchTrackResponse> Tracks,       // Paginated tracks by author
-        SearchPage<SearchAlbumResponse> Music,        // Paginated albums by author
-        IReadOnlyList<SearchTrackResponse> Interests,  // Recommended tracks (random)
-        IReadOnlyList<SearchAuthorResponse> Artists    // Recommended authors (random)
+        SearchPage<SearchTrackResponse> Tracks,     // Paginated tracks
+        SearchPage<SearchAlbumResponse> Music,      // Paginated albums
+        SearchPage<SearchTrackResponse> Interests, // Paginated recommended tracks
+        SearchPage<SearchAuthorResponse> Artists   // Paginated recommended authors
     );
 }
