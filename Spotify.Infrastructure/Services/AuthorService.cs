@@ -25,7 +25,7 @@ public sealed class AuthorService : IAuthorService
                 x.Name,
                 x.MonthList,
                 x.Bio,
-                x.BioImageItemId,
+                x.BioImageItem!.ImageList,
                 x.AuthoredContent.Count))
             .ToListAsync(cancellationToken);
     }
@@ -46,7 +46,7 @@ public sealed class AuthorService : IAuthorService
                 x.Name,
                 x.MonthList,
                 x.Bio,
-                x.BioImageItemId,
+                x.BioImageItem!.ImageList,
                 x.AuthoredContent.Count))
             .ToListAsync(cancellationToken);
     }
@@ -62,7 +62,7 @@ public sealed class AuthorService : IAuthorService
                 x.Name,
                 x.MonthList,
                 x.Bio,
-                x.BioImageItemId,
+                x.BioImageItem!.ImageList,
                 x.AuthoredContent.Count))
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -191,6 +191,6 @@ public sealed class AuthorService : IAuthorService
             author.Name,
             author.MonthList,
             author.Bio,
-            author.BioImageItemId,
+            author.BioImageItem!.ImageList,
             contentCount);
 }

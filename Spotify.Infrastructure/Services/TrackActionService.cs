@@ -2,6 +2,7 @@
 using Spotify.Application.DTOs.Album;
 using Spotify.Application.DTOs.Search;
 using Spotify.Application.DTOs.Track;
+using Spotify.Application.DTOs.Author;
 using Spotify.Application.Interfaces;
 using Spotify.Domain.Entities.Content;
 using Spotify.Domain.Entities.User;
@@ -431,14 +432,14 @@ public sealed class TrackActionService : ITrackActionService
     }
 
     public async Task<TrackPageResult> GetTrackPageAsync(
-        string trackId,
-        int recommendationsMaxPerPage,
-        int recommendationsPage,
-        int popularMaxPerPage,
-        int popularPage,
-        int albumsMaxPerPage,
-        int albumsPage,
-        CancellationToken cancellationToken = default)
+    string trackId,
+    int recommendationsMaxPerPage,
+    int recommendationsPage,
+    int popularMaxPerPage,
+    int popularPage,
+    int albumsMaxPerPage,
+    int albumsPage,
+    CancellationToken cancellationToken = default)
     {
         if (recommendationsPage < 1 || recommendationsMaxPerPage < 1 ||
             popularPage < 1 || popularMaxPerPage < 1 ||
@@ -454,16 +455,17 @@ public sealed class TrackActionService : ITrackActionService
             return TrackPageResult.Failure("Track not found");
         }
 
-        var authorsNames = track.AuthorContent?.Authors
-            .Select(a => a.Author.Name)
-            .ToList() ?? [];
-
-        var authorsIds = track.AuthorContent?.Authors
-            .Select(a => a.Author.Id.ToString())
-            .ToList() ?? [];
-
         var authorIds = track.AuthorContent?.Authors.Select(a => a.AuthorId).ToList() ?? [];
+        var authors = track.AuthorContent?.Authors.Select(a => a.Author).ToList() ?? [];
 
+        var authorsResponse = authors.Select(a => new AuthorResponse(
+            a.Id,
+            a.Name,
+            a.MonthList,
+            a.Bio,
+            GetImageUrl(a.BioImageItemId) ?? a.BioImageItem?.ImageList,
+            a.AuthoredContent?.Count ?? 0
+        )).ToList();
 
         if (track.Provider == AudioProvider.Jamendo && track.ExternalContentId != null)
         {
@@ -481,23 +483,21 @@ public sealed class TrackActionService : ITrackActionService
             var response = new TrackPageResponse(
                 Name: track.Name,
                 Description: track.Description,
-                AuthorsNames: authorsNames,
-                AuthorsIds: authorsIds,
-                DurationSeconds: track.DurationSeconds,
+                Authors: authorsResponse,
                 AlbumName: track.Album?.Name ?? "Unknown Album",
-                AlbumId: track.AlbumId.ToString() ?? null,
-                ImageUrl: track.ImageItem?.ImageList,
+                AlbumId: track.AlbumId?.ToString(),
+                ImageUrl: GetImageUrl(track.ImageItemId) ?? track.ImageItem?.ImageList,
                 AudioUrl: audioUrl,
                 Listeners: track.PlaysNumber,
+                DurationSeconds: track.DurationSeconds,
                 CreatedAt: track.CreatedAt,
-                Recommendation: recommendationsPageResult,
+                Recomendation: recommendationsPageResult,
                 PopularTracksByAuthor: popularTracksPageResult,
                 AlbumsByAuthor: albumsPageResult
             );
 
             return TrackPageResult.Success(response);
         }
-
 
         var recQuery = _context.Tracks
             .AsNoTracking()
@@ -510,17 +510,20 @@ public sealed class TrackActionService : ITrackActionService
             .OrderBy(t => EF.Functions.Random())
             .Skip((recommendationsPage - 1) * recommendationsMaxPerPage)
             .Take(recommendationsMaxPerPage)
-            .Select(t => new TrackResponse(
-                t.Id.ToString(), t.Name, t.Description, t.DurationSeconds,
-                t.AlbumId.ToString(), null, t.GenreId, t.PlaysNumber,
-                t.IsAdult, t.IsDraft, t.AudioItemId, t.ImageItemId,
-                new List<string>(), t.CreatedAt,
-                null,
-                t.AuthorContent != null ? t.AuthorContent.Authors.Select(a => a.AuthorId.ToString()).ToList() : null
+            .Select(t => new TrackRecommendationResponse(
+                t.Id.ToString(),
+                t.Name,
+                t.DurationSeconds,
+                t.AlbumId != null ? t.AlbumId.ToString() : null,
+                t.AuthorContent != null
+                    ? t.AuthorContent.Authors.Select(aca => aca.Author.Name).FirstOrDefault()
+                    : null,
+                GetAudioUrl(t.Id),
+                GetImageUrl(t.ImageItemId)
             ))
             .ToListAsync(cancellationToken);
 
-        var localRecsPage = new SearchPage<TrackResponse>(
+        var localRecsPage = new SearchPage<TrackRecommendationResponse>(
             localRecommendations, totalRecs, recommendationsPage, totalRecPages);
 
         var popularQuery = _context.Tracks
@@ -538,17 +541,17 @@ public sealed class TrackActionService : ITrackActionService
             .OrderByDescending(t => t.PlaysNumber)
             .Skip((popularPage - 1) * popularMaxPerPage)
             .Take(popularMaxPerPage)
-            .Select(t => new TrackResponse(
-                t.Id.ToString(), t.Name, t.Description, t.DurationSeconds,
-                t.AlbumId.ToString(), null, t.GenreId, t.PlaysNumber,
-                t.IsAdult, t.IsDraft, t.AudioItemId, t.ImageItemId,
-                new List<string>(), t.CreatedAt,
-                null,
-                t.AuthorContent != null ? t.AuthorContent.Authors.Select(a => a.AuthorId.ToString()).ToList() : null
+            .Select(t => new TrackPopularResponse(
+                t.Id.ToString(),
+                t.Name,
+                t.DurationSeconds,
+                t.AlbumId != null ? t.AlbumId.ToString() : null,
+                GetAudioUrl(t.Id),
+                GetImageUrl(t.ImageItemId)
             ))
             .ToListAsync(cancellationToken);
 
-        var localPopularPage = new SearchPage<TrackResponse>(
+        var localPopularPage = new SearchPage<TrackPopularResponse>(
             localPopularTracks, totalPopular, popularPage, totalPopularPages);
 
         var albumsQuery = _context.Albums
@@ -565,51 +568,45 @@ public sealed class TrackActionService : ITrackActionService
             .OrderByDescending(a => a.CreatedAt)
             .Skip((albumsPage - 1) * albumsMaxPerPage)
             .Take(albumsMaxPerPage)
-            .Select(a => new AlbumResponse(
+            .Select(a => new TrackAlbumResponse(
                 a.Id.ToString(),
                 a.Name,
-                a.Description,
-                a.DurationSeconds,
-                a.ImageItemId,
-                a.IsDraft,
-                a.GenreId,
                 a.CreatedAt,
-                a.ImageItem!.ImageList
+                GetImageUrl(a.ImageItemId)
             ))
             .ToListAsync(cancellationToken);
 
-        var localAlbumsPage = new SearchPage<AlbumResponse>(
+        var localAlbumsPage = new SearchPage<TrackAlbumResponse>(
             localAlbums, totalAlbums, albumsPage, totalAlbumPages);
 
-        var audioUrl2 = await _audioUrlResolver.ResolveAsync(track, cancellationToken);
+        var audioUrlLocal = await _audioUrlResolver.ResolveAsync(track, cancellationToken);
 
         var responseLocal = new TrackPageResponse(
             Name: track.Name,
             Description: track.Description,
-            AuthorsNames: authorsNames,
-            AuthorsIds: authorsIds,
+            Authors: authorsResponse,
             AlbumName: track.Album?.Name ?? "Unknown Album",
-            AlbumId: track.AlbumId.ToString(),
-            ImageUrl: track.ImageItem?.ImageList,
-            AudioUrl: audioUrl2,
+            AlbumId: track.AlbumId?.ToString(),
+            ImageUrl: GetImageUrl(track.ImageItemId) ?? track.ImageItem?.ImageList,
+            AudioUrl: audioUrlLocal,
             Listeners: track.PlaysNumber,
+            DurationSeconds: track.DurationSeconds,
             CreatedAt: track.CreatedAt,
-            Recommendation: localRecsPage,
+            Recomendation: localRecsPage,
             PopularTracksByAuthor: localPopularPage,
-            AlbumsByAuthor: localAlbumsPage,
-            DurationSeconds: track.DurationSeconds
+            AlbumsByAuthor: localAlbumsPage
         );
 
         return TrackPageResult.Success(responseLocal);
     }
 
-    private async Task<SearchPage<TrackResponse>> GetJamendoRecommendationsAsync(
-        string trackId, int maxPerPage, int page, CancellationToken cancellationToken)
+    private async Task<SearchPage<TrackRecommendationResponse>> GetJamendoRecommendationsAsync(
+    string trackId, int maxPerPage, int page, CancellationToken cancellationToken)
     {
         try
         {
             var track = await _jamendoService.GetTrackAsync(trackId, cancellationToken);
-            if (track is null) return EmptySearchPage<TrackResponse>(page);
+            if (track is null) return EmptySearchPage<TrackRecommendationResponse>(page);
 
             var authorId = track.ArtistId;
             var jamendoTracks = await _jamendoService.GetTracksByAuthorAsync(
@@ -622,24 +619,26 @@ public sealed class TrackActionService : ITrackActionService
             var items = rawTracks
                 .Skip((page - 1) * maxPerPage)
                 .Take(maxPerPage)
-                .Select(jt => new TrackResponse(
-                    jt.Id, jt.Name ?? "Unknown", null, jt.DurationSeconds,
-                    jt.AlbumId, null, null, 0,
-                    jt.IsExplicit, false, null, null,
-                    new List<string>(), DateTime.UtcNow,
-                    jt.AudioUrl, null
+                .Select(jt => new TrackRecommendationResponse(
+                    Id: jt.Id,
+                    Name: jt.Name ?? "Unknown",
+                    DurationSeconds: jt.DurationSeconds,
+                    AlbumId: jt.AlbumId,
+                    AuthorName: jt.ArtistName ?? track.ArtistName,
+                    AudioUrl: jt.AudioUrl,
+                    ImageUrl: jt.ImageUrl
                 ))
                 .ToList();
 
-            return new SearchPage<TrackResponse>(items, totalCount, page, totalPages);
+            return new SearchPage<TrackRecommendationResponse>(items, totalCount, page, totalPages);
         }
         catch
         {
-            return EmptySearchPage<TrackResponse>(page);
+            return EmptySearchPage<TrackRecommendationResponse>(page);
         }
     }
 
-    private async Task<SearchPage<TrackResponse>> GetJamendoPopularTracksByAuthorAsync(
+    private async Task<SearchPage<TrackPopularResponse>> GetJamendoPopularTracksByAuthorAsync(
         string trackId, int maxPerPage, int page, CancellationToken cancellationToken)
     {
         try
@@ -648,7 +647,7 @@ public sealed class TrackActionService : ITrackActionService
             var authorExternalId = track?.AuthorContent?.Authors.FirstOrDefault()?.Author.ExternalAuthorId;
 
             if (string.IsNullOrWhiteSpace(authorExternalId))
-                return EmptySearchPage<TrackResponse>(page);
+                return EmptySearchPage<TrackPopularResponse>(page);
 
             var jamendoTracksResult = await _jamendoService.GetTracksByAuthorAsync(
                 authorExternalId, JamendoCandidateLimit, 1, cancellationToken);
@@ -660,30 +659,31 @@ public sealed class TrackActionService : ITrackActionService
             var items = rawTracks
                 .Skip((page - 1) * maxPerPage)
                 .Take(maxPerPage)
-                .Select(jt => new TrackResponse(
-                    jt.Id, jt.Name ?? "Unknown", null, jt.DurationSeconds,
-                    jt.AlbumId, null, null, 0,
-                    jt.IsExplicit, false, null, null,
-                    new List<string>(), DateTime.UtcNow,
-                    jt.AudioUrl, null
+                .Select(jt => new TrackPopularResponse(
+                    Id: jt.Id,
+                    Name: jt.Name ?? "Unknown",
+                    DurationSeconds: jt.DurationSeconds,
+                    AlbumId: jt.AlbumId,
+                    AudioUrl: jt.AudioUrl,
+                    ImageUrl: jt.ImageUrl
                 ))
                 .ToList();
 
-            return new SearchPage<TrackResponse>(items, totalCount, page, totalPages);
+            return new SearchPage<TrackPopularResponse>(items, totalCount, page, totalPages);
         }
         catch
         {
-            return EmptySearchPage<TrackResponse>(page);
+            return EmptySearchPage<TrackPopularResponse>(page);
         }
     }
 
-    private async Task<SearchPage<AlbumResponse>> GetJamendoAlbumsByAuthorAsync(
+    private async Task<SearchPage<TrackAlbumResponse>> GetJamendoAlbumsByAuthorAsync(
         string trackId, int maxPerPage, int page, CancellationToken cancellationToken)
     {
         try
         {
             var track = await _jamendoService.GetTrackAsync(trackId, cancellationToken);
-            if (track is null) return EmptySearchPage<AlbumResponse>(page);
+            if (track is null) return EmptySearchPage<TrackAlbumResponse>(page);
 
             var authorId = track.ArtistId;
             var jamendoAlbums = await _jamendoService.GetAlbumsByAuthorAsync(
@@ -696,18 +696,29 @@ public sealed class TrackActionService : ITrackActionService
             var items = rawAlbums
                 .Skip((page - 1) * maxPerPage)
                 .Take(maxPerPage)
-                .Select(ja => new AlbumResponse(
-                    ja.Id, ja.Name, null, 0, null, false, null, ja.ReleaseDate, ja.ImageUrl
+                .Select(ja => new TrackAlbumResponse(
+                    Id: ja.Id,
+                    Name: ja.Name,
+                    ReleaseDate: ja.ReleaseDate,
+                    ImageUrl: ja.ImageUrl
                 ))
                 .ToList();
 
-            return new SearchPage<AlbumResponse>(items, totalCount, page, totalPages);
+            return new SearchPage<TrackAlbumResponse>(items, totalCount, page, totalPages);
         }
         catch
         {
-            return EmptySearchPage<AlbumResponse>(page);
+            return EmptySearchPage<TrackAlbumResponse>(page);
         }
     }
 
     private static SearchPage<T> EmptySearchPage<T>(int page) => new([], 0, page, 0);
+
+    private static string? GetImageUrl(Guid? imageItemId) =>
+        imageItemId is Guid id && id != Guid.Empty
+            ? $"/images/{id}"
+            : null;
+
+    private static string GetAudioUrl(Guid trackId) =>
+        $"/api/playback/tracks/{trackId}";
 }

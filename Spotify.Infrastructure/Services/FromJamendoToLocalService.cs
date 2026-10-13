@@ -287,9 +287,16 @@ namespace Spotify.Infrastructure.Services
             if (jamendoAuthor is null)
                 return null;
 
+            var avatarImageItem = new ImageItem
+            {
+                Id = Guid.NewGuid(),
+                ImageList = jamendoAuthor.ImageUrl
+            };
+
             var author = new Author
             {
                 Id = Guid.NewGuid(),
+                BioImageItemId = avatarImageItem.Id,
                 Name = jamendoAuthor.Name,
                 ExternalAuthorId = jamendoAuthor.Id
             };

@@ -110,7 +110,7 @@ public sealed class SearchService : ISearchService
 
     private static SearchAuthorResponse MapLocalAuthor(AuthorResponse author) => new(
         author.Id.ToString(), author.Name, "LocalStorage", author.Bio,
-        GetImageUrl(author.BioImageItemId), author.ContentCount, null);
+        author.ImageUrl, author.ContentCount, null);
 
     private static SearchAuthorResponse MapJamendoAuthor(JamendoAuthorDto author) => new(
         author.Id, author.Name, "Jamendo", null, author.ImageUrl,

@@ -153,7 +153,7 @@ public sealed class AuthorActionService : IAuthorActionService
                 x.Author.Name,
                 x.Author.MonthList,
                 x.Author.Bio,
-                x.Author.BioImageItemId,
+                x.Author.BioImageItem!.ImageList,
                 x.Author.AuthoredContent.Count))
             .ToListAsync(cancellationToken);
 

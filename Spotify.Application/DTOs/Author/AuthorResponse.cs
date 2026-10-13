@@ -5,5 +5,5 @@ public sealed record AuthorResponse(
     string Name,
     int MonthList,
     string? Bio,
-    Guid? BioImageItemId,
+    string? ImageUrl,
     int ContentCount);
