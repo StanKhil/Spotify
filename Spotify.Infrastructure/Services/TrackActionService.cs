@@ -348,6 +348,9 @@ public sealed class TrackActionService : ITrackActionService
                 track,
                 cancellationToken);
 
+            var imageUrl = track.ImageItem?.ImageList;
+            if (imageUrl?[0] == '/') imageUrl = track.ImageItemId.ToString();
+
             result.Add(new ListeningHistoryResponse(
                 item.Id,
                 track.Id,
@@ -356,7 +359,7 @@ public sealed class TrackActionService : ITrackActionService
                 track.Album?.Name ?? "Unknown Album",
                 track.DurationSeconds.ToString(),
                 audioUrl,
-                track.ImageItem?.ImageList
+                imageUrl
             ));
         }
 
