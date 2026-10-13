@@ -13,11 +13,13 @@ namespace Spotify.Application.DTOs.Track
         List<string> AuthorsNames,
         List<string> AuthorsIds,
         string AlbumName,
+        string? AlbumId,
         string? ImageUrl,
         string? AudioUrl,
         long Listeners,
+        int DurationSeconds,
         DateTime CreatedAt,
-        SearchPage<TrackResponse> Recomendation,
+        SearchPage<TrackResponse> Recommendation,
         SearchPage<TrackResponse> PopularTracksByAuthor,
         SearchPage<AlbumResponse> AlbumsByAuthor
     );

@@ -480,12 +480,14 @@ public sealed class TrackActionService : ITrackActionService
                 Description: track.Description,
                 AuthorsNames: authorsNames,
                 AuthorsIds: authorsIds,
+                DurationSeconds: track.DurationSeconds,
                 AlbumName: track.Album?.Name ?? "Unknown Album",
+                AlbumId: track.AlbumId.ToString() ?? null,
                 ImageUrl: track.ImageItem?.ImageList,
                 AudioUrl: audioUrl,
                 Listeners: track.PlaysNumber,
                 CreatedAt: track.CreatedAt,
-                Recomendation: recommendationsPageResult,
+                Recommendation: recommendationsPageResult,
                 PopularTracksByAuthor: popularTracksPageResult,
                 AlbumsByAuthor: albumsPageResult
             );
@@ -584,13 +586,15 @@ public sealed class TrackActionService : ITrackActionService
             AuthorsNames: authorsNames,
             AuthorsIds: authorsIds,
             AlbumName: track.Album?.Name ?? "Unknown Album",
+            AlbumId: track.AlbumId.ToString(),
             ImageUrl: track.ImageItem?.ImageList,
             AudioUrl: audioUrl2,
             Listeners: track.PlaysNumber,
             CreatedAt: track.CreatedAt,
-            Recomendation: localRecsPage,
+            Recommendation: localRecsPage,
             PopularTracksByAuthor: localPopularPage,
-            AlbumsByAuthor: localAlbumsPage
+            AlbumsByAuthor: localAlbumsPage,
+            DurationSeconds: track.DurationSeconds
         );
 
         return TrackPageResult.Success(responseLocal);
