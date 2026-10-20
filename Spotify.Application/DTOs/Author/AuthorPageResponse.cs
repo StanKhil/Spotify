@@ -3,10 +3,11 @@
 namespace Spotify.Application.DTOs.Author
 {
     public sealed record AuthorPageResponse(
-        Guid AuthorId,
+        Guid Id,
         string Name,
         string? Description,
-        string? AvatarImage,
+        string? ImageUrl,
+        long? Listeners,
         SearchPage<SearchTrackResponse> Tracks,     // Paginated tracks
         SearchPage<SearchAlbumResponse> Music,      // Paginated albums
         SearchPage<SearchTrackResponse> Interests, // Paginated recommended tracks

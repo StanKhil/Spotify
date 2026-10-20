@@ -5,11 +5,11 @@ using System.Text;
 namespace Spotify.Application.DTOs.Author
 {
     public sealed record AuthorPageResult(
-    bool Succeeded,
-    AuthorPageResponse? AuthorPage,
+    bool Success,
+    AuthorPageResponse? Response,
     IReadOnlyCollection<string> Errors)
     {
-        public static AuthorPageResult Success(AuthorPageResponse authorPage) => new(true, authorPage, []);
+        public static AuthorPageResult Successed(AuthorPageResponse authorPage) => new(true, authorPage, []);
 
         public static AuthorPageResult Failure(params string[] errors) =>
             new(false, null, errors);

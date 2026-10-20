@@ -414,17 +414,18 @@ public sealed class AuthorActionService : IAuthorActionService
             artistsItems, totalArtists, artistsPage, totalArtistPages);
 
         var authorPageResponse = new AuthorPageResponse(
-            author.Id,
-            author.Name,
-            author.Bio,
-            GetImageUrl(author.BioImageItemId),
-            tracksPageResult,
-            albumsPageResult,
-            interestsPageResult,
-            artistsPageResult
+            Id: author.Id,
+            Name: author.Name,
+            Description: author.Bio,
+            ImageUrl: GetImageUrl(author.BioImageItemId),
+            Listeners: author.Followers.Count,
+            Tracks: tracksPageResult,
+            Music: albumsPageResult,
+            Interests: interestsPageResult,
+            Artists: artistsPageResult
         );
 
-        return AuthorPageResult.Success(authorPageResponse);
+        return AuthorPageResult.Successed(authorPageResponse);
     }
 
     private static string? GetImageUrl(Guid? imageItemId) =>

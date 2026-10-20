@@ -6,7 +6,7 @@ public sealed record SearchAlbumResponse(
     string? Description,
     int DurationSeconds,
     string Provider,
-    string? ArtistName,
+    string? Artist,
     string? ImageUrl,
     int TracksCount,
     DateTime? ReleaseDate);

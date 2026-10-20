@@ -353,7 +353,7 @@ public sealed class TrackActionService : ITrackActionService
             if (imageUrl?[0] == '/') imageUrl = track.ImageItemId.ToString();
 
             result.Add(new ListeningHistoryResponse(
-                item.Id,
+                //item.Id,
                 track.Id,
                 track.Name,
                 artistName,

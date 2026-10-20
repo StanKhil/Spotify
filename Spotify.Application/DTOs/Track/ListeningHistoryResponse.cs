@@ -2,13 +2,13 @@
 {
     public sealed record ListeningHistoryResponse(
         Guid Id,
-        Guid TrackId,
-        string TrackName,
+        // Guid TrackId,
+        string Name,
         string ArtistName,
         string AlbumName,
         string DurationSeconds,
         string? AudioUrl,
-        string? imageUrl
+        string? ImageUrl
         );
 
 }

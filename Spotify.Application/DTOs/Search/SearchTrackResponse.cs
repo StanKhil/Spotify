@@ -7,7 +7,7 @@ public sealed record SearchTrackResponse(
     int DurationSeconds,
     string Provider,
     string? AlbumId,
-    string? AlbumName,
+    string? Album,
     string? ArtistName,
     string? ImageUrl,
     string? AudioUrl);

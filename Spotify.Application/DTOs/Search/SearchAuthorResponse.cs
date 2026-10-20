@@ -4,7 +4,7 @@ public sealed record SearchAuthorResponse(
     string Id,
     string Name,
     string Provider,
-    string? Bio,
+    string? Description,
     string? ImageUrl,
     int ContentCount,
     string? WebsiteUrl);
