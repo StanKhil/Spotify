@@ -25,16 +25,18 @@ public sealed class PlaylistService : IPlaylistService
         CancellationToken cancellationToken = default)
     {
         return await _context.Playlists
-            .AsNoTracking()
-            .OrderBy(x => x.Name)
-            .Select(x => new PlaylistResponse(
-                x.Id,
-                x.Name,
-                x.ApplicationUserId,
-                x.PlaylistTracks.Count,
-                x.CoverImageId,
-                GetImageUrl(x.CoverImageId, x.CoverImage != null ? x.CoverImage.ImageList : null)))
-            .ToListAsync(cancellationToken);
+        .AsNoTracking()
+        .OrderBy(x => x.Name)
+        .Select(x => new PlaylistResponse(
+            x.Id,
+            x.Name,
+            x.ApplicationUserId,
+            x.PlaylistTracks.Count,
+            x.CoverImageId,
+            x.CoverImage != null && x.CoverImage.ImageList.StartsWith("/")
+                ? x.CoverImageId.ToString()
+                : x.CoverImage!.ImageList))
+        .ToListAsync(cancellationToken);
     }
 
     public async Task<PlaylistResponse?> GetPlaylistByIdAsync(
@@ -187,9 +189,27 @@ public sealed class PlaylistService : IPlaylistService
         Guid playlistId, CancellationToken cancellationToken = default)
     {
         return await _context.PlaylistTracks
+            .Include(pl => pl.Track)
+                .ThenInclude(t => t.Album)
+             .Include(pl => pl.Track)
+                .ThenInclude(t => t.AuthorContent)
+                    .ThenInclude(ac => ac.Authors)
+                        .ThenInclude(a => a.Author)
+             .Include(pl => pl.Track)
+                .ThenInclude(t => t.ImageItem)
             .Where(x => x.PlaylistId == playlistId)
             .OrderBy(x => x.Position)
-            .Select(x => new PlaylistTrackResponse(x.TrackId, x.Track.Name, x.Position, x.AddedAt))
+            .Select(x => new PlaylistTrackResponse(
+            x.TrackId,
+            x.Track.Name,
+            x.Track.Album.Name,
+            x.Track.DurationSeconds,
+            x.Track.AuthorContent!.Authors.Select(a => a.Author.Name).FirstOrDefault(),
+            x.Track.ImageItem != null && x.Track.ImageItem.ImageList.StartsWith("/")
+                ? x.Track.ImageItemId.ToString()
+                : x.Track.ImageItem!.ImageList,
+            x.Position,
+            x.AddedAt))
             .ToListAsync(cancellationToken);
     }
 
@@ -241,7 +261,13 @@ public sealed class PlaylistService : IPlaylistService
         await _context.SaveChangesAsync(cancellationToken);
 
         return AddTrackToPlaylistResult.Success(new PlaylistTrackResponse(
-            track.Id, track.Name, playlistTrack.Position, playlistTrack.AddedAt));
+            track.Id, track.Name,
+            track.Album.Name,
+            track.DurationSeconds,
+            track.AuthorContent!.Authors.First().Author.Name,
+            track.ImageItem!.ImageList,
+            playlistTrack.Position, 
+            playlistTrack.AddedAt));
     }
 
     public async Task<RemoveTrackFromPlaylistResult> RemoveTrackFromPlaylistAsync(

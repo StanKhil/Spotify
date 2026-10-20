@@ -296,7 +296,7 @@ namespace Spotify.Infrastructure.Services
             var author = new Author
             {
                 Id = Guid.NewGuid(),
-                BioImageItemId = avatarImageItem.Id,
+                BioImageItem = avatarImageItem,
                 Name = jamendoAuthor.Name,
                 ExternalAuthorId = jamendoAuthor.Id
             };

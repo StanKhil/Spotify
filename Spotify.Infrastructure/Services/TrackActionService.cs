@@ -486,7 +486,9 @@ public sealed class TrackActionService : ITrackActionService
                 Authors: authorsResponse,
                 AlbumName: track.Album?.Name ?? "Unknown Album",
                 AlbumId: track.AlbumId?.ToString(),
-                ImageUrl: GetImageUrl(track.ImageItemId) ?? track.ImageItem?.ImageList,
+                ImageUrl: track.ImageItem != null && track.ImageItem.ImageList.StartsWith("/")
+                    ? track.ImageItemId?.ToString()
+                    : track.ImageItem!.ImageList,
                 AudioUrl: audioUrl,
                 Listeners: track.PlaysNumber,
                 DurationSeconds: track.DurationSeconds,

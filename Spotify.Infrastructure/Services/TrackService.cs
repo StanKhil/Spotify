@@ -48,6 +48,9 @@ public sealed class TrackService : ITrackService
             .Include(x => x.TrackTags)
             .Include(x => x.AuthorContent)
                 .ThenInclude(x => x.Authors)
+                .ThenInclude(ac => ac.Author)
+            .Include(x => x.Album)
+            .Include(x => x.ImageItem)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
