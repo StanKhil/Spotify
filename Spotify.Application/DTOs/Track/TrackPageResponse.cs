@@ -11,8 +11,8 @@ namespace Spotify.Application.DTOs.Track
     public record TrackPageResponse(
         string Name,
         string? Description,
-        List<AuthorResponse> Authors,
-        string AlbumName,
+        List<AuthorResponse> Artists,
+        string Album,
         string? AlbumId,
         string? ImageUrl,
         string? AudioUrl,

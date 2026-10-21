@@ -109,7 +109,7 @@ public sealed class SearchService : ISearchService
         album.ImageUrl, album.TracksCount, album.ReleaseDate);
 
     private static SearchAuthorResponse MapLocalAuthor(AuthorResponse author) => new(
-        author.Id.ToString(), author.Name, "LocalStorage", author.Bio,
+        author.Id.ToString(), author.Name, "LocalStorage", author.Description,
         author.ImageUrl, author.ContentCount, null);
 
     private static SearchAuthorResponse MapJamendoAuthor(JamendoAuthorDto author) => new(

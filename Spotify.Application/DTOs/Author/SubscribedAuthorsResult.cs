@@ -6,7 +6,7 @@ namespace Spotify.Application.DTOs.Author
 {
     public sealed record SubscribedAuthorsResult(
         bool Succeeded,
-        SubscribedAuthorsResponse? Authors,
+        SubscribedAuthorsResponse? Artists,
         IReadOnlyCollection<string> Errors)
     {
         public static SubscribedAuthorsResult Success(SubscribedAuthorsResponse authors) =>

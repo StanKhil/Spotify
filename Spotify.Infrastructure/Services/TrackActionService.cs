@@ -483,8 +483,8 @@ public sealed class TrackActionService : ITrackActionService
             var response = new TrackPageResponse(
                 Name: track.Name,
                 Description: track.Description,
-                Authors: authorsResponse,
-                AlbumName: track.Album?.Name ?? "Unknown Album",
+                Artists: authorsResponse,
+                Album: track.Album?.Name ?? "Unknown Album",
                 AlbumId: track.AlbumId?.ToString(),
                 ImageUrl: track.ImageItem != null && track.ImageItem.ImageList.StartsWith("/")
                     ? track.ImageItemId?.ToString()
@@ -586,8 +586,8 @@ public sealed class TrackActionService : ITrackActionService
         var responseLocal = new TrackPageResponse(
             Name: track.Name,
             Description: track.Description,
-            Authors: authorsResponse,
-            AlbumName: track.Album?.Name ?? "Unknown Album",
+            Artists: authorsResponse,
+            Album: track.Album?.Name ?? "Unknown Album",
             AlbumId: track.AlbumId?.ToString(),
             ImageUrl: GetImageUrl(track.ImageItemId) ?? track.ImageItem?.ImageList,
             AudioUrl: audioUrlLocal,

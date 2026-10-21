@@ -4,6 +4,6 @@ public sealed record AuthorResponse(
     Guid Id,
     string Name,
     int MonthList,
-    string? Bio,
+    string? Description,
     string? ImageUrl,
     int ContentCount);
