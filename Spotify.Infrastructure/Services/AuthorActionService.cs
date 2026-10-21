@@ -219,7 +219,7 @@ public sealed class AuthorActionService : IAuthorActionService
         if (Guid.TryParse(authorId, out var parsedGuid))
         {
             author = await _context.Authors
-                .AsNoTracking()
+                .Include(a => a.BioImageItem)
                 .FirstOrDefaultAsync(a => a.Id == parsedGuid, cancellationToken);
         }
         else if (_fromJamendoToLocalService.IsJamendoId(authorId))
@@ -275,10 +275,12 @@ public sealed class AuthorActionService : IAuthorActionService
             totalTracks = await tracksQuery.CountAsync(cancellationToken);
             totalTrackPages = (int)Math.Ceiling((double)totalTracks / tracksMaxPerPage);
 
-            tracksItems = await tracksQuery
+            tracksItems = (await tracksQuery
                 .OrderByDescending(t => t.CreatedAt)
                 .Skip((tracksPage - 1) * tracksMaxPerPage)
                 .Take(tracksMaxPerPage)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken))
                 .Select(t => new SearchTrackResponse(
                     t.Id.ToString(),
                     t.Name,
@@ -288,10 +290,10 @@ public sealed class AuthorActionService : IAuthorActionService
                     t.AlbumId != null ? t.AlbumId.ToString() : null,
                     t.Album != null ? t.Album.Name : null,
                     author.Name,
-                    GetImageUrl(t.ImageItemId),
+                    GetImageUrl(t.ImageItemId, t.ImageItem?.ImageList),
                     GetAudioUrl(t.Id)
                 ))
-                .ToListAsync(cancellationToken);
+                .ToList();
         }
 
         var tracksPageResult = new SearchPage<SearchTrackResponse>(
@@ -329,6 +331,7 @@ public sealed class AuthorActionService : IAuthorActionService
         else
         {
             var albumsQuery = _context.Albums
+                .Include(ii => ii.ImageItem)
                 .AsNoTracking()
                 .Where(a => a.DeletedAt == null &&
                             a.AuthorContent != null &&
@@ -337,10 +340,12 @@ public sealed class AuthorActionService : IAuthorActionService
             totalAlbums = await albumsQuery.CountAsync(cancellationToken);
             totalAlbumPages = (int)Math.Ceiling((double)totalAlbums / albumsMaxPerPage);
 
-            albumsItems = await albumsQuery
+            albumsItems = (await albumsQuery
                 .OrderByDescending(a => a.CreatedAt)
                 .Skip((albumsPage - 1) * albumsMaxPerPage)
                 .Take(albumsMaxPerPage)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken))
                 .Select(a => new SearchAlbumResponse(
                     a.Id.ToString(),
                     a.Name,
@@ -348,27 +353,30 @@ public sealed class AuthorActionService : IAuthorActionService
                     a.DurationSeconds,
                     a.Provider.ToString(),
                     author.Name,
-                    GetImageUrl(a.ImageItemId),
+                    GetImageUrl(a.ImageItemId, a.ImageItem?.ImageList),
                     a.Tracks.Count(t => t.DeletedAt == null),
                     a.CreatedAt
                 ))
-                .ToListAsync(cancellationToken);
+                .ToList();
         }
 
         var albumsPageResult = new SearchPage<SearchAlbumResponse>(
             albumsItems, totalAlbums, albumsPage, totalAlbumPages);
 
         var interestsQuery = _context.Tracks
+            .Include(ii => ii.ImageItem)
             .AsNoTracking()
             .Where(t => t.DeletedAt == null);
 
         var totalInterests = await interestsQuery.CountAsync(cancellationToken);
         var totalInterestPages = (int)Math.Ceiling((double)totalInterests / interestsMaxPerPage);
 
-        var interestsItems = await interestsQuery
+        var interestsItems = (await interestsQuery
             .OrderBy(t => EF.Functions.Random())
             .Skip((interestsPage - 1) * interestsMaxPerPage)
             .Take(interestsMaxPerPage)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken))
             .Select(t => new SearchTrackResponse(
                 t.Id.ToString(),
                 t.Name,
@@ -380,35 +388,38 @@ public sealed class AuthorActionService : IAuthorActionService
                 t.AuthorContent != null
                     ? t.AuthorContent.Authors.Select(aca => aca.Author.Name).FirstOrDefault()
                     : null,
-                GetImageUrl(t.ImageItemId),
+                GetImageUrl(t.ImageItemId, t.ImageItem?.ImageList),
                 GetAudioUrl(t.Id)
             ))
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var interestsPageResult = new SearchPage<SearchTrackResponse>(
             interestsItems, totalInterests, interestsPage, totalInterestPages);
 
         var artistsQuery = _context.Authors
+            .Include(ii => ii.BioImageItem)
             .AsNoTracking()
             .Where(a => a.Id != internalAuthorId);
 
         var totalArtists = await artistsQuery.CountAsync(cancellationToken);
         var totalArtistPages = (int)Math.Ceiling((double)totalArtists / artistsMaxPerPage);
 
-        var artistsItems = await artistsQuery
+        var artistsItems = (await artistsQuery
             .OrderBy(a => EF.Functions.Random())
             .Skip((artistsPage - 1) * artistsMaxPerPage)
             .Take(artistsMaxPerPage)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken))
             .Select(a => new SearchAuthorResponse(
                 a.Id.ToString(),
                 a.Name,
                 "LocalStorage",
                 a.Bio,
-                GetImageUrl(a.BioImageItemId),
+                GetImageUrl(a.BioImageItemId, a.BioImageItem?.ImageList),
                 a.AuthoredContent.Count,
                 null
             ))
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var artistsPageResult = new SearchPage<SearchAuthorResponse>(
             artistsItems, totalArtists, artistsPage, totalArtistPages);
@@ -417,7 +428,7 @@ public sealed class AuthorActionService : IAuthorActionService
             Id: author.Id,
             Name: author.Name,
             Description: author.Bio,
-            ImageUrl: GetImageUrl(author.BioImageItemId),
+            ImageUrl: GetImageUrl(author.BioImageItemId, author.BioImageItem?.ImageList),
             Listeners: author.Followers.Count,
             Tracks: tracksPageResult,
             Music: albumsPageResult,
@@ -425,13 +436,21 @@ public sealed class AuthorActionService : IAuthorActionService
             Artists: artistsPageResult
         );
 
-        return AuthorPageResult.Successed(authorPageResponse);
+       return AuthorPageResult.Successed(authorPageResponse);
     }
 
-    private static string? GetImageUrl(Guid? imageItemId) =>
-        imageItemId is Guid id && id != Guid.Empty
-            ? $"/images/{id}"
-            : null;
+    private static string? GetImageUrl(Guid? imageItemId, string? imageItemUrl)
+    {
+        if(imageItemId is null && string.IsNullOrEmpty(imageItemUrl))
+        {
+            return null;
+        }
+        if (imageItemUrl!.StartsWith("/"))
+        {
+            return imageItemId.ToString();
+        }
+        return imageItemUrl;
+    }
 
     private static string GetAudioUrl(Guid trackId) =>
         $"/api/playback/tracks/{trackId}";

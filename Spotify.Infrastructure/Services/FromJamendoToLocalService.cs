@@ -273,6 +273,7 @@ namespace Spotify.Infrastructure.Services
             CancellationToken cancellationToken)
         {
             var existingAuthor = await _context.Authors
+                .Include(ii => ii.BioImageItem)
                 .FirstOrDefaultAsync(
                     x => x.ExternalAuthorId == jamendoAuthorId,
                     cancellationToken);
