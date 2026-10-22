@@ -1,11 +1,11 @@
 ﻿namespace Spotify.Application.DTOs.Playlist;
 
 public sealed record PlaylistTrackResponse(
-    Guid TrackId,
-    string TrackName,
-    string? AlbumName,
-    int Seconds,
+    Guid Id,
+    string Name,
+    string? Album,
+    int DurationSeconds,
     string? ArtistName,
-    string? CoverImageUrl,
+    string? ImageUrl,
     int Position,
     DateTime AddedAt);

@@ -200,16 +200,16 @@ public sealed class PlaylistService : IPlaylistService
             .Where(x => x.PlaylistId == playlistId)
             .OrderBy(x => x.Position)
             .Select(x => new PlaylistTrackResponse(
-            x.TrackId,
-            x.Track.Name,
-            x.Track.Album.Name,
-            x.Track.DurationSeconds,
-            x.Track.AuthorContent!.Authors.Select(a => a.Author.Name).FirstOrDefault(),
-            x.Track.ImageItem != null && x.Track.ImageItem.ImageList.StartsWith("/")
+            Id: x.TrackId,
+            Name: x.Track.Name,
+            Album: x.Track.Album.Name,
+            DurationSeconds: x.Track.DurationSeconds,
+            ArtistName: x.Track.AuthorContent!.Authors.Select(a => a.Author.Name).FirstOrDefault(),
+            ImageUrl: x.Track.ImageItem != null && x.Track.ImageItem.ImageList.StartsWith("/")
                 ? x.Track.ImageItemId.ToString()
                 : x.Track.ImageItem!.ImageList,
-            x.Position,
-            x.AddedAt))
+            Position: x.Position,
+            AddedAt: x.AddedAt))
             .ToListAsync(cancellationToken);
     }
 

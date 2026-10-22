@@ -108,7 +108,7 @@ public sealed class AuthorActionController : ControllerBase
         [FromQuery] int artistsPage = 1,
         CancellationToken cancellationToken = default)
     {
-        return await _authorActionService.GetAuthorPageAsync(
+        var response = await _authorActionService.GetAuthorPageAsync(
             authorId,
             tracksMaxPerPage,
             tracksPage,
@@ -119,5 +119,7 @@ public sealed class AuthorActionController : ControllerBase
             artistsMaxPerPage,
             artistsPage,
             cancellationToken);
+
+        return response;
     }
 }

@@ -492,7 +492,7 @@ public sealed class TrackActionService : ITrackActionService
                 Listeners: track.PlaysNumber,
                 DurationSeconds: track.DurationSeconds,
                 CreatedAt: track.CreatedAt,
-                Recomendation: recommendationsPageResult,
+                Recommendation: recommendationsPageResult,
                 PopularTracksByAuthor: popularTracksPageResult,
                 AlbumsByAuthor: albumsPageResult
             );
@@ -596,7 +596,7 @@ public sealed class TrackActionService : ITrackActionService
             Listeners: track.PlaysNumber,
             DurationSeconds: track.DurationSeconds,
             CreatedAt: track.CreatedAt,
-            Recomendation: localRecsPage,
+            Recommendation: localRecsPage,
             PopularTracksByAuthor: localPopularPage,
             AlbumsByAuthor: localAlbumsPage
         );

@@ -19,7 +19,7 @@ namespace Spotify.Application.DTOs.Track
         long Listeners,
         int DurationSeconds,
         DateTime CreatedAt,
-        SearchPage<TrackRecommendationResponse> Recomendation,
+        SearchPage<TrackRecommendationResponse> Recommendation,
         SearchPage<TrackPopularResponse> PopularTracksByAuthor,
         SearchPage<TrackAlbumResponse> AlbumsByAuthor
     );

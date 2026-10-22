@@ -296,8 +296,7 @@ public sealed class AuthorActionService : IAuthorActionService
                 .ToList();
         }
 
-        var tracksPageResult = new SearchPage<SearchTrackResponse>(
-            tracksItems, totalTracks, tracksPage, totalTrackPages);
+        var tracksPageResult = new SearchPage<SearchTrackResponse>(tracksItems, totalTracks, tracksPage, totalTrackPages);
 
         List<SearchAlbumResponse> albumsItems;
         int totalAlbums;
