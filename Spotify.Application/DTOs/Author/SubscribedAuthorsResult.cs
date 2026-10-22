@@ -6,11 +6,11 @@ namespace Spotify.Application.DTOs.Author
 {
     public sealed record SubscribedAuthorsResult(
         bool Succeeded,
-        SubscribedAuthorsResponse? Artists,
+        IEnumerable<AuthorResponse> Artists,
         IReadOnlyCollection<string> Errors)
     {
-        public static SubscribedAuthorsResult Success(SubscribedAuthorsResponse authors) =>
-            new(true, authors, []);
+        public static SubscribedAuthorsResult Success(IEnumerable<AuthorResponse> Artists) =>
+            new(true, Artists, []);
         public static SubscribedAuthorsResult Failure(params string[] errors) =>
             new(false, null, errors);
     }

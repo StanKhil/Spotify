@@ -157,8 +157,7 @@ public sealed class AuthorActionService : IAuthorActionService
                 x.Author.AuthoredContent.Count))
             .ToListAsync(cancellationToken);
 
-        return SubscribedAuthorsResult.Success(
-            new SubscribedAuthorsResponse(authors));
+        return SubscribedAuthorsResult.Success(authors);
     }
 
     private async Task<Author?> GetAuthorAsync(
@@ -220,6 +219,7 @@ public sealed class AuthorActionService : IAuthorActionService
         {
             author = await _context.Authors
                 .Include(a => a.BioImageItem)
+                .Include(a => a.Followers)
                 .FirstOrDefaultAsync(a => a.Id == parsedGuid, cancellationToken);
         }
         else if (_fromJamendoToLocalService.IsJamendoId(authorId))

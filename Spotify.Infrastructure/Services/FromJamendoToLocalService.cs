@@ -77,6 +77,7 @@ namespace Spotify.Infrastructure.Services
                 .Include(x => x.AuthorContent)
                     .ThenInclude(x => x.Authors)
                         .ThenInclude(x => x.Author)
+                            .ThenInclude(x => x.BioImageItem)
                 .FirstOrDefaultAsync(
                     x => x.Provider == AudioProvider.Jamendo &&
                          x.ExternalContentId == jamendoTrackId &&
@@ -274,6 +275,7 @@ namespace Spotify.Infrastructure.Services
         {
             var existingAuthor = await _context.Authors
                 .Include(ii => ii.BioImageItem)
+                .Include(a => a.Followers)
                 .FirstOrDefaultAsync(
                     x => x.ExternalAuthorId == jamendoAuthorId,
                     cancellationToken);

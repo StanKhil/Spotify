@@ -396,6 +396,7 @@ public sealed class TrackActionService : ITrackActionService
             .Include(x => x.AuthorContent)
                 .ThenInclude(ac => ac.Authors)
                     .ThenInclude(aca => aca.Author)
+                        .ThenInclude(a => a.BioImageItem)
             .Include(x => x.Album)
             .Include(x => x.ImageItem)
             .Include(x => x.AudioItem)
@@ -463,7 +464,7 @@ public sealed class TrackActionService : ITrackActionService
             a.Name,
             a.MonthList,
             a.Bio,
-            GetImageUrl(a.BioImageItemId) ?? a.BioImageItem?.ImageList,
+            GetImageUrl(a.BioImageItemId, a.BioImageItem?.ImageList),
             a.AuthoredContent?.Count ?? 0
         )).ToList();
 
@@ -486,9 +487,7 @@ public sealed class TrackActionService : ITrackActionService
                 Artists: authorsResponse,
                 Album: track.Album?.Name ?? "Unknown Album",
                 AlbumId: track.AlbumId?.ToString(),
-                ImageUrl: track.ImageItem != null && track.ImageItem.ImageList.StartsWith("/")
-                    ? track.ImageItemId?.ToString()
-                    : track.ImageItem!.ImageList,
+                ImageUrl: GetImageUrl(track.ImageItemId, track.ImageItem.ImageList),
                 AudioUrl: audioUrl,
                 Listeners: track.PlaysNumber,
                 DurationSeconds: track.DurationSeconds,
@@ -502,6 +501,7 @@ public sealed class TrackActionService : ITrackActionService
         }
 
         var recQuery = _context.Tracks
+            .Include(t => t.ImageItem)
             .AsNoTracking()
             .Where(t => t.DeletedAt == null && !t.IsDraft && t.Id != track.Id);
 
@@ -521,7 +521,7 @@ public sealed class TrackActionService : ITrackActionService
                     ? t.AuthorContent.Authors.Select(aca => aca.Author.Name).FirstOrDefault()
                     : null,
                 GetAudioUrl(t.Id),
-                GetImageUrl(t.ImageItemId)
+                GetImageUrl(t.ImageItemId, t.ImageItem.ImageList)
             ))
             .ToListAsync(cancellationToken);
 
@@ -529,6 +529,7 @@ public sealed class TrackActionService : ITrackActionService
             localRecommendations, totalRecs, recommendationsPage, totalRecPages);
 
         var popularQuery = _context.Tracks
+            .Include(t => t.ImageItem)
             .AsNoTracking()
             .Where(t => t.DeletedAt == null &&
                         !t.IsDraft &&
@@ -549,7 +550,7 @@ public sealed class TrackActionService : ITrackActionService
                 t.DurationSeconds,
                 t.AlbumId != null ? t.AlbumId.ToString() : null,
                 GetAudioUrl(t.Id),
-                GetImageUrl(t.ImageItemId)
+                GetImageUrl(t.ImageItemId, t.ImageItem.ImageList)
             ))
             .ToListAsync(cancellationToken);
 
@@ -557,6 +558,7 @@ public sealed class TrackActionService : ITrackActionService
             localPopularTracks, totalPopular, popularPage, totalPopularPages);
 
         var albumsQuery = _context.Albums
+            .Include(a => a.ImageItem)
             .AsNoTracking()
             .Where(a => a.DeletedAt == null &&
                         !a.IsDraft &&
@@ -574,7 +576,7 @@ public sealed class TrackActionService : ITrackActionService
                 a.Id.ToString(),
                 a.Name,
                 a.CreatedAt,
-                GetImageUrl(a.ImageItemId)
+                GetImageUrl(a.ImageItemId, a.ImageItem.ImageList)
             ))
             .ToListAsync(cancellationToken);
 
@@ -589,7 +591,7 @@ public sealed class TrackActionService : ITrackActionService
             Artists: authorsResponse,
             Album: track.Album?.Name ?? "Unknown Album",
             AlbumId: track.AlbumId?.ToString(),
-            ImageUrl: GetImageUrl(track.ImageItemId) ?? track.ImageItem?.ImageList,
+            ImageUrl: GetImageUrl(track.ImageItemId, track.ImageItem?.ImageList),
             AudioUrl: audioUrlLocal,
             Listeners: track.PlaysNumber,
             DurationSeconds: track.DurationSeconds,
@@ -716,10 +718,18 @@ public sealed class TrackActionService : ITrackActionService
 
     private static SearchPage<T> EmptySearchPage<T>(int page) => new([], 0, page, 0);
 
-    private static string? GetImageUrl(Guid? imageItemId) =>
-        imageItemId is Guid id && id != Guid.Empty
-            ? $"/images/{id}"
-            : null;
+    private static string? GetImageUrl(Guid? imageItemId, string? imageItemUrl)
+    {
+        if (imageItemId is null && string.IsNullOrEmpty(imageItemUrl) || imageItemUrl is null)
+        {
+            return null;
+        }
+        if (imageItemUrl!.StartsWith("/"))
+        {
+            return imageItemId.ToString();
+        }
+        return imageItemUrl;
+    }
 
     private static string GetAudioUrl(Guid trackId) =>
         $"/api/playback/tracks/{trackId}";
