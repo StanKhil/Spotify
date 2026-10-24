@@ -39,6 +39,23 @@ public sealed class PlaylistService : IPlaylistService
         .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<PlaylistResponse>> GetUserPlaylistsAsync(
+        Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Playlists
+            .AsNoTracking()
+            .Where(x => x.ApplicationUserId == userId)
+            .OrderBy(x => x.Name)
+            .Select(x => new PlaylistResponse(
+                x.Id,
+                x.Name,
+                x.ApplicationUserId,
+                x.PlaylistTracks.Count,
+                x.CoverImageId,
+                GetImageUrl(x.CoverImageId, x.CoverImage != null ? x.CoverImage.ImageList : null)))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<PlaylistResponse?> GetPlaylistByIdAsync(
         Guid id, CancellationToken cancellationToken = default)
     {

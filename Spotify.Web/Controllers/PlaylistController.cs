@@ -7,7 +7,7 @@ using Spotify.Application.Interfaces;
 namespace Spotify.Web.Controllers;
 
 [ApiController]
-[Route("api/admin/playlists")]
+[Route("api/playlists")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class PlaylistController : ControllerBase
 {
@@ -21,6 +21,10 @@ public sealed class PlaylistController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyCollection<PlaylistResponse>>> GetPlaylists(CancellationToken cancellationToken)
         => Ok(await _playlistService.GetPlaylistsAsync(cancellationToken));
+
+    [HttpGet("user/{userId:guid}")]
+    public async Task<ActionResult<IReadOnlyCollection<PlaylistResponse>>> GetUserPlaylists(Guid userId, CancellationToken cancellationToken)
+        => Ok(await _playlistService.GetUserPlaylistsAsync(userId, cancellationToken));
 
     [HttpGet("{id}")]
     public async Task<ActionResult<PlaylistResponse>> GetPlaylistById(Guid id, CancellationToken cancellationToken)
