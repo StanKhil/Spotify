@@ -435,7 +435,7 @@ public sealed class AuthenticationService : IAuthenticationService
     }
 
     public async Task<MeResult> MeAsync(
-    CancellationToken cancellationToken = default)
+   CancellationToken cancellationToken = default)
     {
 
         var userId = _currentUserService.UserId;
@@ -451,6 +451,9 @@ public sealed class AuthenticationService : IAuthenticationService
                 .ThenInclude(p => p.AvatarImage)
             .Include(au => au.Profile)
                 .ThenInclude(p => p.CoverImage)
+            .Include(au => au.Author)
+                .ThenInclude(a => a!.Followers)
+            .Include(au => au.AuthorSubscriptions)
             .FirstOrDefaultAsync(u => u.Id == userId.Value, cancellationToken);
 
         if (user is null)
@@ -458,13 +461,22 @@ public sealed class AuthenticationService : IAuthenticationService
             return MeResult.Failure("User not found.");
         }
 
-        var roles = await _userManager.GetRolesAsync(user);
         Author? author = null;
         int followersCount = 0;
         if (user.Author != null)
         {
-            author = user.Author;
-            followersCount = author.Followers.Count;
+            followersCount = user.Author.Followers.Count;
+
+            // Копия без навигационных свойств, чтобы в JSON не ушёл User (хеш пароля) и не было цикла
+            author = new Author
+            {
+                Id = user.Author.Id,
+                Name = user.Author.Name,
+                MonthList = user.Author.MonthList,
+                Bio = user.Author.Bio,
+                BioImageItemId = user.Author.BioImageItemId,
+                UserId = user.Author.UserId
+            };
         }
 
         return MeResult.Success(
@@ -477,7 +489,8 @@ public sealed class AuthenticationService : IAuthenticationService
                 user.AuthorSubscriptions.Count,
                 user.Profile.AvatarImageId,
                 user.Profile.CoverImageId,
-                author));
+                author,
+                author is not null));
     }
 
     public async Task<LogoutResult> LogoutAsync(
