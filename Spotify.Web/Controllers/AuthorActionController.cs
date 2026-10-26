@@ -93,6 +93,21 @@ public sealed class AuthorActionController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("authorIdByUserId/{userId:guid}")]
+    public async Task<IActionResult> GetAuthorIdByUserId(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var authorId = await _authorActionService.GetAuthorIdByUserIdAsync(
+            userId,
+            cancellationToken);
+
+        if (authorId is null)
+            return NotFound();
+
+        return Ok(authorId);
+    }
+
     [HttpGet("authorPage/{authorId}")]
     [ProducesResponseType(typeof(AuthorPageResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -44,7 +44,7 @@ public sealed class EpisodeService : IEpisodeService
             .ThenByDescending(x => x.CreatedAt)
             .Select(x => new EpisodeResponse(
                 x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.PodcastId, x.AudiobookId, x.SeqNumber, x.AudioItemId, x.ImageItemId, x.CreatedAt))
+                x.PodcastId, x.AudiobookId, x.SeqNumber, AudioUrlresolver(x.Id), x.ImageItemId, x.CreatedAt))
             .ToListAsync(cancellationToken);
     }
 
@@ -55,7 +55,7 @@ public sealed class EpisodeService : IEpisodeService
             .Where(x => x.Id == id && x.DeletedAt == null)
             .Select(x => new EpisodeResponse(
                 x.Id, x.Name, x.Description, x.DurationSeconds,
-                x.PodcastId, x.AudiobookId, x.SeqNumber, x.AudioItemId, x.ImageItemId, x.CreatedAt))
+                x.PodcastId, x.AudiobookId, x.SeqNumber, AudioUrlresolver(x.Id), x.ImageItemId, x.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -132,7 +132,7 @@ public sealed class EpisodeService : IEpisodeService
 
         return CreateEpisodeResult.Success(new EpisodeResponse(
             episode.Id, episode.Name, episode.Description, episode.DurationSeconds,
-            episode.PodcastId, episode.AudiobookId, episode.SeqNumber, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
+            episode.PodcastId, episode.AudiobookId, episode.SeqNumber, AudioUrlresolver(episode.Id), episode.ImageItemId, episode.CreatedAt));
     }
 
     public async Task<UpdateEpisodeResult> EditEpisodeAsync(
@@ -180,7 +180,7 @@ public sealed class EpisodeService : IEpisodeService
 
         return UpdateEpisodeResult.Success(new EpisodeResponse(
             episode.Id, episode.Name, episode.Description, episode.DurationSeconds,
-            episode.PodcastId, episode.AudiobookId, episode.SeqNumber, episode.AudioItemId, episode.ImageItemId, episode.CreatedAt));
+            episode.PodcastId, episode.AudiobookId, episode.SeqNumber, AudioUrlresolver(episode.Id), episode.ImageItemId, episode.CreatedAt));
     }
 
     public async Task<DeleteEpisodeResult> DeleteEpisodeAsync(
@@ -198,5 +198,10 @@ public sealed class EpisodeService : IEpisodeService
         await _context.SaveChangesAsync(cancellationToken);
 
         return DeleteEpisodeResult.Success();
+    }
+
+    private static string AudioUrlresolver(Guid episodeId)
+    {
+        return $"/api/playback/{episodeId}";
     }
 }

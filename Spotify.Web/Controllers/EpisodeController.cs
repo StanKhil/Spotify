@@ -7,8 +7,8 @@ using Spotify.Application.Interfaces;
 namespace Spotify.Web.Controllers;
 
 [ApiController]
-[Route("api/admin/episodes")]
-[Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Route("api/episodes")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class EpisodeController : ControllerBase
 {
     private readonly IEpisodeService _episodeService;

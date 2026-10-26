@@ -160,6 +160,16 @@ public sealed class AuthorActionService : IAuthorActionService
         return SubscribedAuthorsResult.Success(authors);
     }
 
+    public async Task<Guid?> GetAuthorIdByUserIdAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var author = await _context.Authors
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.UserId == userId, cancellationToken);
+        return author?.Id;
+    }
+
     private async Task<Author?> GetAuthorAsync(
         Guid authorId,
         CancellationToken cancellationToken)

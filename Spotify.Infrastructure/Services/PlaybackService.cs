@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Spotify.Application.DTOs.Playback;
 using Spotify.Application.Interfaces;
+using Spotify.Domain.Entities.Content;
 using Spotify.Domain.Enumerations;
 using Spotify.Infrastructure.Persistance.Context;
 
@@ -25,62 +26,58 @@ public sealed class PlaybackService : IPlaybackService
         _jamendoService = jamendoService;
     }
 
-    public async Task<TrackPlaybackResponse?> GetTrackPlaybackAsync(
-        Guid trackId,
-        Guid userId,
+    public async Task<string?> GetAudioContentPlaybackAsync(
+        Guid audioContentId,
+        Guid? userId,
         CancellationToken cancellationToken = default)
     {
-        var track = await _context.Tracks
+        var audioContent = await _context.Set<AudioContent>()
             .AsNoTracking()
             .Include(x => x.AudioItem)
             .FirstOrDefaultAsync(
-                x => x.Id == trackId &&
-                     x.DeletedAt == null &&
-                     !x.IsDraft,
+                x => x.Id == audioContentId && x.DeletedAt == null,
                 cancellationToken);
 
-        if (track?.AudioItem is null)
+        if (audioContent?.AudioItem is null ||
+            audioContent is Track { IsDraft: true })
         {
             return null;
         }
 
-        if (track.IsForAdult && !await IsUserAdultAsync(userId, cancellationToken))
+        if (audioContent.IsForAdult && !await IsUserAdultAsync(userId, cancellationToken))
         {
             return null;
         }
 
-        return await BuildPlaybackResponseAsync(track, cancellationToken);
+        var playback = await BuildPlaybackResponseAsync(audioContent, cancellationToken);
+        return playback?.StreamUrl;
     }
 
-    public async Task<TrackPlaybackResponse?> GetTrackPlaybackForAdminAsync(
-        Guid trackId,
+    public async Task<AudioContentPlaybackResponse?> GetAudioContentPlaybackForAdminAsync(
+        Guid audioContentId,
         bool asUser,
         Guid? userId,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.Tracks
+        var query = _context.Set<AudioContent>()
             .AsNoTracking()
             .Include(x => x.AudioItem)
-            .Where(x => x.Id == trackId && x.DeletedAt == null);
+            .Where(x => x.Id == audioContentId && x.DeletedAt == null);
 
-        if (asUser)
-        {
-            query = query.Where(x => !x.IsDraft);
-        }
+        var audioContent = await query.FirstOrDefaultAsync(cancellationToken);
 
-        var track = await query.FirstOrDefaultAsync(cancellationToken);
-
-        if (track?.AudioItem is null)
+        if (audioContent?.AudioItem is null ||
+            (asUser && audioContent is Track { IsDraft: true }))
         {
             return null;
         }
 
-        if (asUser && track.IsForAdult && !await IsUserAdultAsync(userId, cancellationToken))
+        if (asUser && audioContent.IsForAdult && !await IsUserAdultAsync(userId, cancellationToken))
         {
             return null;
         }
 
-        return await BuildPlaybackResponseAsync(track, cancellationToken);
+        return await BuildPlaybackResponseAsync(audioContent, cancellationToken);
     }
 
     private async Task<bool> IsUserAdultAsync(Guid? userId, CancellationToken cancellationToken)
@@ -97,40 +94,41 @@ public sealed class PlaybackService : IPlaybackService
             cancellationToken);
     }
 
-    private async Task<TrackPlaybackResponse?> BuildPlaybackResponseAsync(
-        Domain.Entities.Content.Track track,
+    private async Task<AudioContentPlaybackResponse?> BuildPlaybackResponseAsync(
+        AudioContent audioContent,
         CancellationToken cancellationToken)
     {
-        var expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(
-            _playbackOptions.LocalUrlLifetimeMinutes);
-
+        DateTimeOffset? expiresAtUtc = null;
         string? streamUrl = null;
 
-        switch (track.Provider)
+        switch (audioContent.Provider)
         {
             case AudioProvider.LocalStorage:
                 {
-                    if (string.IsNullOrWhiteSpace(track.AudioItem!.StorageKey))
+                    if (string.IsNullOrWhiteSpace(audioContent.AudioItem!.StorageKey))
                     {
                         return null;
                     }
 
+                    expiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(
+                        _playbackOptions.LocalUrlLifetimeMinutes);
+
                     streamUrl = _localPlaybackUrlService.CreateStreamUrl(
-                        track.AudioItem.Id,
-                        expiresAtUtc);
+                        audioContent.AudioItem.Id,
+                        expiresAtUtc.Value);
 
                     break;
                 }
 
             case AudioProvider.Jamendo:
                 {
-                    if (string.IsNullOrWhiteSpace(track.ExternalContentId))
+                    if (string.IsNullOrWhiteSpace(audioContent.ExternalContentId))
                     {
                         return null;
                     }
 
                     streamUrl = await _jamendoService.GetTrackStreamUrlAsync(
-                        track.ExternalContentId,
+                        audioContent.ExternalContentId,
                         cancellationToken);
 
                     break;
@@ -140,13 +138,14 @@ public sealed class PlaybackService : IPlaybackService
                 return null;
         }
 
-        return new TrackPlaybackResponse(
-            track.Id,
-            track.Name,
-            track.DurationSeconds,
+        return new AudioContentPlaybackResponse(
+            audioContent.Id,
+            GetContentType(audioContent),
+            audioContent.Name,
+            audioContent.DurationSeconds,
             streamUrl,
             expiresAtUtc,
-            false);
+            audioContent.Provider == AudioProvider.Jamendo);
     }
     public async Task<bool> RegisterPlayAsync(
     Guid trackId, CancellationToken cancellationToken = default)
@@ -164,4 +163,12 @@ public sealed class PlaybackService : IPlaybackService
 
         return true;
     }
+
+    private static string GetContentType(AudioContent content) => content switch
+    {
+        Track => "Track",
+        Episode => "Episode",
+        Audiobook => "Audiobook",
+        _ => "AudioContent"
+    };
 }

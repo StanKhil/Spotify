@@ -21,6 +21,10 @@ namespace Spotify.Application.Interfaces
             Guid userId,
             CancellationToken cancellationToken = default);
 
+        Task<Guid?> GetAuthorIdByUserIdAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default);
+
         Task<AuthorPageResult> GetAuthorPageAsync(
             string authorId,
             int tracksMaxPerPage,

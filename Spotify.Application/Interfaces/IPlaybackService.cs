@@ -4,13 +4,13 @@ namespace Spotify.Application.Interfaces;
 
 public interface IPlaybackService
 {
-    Task<TrackPlaybackResponse?> GetTrackPlaybackAsync(
-        Guid trackId,
-        Guid userId,
+    Task<string?> GetAudioContentPlaybackAsync(
+        Guid audioContentId,
+        Guid? userId,
         CancellationToken cancellationToken = default);
 
-    Task<TrackPlaybackResponse?> GetTrackPlaybackForAdminAsync(
-        Guid trackId,
+    Task<AudioContentPlaybackResponse?> GetAudioContentPlaybackForAdminAsync(
+        Guid audioContentId,
         bool asUser,
         Guid? userId,
         CancellationToken cancellationToken = default);

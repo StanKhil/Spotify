@@ -7,8 +7,8 @@ using Spotify.Application.Interfaces;
 namespace Spotify.Web.Controllers;
 
 [ApiController]
-[Route("api/admin/podcasts")]
-[Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Route("api/podcasts")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class PodcastController : ControllerBase
 {
     private readonly IPodcastService _podcastService;
