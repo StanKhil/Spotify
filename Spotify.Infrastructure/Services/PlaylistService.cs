@@ -11,14 +11,17 @@ public sealed class PlaylistService : IPlaylistService
     private readonly ApplicationContext _context;
     private readonly ICurrentUserService _currentUserService;
     private readonly IFromJamendoToLocalService _fromJamendoToLocalService;
+    private readonly IAudioUrlResolver _audioUrlResolver;
 
     public PlaylistService(ApplicationContext context,
         IFromJamendoToLocalService fromJamendoToLocalService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IAudioUrlResolver audioUrlResolver)
     {
         _context = context;
         _fromJamendoToLocalService = fromJamendoToLocalService;
         _currentUserService = currentUserService;
+        _audioUrlResolver = audioUrlResolver;
     }
 
     public async Task<IReadOnlyCollection<PlaylistResponse>> GetPlaylistsAsync(
@@ -205,7 +208,7 @@ public sealed class PlaylistService : IPlaylistService
     public async Task<IReadOnlyCollection<PlaylistTrackResponse>> GetPlaylistTracksAsync(
         Guid playlistId, CancellationToken cancellationToken = default)
     {
-        return await _context.PlaylistTracks
+        var playlistTracks = await _context.PlaylistTracks
             .Include(pl => pl.Track)
                 .ThenInclude(t => t.Album)
              .Include(pl => pl.Track)
@@ -214,20 +217,29 @@ public sealed class PlaylistService : IPlaylistService
                         .ThenInclude(a => a.Author)
              .Include(pl => pl.Track)
                 .ThenInclude(t => t.ImageItem)
+              .Include(pl => pl.Track)
+                .ThenInclude(t => t.AudioItem)
             .Where(x => x.PlaylistId == playlistId)
             .OrderBy(x => x.Position)
-            .Select(x => new PlaylistTrackResponse(
-            Id: x.TrackId,
-            Name: x.Track.Name,
-            Album: x.Track.Album.Name,
-            DurationSeconds: x.Track.DurationSeconds,
-            ArtistName: x.Track.AuthorContent!.Authors.Select(a => a.Author.Name).FirstOrDefault(),
-            ImageUrl: x.Track.ImageItem != null && x.Track.ImageItem.ImageList.StartsWith("/")
-                ? x.Track.ImageItemId.ToString()
-                : x.Track.ImageItem!.ImageList,
-            Position: x.Position,
-            AddedAt: x.AddedAt))
             .ToListAsync(cancellationToken);
+
+        var result = new List<PlaylistTrackResponse>();
+        foreach (var playlistTrack in playlistTracks)
+        {
+            var audioUrl = await GetAudioUrl(playlistTrack.Track);
+            result.Add(new PlaylistTrackResponse(
+                Id: playlistTrack.TrackId,
+                Name: playlistTrack.Track.Name,
+                Album: playlistTrack.Track.Album.Name,
+                DurationSeconds: playlistTrack.Track.DurationSeconds,
+                ArtistName: playlistTrack.Track.AuthorContent!.Authors.Select(a => a.Author.Name).FirstOrDefault(),
+                ImageUrl: GetImageUrl(playlistTrack.Track.ImageItemId, playlistTrack.Track.ImageItem?.ImageList),
+                AudioUrl: audioUrl,
+                Position: playlistTrack.Position,
+                AddedAt: playlistTrack.AddedAt));
+        }
+
+        return result;
     }
 
     public async Task<AddTrackToPlaylistResult> AddTrackToPlaylistAsync(
@@ -277,12 +289,14 @@ public sealed class PlaylistService : IPlaylistService
         _context.PlaylistTracks.Add(playlistTrack);
         await _context.SaveChangesAsync(cancellationToken);
 
+        var audioUrl = await GetAudioUrl(track);
         return AddTrackToPlaylistResult.Success(new PlaylistTrackResponse(
             track.Id, track.Name,
             track.Album.Name,
             track.DurationSeconds,
             track.AuthorContent!.Authors.First().Author.Name,
             track.ImageItem!.ImageList,
+            audioUrl,
             playlistTrack.Position, 
             playlistTrack.AddedAt));
     }
@@ -352,15 +366,18 @@ public sealed class PlaylistService : IPlaylistService
                 cancellationToken);
     }
 
-    private static string? GetImageUrl(Guid? coverImageId, string? imageList)
+    private static string? GetImageUrl(Guid? imageItemId, string? imageItemUrl)
     {
-        if (!string.IsNullOrWhiteSpace(imageList))
+        if (imageItemId is null && string.IsNullOrEmpty(imageItemUrl))
         {
-            return imageList;
+            return null;
         }
-
-        return coverImageId.HasValue && coverImageId.Value != Guid.Empty
-            ? $"/images/{coverImageId.Value}"
-            : null;
+        if (imageItemUrl!.StartsWith("/"))
+        {
+            return imageItemId.ToString();
+        }
+        return imageItemUrl;
     }
+    private async Task<string?> GetAudioUrl(Track track) =>
+        await _audioUrlResolver.ResolveAsync(track);
 }

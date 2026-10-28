@@ -7,5 +7,6 @@ public sealed record PlaylistTrackResponse(
     int DurationSeconds,
     string? ArtistName,
     string? ImageUrl,
+    string? AudioUrl,
     int Position,
     DateTime AddedAt);
