@@ -9,10 +9,14 @@ namespace Spotify.Infrastructure.Services;
 public sealed class AudiobookService : IAudiobookService
 {
     private readonly ApplicationContext _context;
+    private readonly IAudioMetadataService _audioMetadataService;
 
-    public AudiobookService(ApplicationContext context)
+    public AudiobookService(
+        ApplicationContext context,
+        IAudioMetadataService audioMetadataService)
     {
         _context = context;
+        _audioMetadataService = audioMetadataService;
     }
 
     public async Task<IReadOnlyCollection<AudiobookResponse>> GetAudiobooksAsync(
@@ -22,6 +26,8 @@ public sealed class AudiobookService : IAudiobookService
             .Where(x => x.DeletedAt == null)
             .Include(x => x.AuthorContent)
                 .ThenInclude(ac => ac.Authors)
+                    .ThenInclude(aca => aca.Author)
+                        .ThenInclude(a => a.BioImageItem)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -34,7 +40,22 @@ public sealed class AudiobookService : IAudiobookService
         var audiobook = await _context.Audiobooks
             .Include(x => x.AuthorContent)
                 .ThenInclude(ac => ac.Authors)
+                    .ThenInclude(aca => aca.Author)
+                        .ThenInclude(a => a.BioImageItem)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
+
+        return audiobook is null ? null : MapToResponse(audiobook);
+    }
+
+    public async Task<AudiobookResponse?> GetUserAudiobookAsync(
+        Guid userId, CancellationToken cancellationToken = default)
+    {
+        var audiobook = await _context.Audiobooks
+            .Include(x => x.AuthorContent)
+                .ThenInclude(ac => ac.Authors)
+                    .ThenInclude(aca => aca.Author)
+                        .ThenInclude(a => a.BioImageItem)
+            .FirstOrDefaultAsync(x => x.AuthorContent.Authors.Any(a => a.Author.Id == userId) && x.DeletedAt == null, cancellationToken);
 
         return audiobook is null ? null : MapToResponse(audiobook);
     }
@@ -42,10 +63,16 @@ public sealed class AudiobookService : IAudiobookService
     public async Task<CreateAudiobookResult> CreateAudiobookAsync(
         CreateAudiobookRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await _context.AudioItems.AnyAsync(x => x.Id == request.AudioItemId, cancellationToken))
+        var audioItem = await _context.AudioItems
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.AudioItemId, cancellationToken);
+
+        if (audioItem is null)
         {
             return CreateAudiobookResult.Failure("The specified audio item was not found.");
         }
+
+        var durationSeconds = await GetDurationSecondsAsync(audioItem, cancellationToken);
 
         if (request.GenreId is string genreId &&
             !await _context.Genres.AnyAsync(x => x.Id == genreId, cancellationToken))
@@ -76,7 +103,7 @@ public sealed class AudiobookService : IAudiobookService
             Id = Guid.NewGuid(),
             Name = audiobookName,
             Description = request.Description?.Trim(),
-            DurationSeconds = 0,
+            DurationSeconds = durationSeconds,
             AudioItemId = request.AudioItemId,
             GenreId = request.GenreId,
             CreatedAt = DateTime.UtcNow
@@ -104,7 +131,8 @@ public sealed class AudiobookService : IAudiobookService
         _context.Audiobooks.Add(audiobook);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return CreateAudiobookResult.Success(MapToResponse(audiobook));
+        var response = await GetAudiobookByIdAsync(audiobook.Id, cancellationToken);
+        return CreateAudiobookResult.Success(response!);
     }
 
     public async Task<UpdateAudiobookResult> EditAudiobookAsync(
@@ -113,6 +141,8 @@ public sealed class AudiobookService : IAudiobookService
         var audiobook = await _context.Audiobooks
             .Include(x => x.AuthorContent)
                 .ThenInclude(ac => ac.Authors)
+                    .ThenInclude(aca => aca.Author)
+                        .ThenInclude(a => a.BioImageItem)
             .FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null, cancellationToken);
 
         if (audiobook is null)
@@ -124,6 +154,21 @@ public sealed class AudiobookService : IAudiobookService
             !await _context.Genres.AnyAsync(x => x.Id == genreId, cancellationToken))
         {
             return UpdateAudiobookResult.Failure("The specified genre was not found.");
+        }
+
+        if (request.AudioItemId is Guid audioItemId)
+        {
+            var audioItem = await _context.AudioItems
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == audioItemId, cancellationToken);
+
+            if (audioItem is null)
+            {
+                return UpdateAudiobookResult.Failure("The specified audio item was not found.");
+            }
+
+            audiobook.AudioItemId = audioItem.Id;
+            audiobook.DurationSeconds = await GetDurationSecondsAsync(audioItem, cancellationToken);
         }
 
         var audiobookName = request.Name.Trim();
@@ -168,7 +213,8 @@ public sealed class AudiobookService : IAudiobookService
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        return UpdateAudiobookResult.Success(MapToResponse(audiobook));
+        var response = await GetAudiobookByIdAsync(audiobook.Id, cancellationToken);
+        return UpdateAudiobookResult.Success(response!);
     }
 
     public async Task<DeleteAudiobookResult> DeleteAudiobookAsync(
@@ -196,8 +242,39 @@ public sealed class AudiobookService : IAudiobookService
         return DeleteAudiobookResult.Success();
     }
 
+    private async Task<int> GetDurationSecondsAsync(
+        AudioItem audioItem,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(audioItem.StorageKey))
+        {
+            return 0;
+        }
+
+        return await _audioMetadataService.GetDurationSecondsAsync(
+            audioItem.StorageKey,
+            cancellationToken);
+    }
+
     private static AudiobookResponse MapToResponse(Audiobook audiobook) => new(
-        audiobook.Id, audiobook.Name, audiobook.Description, audiobook.DurationSeconds,
-        audiobook.GenreId, audiobook.CreatedAt,
-        audiobook.AuthorContent.Authors.Select(x => x.AuthorId).ToList());
+        audiobook.Id,
+        audiobook.Name,
+        audiobook.Description,
+        audiobook.DurationSeconds,
+        audiobook.AudioItemId,
+        GetAudioUrl(audiobook.Id),
+        audiobook.GenreId,
+        audiobook.CreatedAt,
+        audiobook.AuthorContent?.Authors
+            .Select(x => new Spotify.Application.DTOs.Author.AuthorResponse(
+                x.Author.Id,
+                x.Author.Name,
+                x.Author.MonthList,
+                x.Author.Bio,
+                x.Author.BioImageItem?.ImageList,
+                x.Author.AuthoredContent.Count))
+            .ToList() ?? new List<Spotify.Application.DTOs.Author.AuthorResponse>());
+
+    private static string GetAudioUrl(Guid audiobookId) =>
+        $"/api/playback/{audiobookId}";
 }

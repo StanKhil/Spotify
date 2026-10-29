@@ -11,6 +11,8 @@ public sealed class UpdateAudiobookRequest
     [MaxLength(2000)]
     public string? Description { get; init; }
 
+    public Guid? AudioItemId { get; init; }
+
     public string? GenreId { get; init; }
 
     public IReadOnlyCollection<Guid> AuthorIds { get; init; } = [];

@@ -111,6 +111,8 @@ public sealed class AudiobookActionService : IAudiobookActionService
         var audiobooks = await likedAudiobooksQuery
             .Include(x => x.AuthorContent)
                 .ThenInclude(x => x.Authors)
+                    .ThenInclude(x => x.Author)
+                        .ThenInclude(a => a.BioImageItem)
             .OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * maxPerPage)
             .Take(maxPerPage)
@@ -146,7 +148,17 @@ public sealed class AudiobookActionService : IAudiobookActionService
         audiobook.Name,
         audiobook.Description,
         audiobook.DurationSeconds,
+        audiobook.AudioItemId,
+        $"/api/playback/{audiobook.Id}",
         audiobook.GenreId,
         audiobook.CreatedAt,
-        audiobook.AuthorContent.Authors.Select(x => x.AuthorId).ToList());
+        audiobook.AuthorContent.Authors
+            .Select(x => new Spotify.Application.DTOs.Author.AuthorResponse(
+                x.Author.Id,
+                x.Author.Name,
+                x.Author.MonthList,
+                x.Author.Bio,
+                x.Author.BioImageItem?.ImageList,
+                x.Author.AuthoredContent.Count))
+            .ToList());
 }

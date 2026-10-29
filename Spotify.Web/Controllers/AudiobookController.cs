@@ -7,8 +7,8 @@ using Spotify.Application.Interfaces;
 namespace Spotify.Web.Controllers;
 
 [ApiController]
-[Route("api/admin/audiobooks")]
-[Authorize(Roles = "Admin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Route("api/audiobooks")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public sealed class AudiobookController : ControllerBase
 {
     private readonly IAudiobookService _audiobookService;
@@ -26,6 +26,13 @@ public sealed class AudiobookController : ControllerBase
     public async Task<ActionResult<AudiobookResponse>> GetAudiobookById(Guid id, CancellationToken cancellationToken)
     {
         var audiobook = await _audiobookService.GetAudiobookByIdAsync(id, cancellationToken);
+        return audiobook is null ? NotFound() : Ok(audiobook);
+    }
+
+    [HttpGet("user/{userId:guid}")]
+    public async Task<ActionResult<AudiobookResponse>> GetUserAudiobook(Guid userId, CancellationToken cancellationToken)
+    {
+        var audiobook = await _audiobookService.GetUserAudiobookAsync(userId, cancellationToken);
         return audiobook is null ? NotFound() : Ok(audiobook);
     }
 
