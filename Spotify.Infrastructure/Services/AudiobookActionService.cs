@@ -22,14 +22,16 @@ public sealed class AudiobookActionService : IAudiobookActionService
         CancellationToken cancellationToken = default)
     {
         var audiobook = await GetAudiobookAsync(audiobookId, cancellationToken);
-        if (audiobook is null)
+        if (audiobook is null || audiobook.AuthorContent is null)
             return null;
+
+        var authorContentId = audiobook.AuthorContent.Id;
 
         _context.ListeningHistories.Add(new ListeningHistory
         {
             Id = Guid.NewGuid(),
             ApplicationUserId = userId,
-            AuthorContentId = audiobook.AuthorContentId,
+            AuthorContentId = authorContentId,
             ListenedSeconds = 0,
             IsCompleted = false,
             PlayedAt = DateTime.UtcNow
@@ -39,7 +41,7 @@ public sealed class AudiobookActionService : IAudiobookActionService
 
         return new AudiobookActionResponse(
             audiobook.Id,
-            await IsLikedAsync(userId, audiobook.AuthorContentId, cancellationToken));
+            await IsLikedAsync(userId, authorContentId, cancellationToken));
     }
 
     public async Task<AudiobookActionResponse?> LikeAsync(
@@ -48,16 +50,18 @@ public sealed class AudiobookActionService : IAudiobookActionService
         CancellationToken cancellationToken = default)
     {
         var audiobook = await GetAudiobookAsync(audiobookId, cancellationToken);
-        if (audiobook is null)
+        if (audiobook is null || audiobook.AuthorContent is null)
             return null;
 
-        if (!await IsLikedAsync(userId, audiobook.AuthorContentId, cancellationToken))
+        var authorContentId = audiobook.AuthorContent.Id;
+
+        if (!await IsLikedAsync(userId, authorContentId, cancellationToken))
         {
             _context.Likes.Add(new Like
             {
                 Id = Guid.NewGuid(),
                 ApplicationUserId = userId,
-                AuthorContentId = audiobook.AuthorContentId
+                AuthorContentId = authorContentId
             });
 
             await _context.SaveChangesAsync(cancellationToken);
@@ -72,12 +76,14 @@ public sealed class AudiobookActionService : IAudiobookActionService
         CancellationToken cancellationToken = default)
     {
         var audiobook = await GetAudiobookAsync(audiobookId, cancellationToken);
-        if (audiobook is null)
+        if (audiobook is null || audiobook.AuthorContent is null)
             return null;
+
+        var authorContentId = audiobook.AuthorContent.Id;
 
         var like = await _context.Likes.FirstOrDefaultAsync(
             x => x.ApplicationUserId == userId &&
-                 x.AuthorContentId == audiobook.AuthorContentId,
+                 x.AuthorContentId == authorContentId,
             cancellationToken);
 
         if (like is not null)
@@ -128,9 +134,11 @@ public sealed class AudiobookActionService : IAudiobookActionService
         Guid audiobookId,
         CancellationToken cancellationToken)
     {
-        return _context.Audiobooks.FirstOrDefaultAsync(
-            x => x.Id == audiobookId && x.DeletedAt == null,
-            cancellationToken);
+        return _context.Audiobooks
+            .Include(x => x.AuthorContent)
+            .FirstOrDefaultAsync(
+                x => x.Id == audiobookId && x.DeletedAt == null,
+                cancellationToken);
     }
 
     private Task<bool> IsLikedAsync(

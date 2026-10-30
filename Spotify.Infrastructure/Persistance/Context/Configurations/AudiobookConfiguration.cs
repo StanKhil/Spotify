@@ -11,10 +11,10 @@ namespace Spotify.Infrastructure.Persistance.Context.Configurations
     {
         public void Configure(EntityTypeBuilder<Audiobook> builder)
         {
-            builder.HasOne(x => x.AuthorContent)
-                .WithMany()
-                .HasForeignKey(x => x.AuthorContentId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.HasMany(a => a.Episodes)
+                   .WithOne(e => e.Audiobook)
+                   .HasForeignKey(e => e.AudiobookId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

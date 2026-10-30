@@ -124,7 +124,7 @@ public sealed class AudiobookService : IAudiobookService
             });
         }
 
-        audiobook.AuthorContentId = authorContent.Id;
+        audiobook.AuthorContent?.Id = authorContent.Id;
         audiobook.AuthorContent = authorContent;
 
         _context.AuthorContents.Add(authorContent);
@@ -206,7 +206,7 @@ public sealed class AudiobookService : IAudiobookService
         {
             audiobook.AuthorContent.Authors.Add(new AuthorContentAuthor
             {
-                AuthorContentId = audiobook.AuthorContentId,
+                AuthorContentId = audiobook.AuthorContent.Id,
                 AuthorId = authorId
             });
         }
