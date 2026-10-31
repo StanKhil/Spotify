@@ -20,6 +20,41 @@ namespace Spotify.Infrastructure.Services
             _context = context;
             _currentUserService = currentUserService;
         }
+
+        public async Task<UserProfileStatisticsResult> GetUserProfileStatisticsAsync(Guid userId, CancellationToken cancellationToken)
+        {
+            var user = _context.ApplicationUsers
+                .Include(au => au.Profile)
+                .Include(au => au.Author)
+                    .ThenInclude(a => a.Followers)
+                .Include(au => au.Author)
+                    .ThenInclude(a => a.AuthoredContent)
+                        .ThenInclude(aca => aca.AuthorContent)
+                            .ThenInclude(ac => ac.Item)
+                .FirstOrDefault(au => au.Id == userId);
+
+            if (user is null)
+            {
+                return UserProfileStatisticsResult.Failure("User not found.");
+            }
+
+            if(user.Author is null)
+            {
+                return UserProfileStatisticsResult.Failure("User is not an author.");
+            }
+
+            long totalListenersCount = user.Author.AuthoredContent
+    .Sum(aca => aca.AuthorContent?.Item?.PlaysNumber ?? 0);
+
+            var statistics = new UserProfileStatisticsResponse(
+                TotalSubsrcibesCount: user.Author.Followers.Count,
+                TotalContentCount: user.Author.AuthoredContent.Count,
+                TotalListenersCount: totalListenersCount
+            );
+
+            return UserProfileStatisticsResult.Success(statistics);
+        }
+
         public async Task<UpdateUserProfileResult> UpdateUserProfileAsync(UpdateUserProfileRequest request, CancellationToken cancellationToken)
         {
             if(_currentUserService.UserId != request.userId)

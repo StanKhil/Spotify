@@ -13,7 +13,7 @@ public abstract class AudioContent
     public int DurationSeconds { get; set; }
     public string? Description { get; set; }
     public AudioProvider Provider { get; set; }
-
+    public long PlaysNumber { get; set; }
     public string? ExternalContentId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -177,6 +177,9 @@ namespace Spotify.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<long>("PlaysNumber")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Provider")
                         .HasColumnType("int");
 
@@ -192,7 +195,7 @@ namespace Spotify.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("[ExternalContentId] IS NOT NULL");
 
-                    b.ToTable("AudioContent", (string)null);
+                    b.ToTable("AudioContent");
 
                     b.HasDiscriminator<string>("Discriminator").HasValue("AudioContent");
 
@@ -234,7 +237,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AudioItems", (string)null);
+                    b.ToTable("AudioItems");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.Author", b =>
@@ -279,7 +282,7 @@ namespace Spotify.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL");
 
-                    b.ToTable("Authors", (string)null);
+                    b.ToTable("Authors");
 
                     b.HasData(
                         new
@@ -305,7 +308,7 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("ItemId")
                         .IsUnique();
 
-                    b.ToTable("AuthorContents", (string)null);
+                    b.ToTable("AuthorContents");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.AuthorContentAuthor", b =>
@@ -323,7 +326,7 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("AuthorContentId", "AuthorId")
                         .IsUnique();
 
-                    b.ToTable("AuthorContentAuthors", (string)null);
+                    b.ToTable("AuthorContentAuthors");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.AuthorSubscription", b =>
@@ -362,7 +365,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Genres", (string)null);
+                    b.ToTable("Genres");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.ImageItem", b =>
@@ -377,7 +380,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ImageItems", (string)null);
+                    b.ToTable("ImageItems");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.LastPlayed", b =>
@@ -411,7 +414,7 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("ApplicationUserId", "AuthorContentId")
                         .IsUnique();
 
-                    b.ToTable("LastPlayedEntries", (string)null);
+                    b.ToTable("LastPlayedEntries");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.ListeningHistory", b =>
@@ -461,7 +464,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasIndex("MoodImageId");
 
-                    b.ToTable("Moods", (string)null);
+                    b.ToTable("Moods");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.Playlist", b =>
@@ -487,7 +490,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasIndex("CoverImageId");
 
-                    b.ToTable("Playlists", (string)null);
+                    b.ToTable("Playlists");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.PlaylistTrack", b =>
@@ -511,7 +514,7 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("PlaylistId", "Position")
                         .IsUnique();
 
-                    b.ToTable("PlaylistTracks", (string)null);
+                    b.ToTable("PlaylistTracks");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.Plugin", b =>
@@ -532,7 +535,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Plugins", (string)null);
+                    b.ToTable("Plugins");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.Podcast", b =>
@@ -556,7 +559,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Podcasts", (string)null);
+                    b.ToTable("Podcasts");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.PodcastAuthor", b =>
@@ -571,7 +574,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("PodcastAuthors", (string)null);
+                    b.ToTable("PodcastAuthors");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.SystemSetting", b =>
@@ -585,7 +588,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Key");
 
-                    b.ToTable("SystemSettings", (string)null);
+                    b.ToTable("SystemSettings");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.Tag", b =>
@@ -596,7 +599,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Content.TrackTag", b =>
@@ -611,7 +614,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("TrackTags", (string)null);
+                    b.ToTable("TrackTags");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.Location.City", b =>
@@ -632,7 +635,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasIndex("CountryId");
 
-                    b.ToTable("Cities", (string)null);
+                    b.ToTable("Cities");
 
                     b.HasData(
                         new
@@ -1047,7 +1050,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Countries", (string)null);
+                    b.ToTable("Countries");
 
                     b.HasData(
                         new
@@ -1168,7 +1171,7 @@ namespace Spotify.Infrastructure.Migrations
                     b.HasIndex("Jti")
                         .IsUnique();
 
-                    b.ToTable("RevokedTokens", (string)null);
+                    b.ToTable("RevokedTokens");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.ApplicationUser", b =>
@@ -1286,7 +1289,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Licenses", (string)null);
+                    b.ToTable("Licenses");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.Like", b =>
@@ -1313,7 +1316,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasIndex("ApplicationUserId", "Order");
 
-                    b.ToTable("Likes", (string)null);
+                    b.ToTable("Likes");
                 });
 
             modelBuilder.Entity("Spotify.Domain.Entities.User.Settings", b =>
@@ -1327,7 +1330,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Settings", (string)null);
+                    b.ToTable("Settings");
 
                     b.HasData(
                         new
@@ -1356,7 +1359,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subscriptions", (string)null);
+                    b.ToTable("Subscriptions");
 
                     b.HasData(
                         new
@@ -1424,7 +1427,7 @@ namespace Spotify.Infrastructure.Migrations
 
                     b.HasIndex("CoverImageId");
 
-                    b.ToTable("UserProfiles", (string)null);
+                    b.ToTable("UserProfiles");
 
                     b.HasData(
                         new
@@ -1543,9 +1546,6 @@ namespace Spotify.Infrastructure.Migrations
                 {
                     b.HasBaseType("Spotify.Domain.Entities.Content.AudioContent");
 
-                    b.Property<Guid>("AuthorContentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasDiscriminator().HasValue("Audiobook");
                 });
 
@@ -1565,14 +1565,11 @@ namespace Spotify.Infrastructure.Migrations
                     b.Property<Guid?>("MoodId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<long>("PlaysNumber")
-                        .HasColumnType("bigint");
-
                     b.HasIndex("AlbumId");
 
                     b.HasIndex("MoodId");
 
-                    b.ToTable("AudioContent", null, t =>
+                    b.ToTable("AudioContent", t =>
                         {
                             t.Property("IsDraft")
                                 .HasColumnName("Track_IsDraft");

@@ -28,5 +28,17 @@ namespace Spotify.Web.Controllers
             
             return result;
         }
+
+        [HttpGet("statistics/{userId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<UserProfileStatisticsResult> GetUserProfileStatistics([FromRoute] Guid userId)
+        {
+            var result = await _userProfileService.GetUserProfileStatisticsAsync(userId,CancellationToken.None);
+            
+            return result;
+        }
     }
 }
