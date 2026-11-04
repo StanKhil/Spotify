@@ -166,6 +166,7 @@ public sealed class TrackService : ITrackService
             AudioItemId = request.AudioItemId,
             ImageItemId = request.ImageItemId,
             IsAdult = request.IsAdult,
+            IsForAdult = request.IsAdult,
             IsDraft = request.IsDraft,
             PlaysNumber = 0,
             CreatedAt = DateTime.UtcNow
@@ -271,6 +272,7 @@ public sealed class TrackService : ITrackService
         track.GenreId = request.GenreId;
         track.ImageItemId = request.ImageItemId;
         track.IsAdult = request.IsAdult;
+        track.IsForAdult = request.IsAdult;
         track.IsDraft = request.IsDraft;
 
         var tagsToRemove = track.TrackTags.Where(x => !existingTagIds.Contains(x.TagId)).ToList();

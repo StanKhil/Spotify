@@ -98,13 +98,21 @@ public sealed class AuthorUploadService : IAuthorUploadService
         }
 
         var tracks = await _context.Tracks
-            .Where(x => x.DeletedAt == null && x.AlbumId == album.Id)
-            .Include(x => x.TrackTags)
-            .OrderBy(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
+    .Where(x => x.DeletedAt == null && x.AlbumId == album.Id)
+    .Include(x => x.TrackTags)
+    .Include(x => x.AudioItem)
+    .OrderBy(x => x.CreatedAt)
+    .ToListAsync(cancellationToken);
 
-        return GetMyAuthorTracksResult.Success(
-            tracks.Select(x => MapTrack(x, authorId, album.ImageUrl)).ToList());
+        var responses = new List<TrackResponse>(tracks.Count);
+
+        foreach (var track in tracks)
+        {
+            var audioUrl = await _audioUrlResolver.ResolveAsync(track, cancellationToken);
+            responses.Add(MapTrack(track, authorId, album.ImageUrl) with { AudioUrl = audioUrl });
+        }
+
+        return GetMyAuthorTracksResult.Success(responses);
     }
 
     public async Task<CreateAuthorAlbumResult> CreateAlbumAsync(
@@ -434,6 +442,7 @@ public sealed class AuthorUploadService : IAuthorUploadService
             AudioItemId = audioItemId,
             ImageItemId = album.ImageItemId,
             IsAdult = request.IsAdult,
+            IsForAdult = request.IsAdult,
             IsDraft = request.IsDraft,
             PlaysNumber = 0,
             CreatedAt = DateTime.UtcNow
@@ -504,6 +513,7 @@ public sealed class AuthorUploadService : IAuthorUploadService
         track.GenreId = request.GenreId;
         track.MoodId = request.MoodId;
         track.IsAdult = request.IsAdult;
+        track.IsForAdult = request.IsAdult;
         track.IsDraft = request.IsDraft;
 
         await _context.SaveChangesAsync(cancellationToken);
