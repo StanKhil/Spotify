@@ -368,7 +368,7 @@ public sealed class PlaylistService : IPlaylistService
 
     private static string? GetImageUrl(Guid? imageItemId, string? imageItemUrl)
     {
-        if (imageItemId is null && string.IsNullOrEmpty(imageItemUrl))
+        if (imageItemId is null || imageItemUrl is null || string.IsNullOrEmpty(imageItemUrl))
         {
             return null;
         }
