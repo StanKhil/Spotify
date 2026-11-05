@@ -37,6 +37,7 @@ public sealed class AuthorService : IAuthorService
         var pattern = $"%{query.Trim()}%";
 
         return await _context.Authors
+            .Include(x => x.BioImageItem)
             .Where(x => x.ExternalAuthorId == null &&
                         (EF.Functions.Like(x.Name, pattern) ||
                          (x.Bio != null && EF.Functions.Like(x.Bio, pattern))))
