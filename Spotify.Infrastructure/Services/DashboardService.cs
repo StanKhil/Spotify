@@ -27,7 +27,9 @@ public sealed class DashboardService : IDashboardService
         {
             return imageUrl;
         }
-        return Path.ChangeExtension(imageUrl, null);
+
+        // "/uploads/images/<id>.png" или "/images/<id>.png" -> "<id>"
+        return Path.GetFileNameWithoutExtension(imageUrl);
     }
 
     public async Task<DashboardStatsResponse> GetDashboardStatsAsync(
